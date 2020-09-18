@@ -1,9 +1,5 @@
-import { PropsFromKeys } from '@codelab/shared/interface/props'
-import {
-  ReactNodeI,
-  ReactNodeTypeEnum,
-  NodeTypeEnum,
-} from '@codelab/shared/interface/node'
+import { PropsFromKeys, PropJsonValue } from '@codelab/shared/interface/props'
+import { ReactNodeI } from '@codelab/shared/interface/node'
 import { Select } from '../select'
 
 export namespace Form {
@@ -63,10 +59,12 @@ export namespace Form {
 
   export type ItemProps = PropsFromKeys<typeof itemPropKeys[number]>
 
+  export type OptionConfig = [string, PropJsonValue]
+
   export interface CreateSelect {
     label: string
     name: string
-    options: typeof NodeTypeEnum
+    options: Array<OptionConfig>
   }
 
   export const createSelect = ({
@@ -95,9 +93,9 @@ export namespace Form {
   })
 
   export const createOptions = (
-    type: typeof NodeTypeEnum,
+    options: Array<OptionConfig>,
   ): Array<ReactNodeI<Select.OptionProps>> =>
-    Object.entries(type).map(([key, value]: [string, any]) => ({
+    options.map(([key, value]: [string, PropJsonValue]) => ({
       type: 'Select.Option',
       nodeType: 'React',
       props: {
