@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  app:
+    restart: always
+    ports:
+      - 3333:3333
+      - 4200:4200
+    build:
+      context: ../
+#      cache_from:
+#        # - codelabstudios/codelab_builder:v0.0.1
+#        - node:14.11.0-alpine
+      dockerfile: $PWD/.docker/Dockerfile
+      args:
+        - NODE_ENV=production
+    image: codelabai/codelab:0.1
+    # volumes:
+    #   - codelab-volume:/app
+
+  mongodb:
+    image: mongo
+    restart: always
+    volumes:
+      - ./data-node:/data/db
+    ports:
+      - 27017:27017
+    command: mongod --noauth --smallfiles
+
+  # verdaccio:
+  #   image: verdaccio/verdaccio:4
+  #   container_name: verdaccio-docker-local-storage-vol
+  #   ports:
+  #     - 4873:4873
+  #   volumes:
+  #     # This is bind mounted
+  #     - ./storage:/verdaccio/storage
+  #     - ./conf:/verdaccio/conf
+
+# volumes:
+  # https://docs.docker.com/compose/compose-file/#volume-configuration-reference
+  # codelab-volume:
+  #   external:
+  #     name: codelab-volume
+  # verdaccio:
+  #   driver: local
