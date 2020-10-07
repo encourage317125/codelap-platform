@@ -1,21 +1,16 @@
 /* eslint-disable no-underscore-dangle */
-import { DataNode } from 'antd/lib/tree'
+
 import React from 'react'
 import { NodeService } from '../../../libs/core/node/src/node-service'
 import { ButtonGroup } from '../src/node/ButtonGroup'
 import { ModalForm } from '../src/node/ModalForm'
-import { NodeTree } from '../src/node/NodeTree'
 import { Table } from '../src/node/Table'
-import { convertNodeTreeToAntTreeDataNode } from '../src/node/utils/convertNodeTreeToAntTreeNode'
-import { NodeEntity } from '@codelab/core/node'
-import { BaseNodeType, Node } from '@codelab/shared/interface/node'
+import { BaseNodeType } from '@codelab/shared/interface/node'
 
 const service = new NodeService()
 
 const NodePage = () => {
   const [selectedNode, setSelectedNode] = React.useState(null)
-  const [rootNode, setRootNode] = React.useState<Node | null>(null)
-  const [treeDataNodes, setTreeDataNodes] = React.useState<Array<DataNode>>([])
   const [visibility, setVisibility] = React.useState<boolean>(false)
   const [nodes, setNodes] = React.useState([])
   const [editedNode, setEditedNode] = React.useState<any>(null)
@@ -26,16 +21,17 @@ const NodePage = () => {
   }, [])
 
   const fetchNodes = () => {
-    service
-      .getNodes()
-      .then((res: any) => setNodes(res.data))
-      .catch((err: any) => console.log(err))
+    const cb = (data: any) => {
+      setNodes(data)
+    }
+
+    service.getNodes(cb)
   }
 
   const findChildren = (inputNodes: Array<any>) => {
     return inputNodes.map((node) => {
       const children = inputNodes.filter(
-        (childNode) => childNode.parent === node._id,
+        (childNode) => childNode.parent === node.id,
       )
 
       return {
@@ -45,59 +41,38 @@ const NodePage = () => {
     })
   }
 
-  // TODO: specify type of values. It should combine types for all types(React, Tree, Model, etc)
-  const addChild = (values: any) => {
-    // console.log('addChild', this)
-    const newNode = new NodeEntity(values)
-
-    if (rootNode === null) {
-      setRootNode(newNode)
-      setTreeDataNodes([convertNodeTreeToAntTreeDataNode(newNode)])
-    } else {
-      rootNode.addChild(newNode)
-      setTreeDataNodes([convertNodeTreeToAntTreeDataNode(rootNode)])
-    }
-  }
-
-  const selectNode = (values: any) => {
-    console.log(values)
-  }
-
   const handleCreateNode = (formData: any) => {
     console.log(formData)
 
-    service
-      .createNode(formData)
-      .then((res: any) => {
-        const { data } = res
-        const newNodes: any = [...nodes]
+    const cb = (data: any) => {
+      const newNodes: any = [...nodes]
 
-        data.key = data._id
-        newNodes.push(res.data)
+      // eslint-disable-next-line no-param-reassign
+      data.key = data.id
+      newNodes.push(data)
 
-        setNodes(newNodes)
-        setVisibility(false)
-      })
-      .catch((err: any) => console.log(err))
+      setNodes(newNodes)
+      setVisibility(false)
+    }
+
+    service.createNode(formData, cb)
   }
 
   const handleUpdateNode = (formData: any) => {
     console.log(formData)
+    console.log(editedNode)
 
-    service
-      .updateNode(editedNode._id, formData)
-      .then((res: any) => {
-        const { data } = res
+    const cb = (data: any) => {
+      const index = nodes.map((node: any) => node.id).indexOf(editedNode.id)
+      const newNodes: any = [...nodes]
 
-        const index = nodes.map((node: any) => node._id).indexOf(editedNode._id)
-        const newNodes: any = [...nodes]
+      newNodes[index] = data
 
-        newNodes[index] = data
+      setEditedNode(null)
+      setNodes(newNodes)
+    }
 
-        setEditedNode(null)
-        setNodes(newNodes)
-      })
-      .catch((err: any) => console.log(err))
+    service.updateNode(formData, cb)
   }
 
   const deleteNode = () => {
@@ -107,16 +82,13 @@ const NodePage = () => {
   const handleDeleteNode = (nodeId: any) => {
     console.log('delete node fired!', nodeId)
 
-    service
-      .deleteNode(nodeId)
-      .then((res: any) => {
-        fetchNodes()
-      })
-      .catch((err: any) => console.log(err))
+    const cb = () => fetchNodes()
+
+    service.deleteNode(nodeId, cb)
   }
 
   const showEditModal = (nodeId: any) => {
-    const editNode: any = nodes.find((node: any) => node._id === nodeId)
+    const editNode: any = nodes.find((node: any) => node.id === nodeId)
 
     setEditedNode({
       nodeType: BaseNodeType.React,
@@ -127,15 +99,15 @@ const NodePage = () => {
   const data = findChildren(
     selectedNode
       ? nodes.filter((node: any) => {
-          return node._id === selectedNode
+          return node.id === selectedNode
         })
       : nodes,
   )
 
   const parentNodes = [
-    { label: 'none', value: null },
+    // { label: 'none', value: null },
     ...nodes.map((node: any) => {
-      return { label: node._id, value: node._id }
+      return { label: node.id, value: node.id }
     }),
   ]
 
@@ -164,9 +136,8 @@ const NodePage = () => {
         parentnodes={parentNodes}
         initialvalues={editedNode}
       />
-      <NodeTree />
       <Table
-        data={data.map((node: any) => ({ ...node, key: node._id }))}
+        data={data.map((node: any) => ({ ...node, key: node.id }))}
         selectnode={setSelectedNode}
         handleedit={showEditModal}
         handledelete={handleDeleteNode}
