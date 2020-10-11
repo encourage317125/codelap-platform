@@ -17,7 +17,12 @@
     "default": {
       "runner": "@nrwl/nx-cloud",
       "options": {
-        "cacheableOperations": ["build", "test", "lint", "e2e"],
+        "cacheableOperations": [
+          "build",
+          "test",
+          "lint",
+          "e2e"
+        ],
         "canTrackAnalytics": false,
         "showUsageWarnings": true
       }
@@ -39,9 +44,6 @@
     "api-restify": {
       "tags": []
     },
-    "factory": {
-      "tags": []
-    },
     "api-database": {
       "tags": []
     },
@@ -61,7 +63,9 @@
       "tags": []
     },
     "shared-interface-props": {
-      "tags": ["scope:standalone"]
+      "tags": [
+        "scope:standalone"
+      ]
     },
     "shared-interface-model": {
       "tags": []
@@ -87,12 +91,6 @@
     "core-tree": {
       "tags": []
     },
-    "components-ui": {
-      "tags": []
-    },
-    "components-d3": {
-      "tags": []
-    },
     "shared-utils": {
       "tags": []
     },
@@ -110,6 +108,30 @@
       "implicitDependencies": [
         "web"
       ]
+    },
+    "state-app": {
+      "tags": []
+    },
+    "state-node": {
+      "tags": []
+    },
+    "state-modal": {
+      "tags": []
+    },
+    "ui-antd": {
+      "tags": []
+    },
+    "ui-d3": {
+      "tags": []
+    },
+    "ui-component": {
+      "tags": []
+    },
+    "shared-interface-component": {
+      "tags": []
+    },
+    "ui-hoc": {
+      "tags": []
     }
   }
 }
