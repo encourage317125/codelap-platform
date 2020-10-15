@@ -1,3 +1,5 @@
+import { TagChildren } from './Table-tag--children'
+import { TagParent } from './Table-tag--parent'
 import { Renderer } from '@codelab/core/renderer'
 import { NodeReactI, nodeTypeLiterals } from '@codelab/shared/interface/node'
 
@@ -64,27 +66,26 @@ export const tableData: NodeReactI = {
         key: 'props',
         render: propsTable,
       },
-      // {
-      //   title: 'Parent',
-      //   dataIndex: 'parent',
-      //   key: 'parent',
-      //   render: TagParent,
-      // },
-      // {
-      //   title: 'Children',
-      //   dataIndex: 'children',
-      //   key: 'children',
-      //   // render: tagChildren,
-      //   render: TagChildren,
-      // },
+      {
+        title: 'Parent',
+        dataIndex: 'parent',
+        key: 'parent',
+        render: TagParent,
+      },
+      {
+        title: 'Children',
+        dataIndex: 'children',
+        key: 'children',
+        render: TagChildren,
+      },
       // {
       //   title: 'Action',
       //   dataIndex: 'action',
       //   key: 'action',
       //   render: {
       //     type: 'React.Space',
-      //     children: [buttonEdit, buttonDelete],
-      //     // children: [<ButtonEdit />, <ButtonDelete />],
+      //     // children: [buttonEdit, buttonDelete],
+      //     children: [ButtonEdit, ButtonDelete],
       //   },
       // },
     ],
