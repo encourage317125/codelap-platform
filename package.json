@@ -7,7 +7,7 @@
     "nohoist": []
   },
   "engines": {
-    "node": ">=14",
+    "node": ">=13",
     "yarn": ">=1.20.0"
   },
   "version": "0.0.0",
@@ -34,6 +34,7 @@
   "dependencies": {
     "@ant-design/compatible": "1.0.8",
     "@ant-design/icons": "4.2.2",
+    "@apollo/client": "^3.2.4",
     "@emotion/core": "10.0.35",
     "@emotion/styled": "10.0.27",
     "@hapi/joi": "17.1.1",
@@ -59,8 +60,8 @@
     "express": "4.17.1",
     "express-restify-mongoose": "6.1.2",
     "findup-sync": "4.0.0",
-    "graphql-tag": "2.11.0",
     "graphql": "15.3.0",
+    "graphql-tag": "2.11.0",
     "graphql-tools": "6.2.4",
     "highlight.js": "10.2.1",
     "lodash": "4.17.20",
@@ -97,6 +98,7 @@
     "@commitlint/cli": "11.0.0",
     "@commitlint/config-conventional": "11.0.0",
     "@emotion/babel-preset-css-prop": "10.0.27",
+    "@graphql-codegen/cli": "1.17.10",
     "@nestjs/schematics": "7.1.2",
     "@nestjs/testing": "7.4.4",
     "@nrwl/cli": "10.2.1",
@@ -188,7 +190,14 @@
     "tsconfig-paths-webpack-plugin": "3.3.0",
     "typedoc": "0.19.2",
     "typescript": "4.0.3",
-    "utility-types": "3.10.0"
+    "utility-types": "3.10.0",
+    "@graphql-codegen/typescript-operations": "1.17.8",
+    "@graphql-codegen/typescript": "1.17.10",
+    "@graphql-codegen/typescript-react-apollo": "2.0.7",
+    "@graphql-codegen/typescript-graphql-files-modules": "1.18.0",
+    "@graphql-codegen/fragment-matcher": "1.17.8",
+    "@graphql-codegen/typescript-document-nodes": "1.17.8",
+    "@graphql-codegen/introspection": "1.18.0"
   },
   "resolutions": {
     "graphql": "15.3.0"
