@@ -1,23 +1,23 @@
-const { ESLint } = require('eslint')
-
-const eslint = new ESLint({})
-
 // Add remove un-used when pushing only a
 const rules = `--rule 'unused-imports/no-unused-imports-ts: 2'`
 
 module.exports = {
-  '**/*.{ts,tsx}': (files) => {
-    const processedFiles = files
-      .map((file) => `${file}`)
-      .filter(async (file) => !(await eslint.isPathIgnored(file)))
-      .join(' ')
+  '**/*.{js,ts,tsx}': (files) => {
+    const stagedFiles = files.join(' ')
 
-    const cmd = `cross-env NODE_OPTIONS=--max-old-space-size=4096 eslint ${processedFiles} ${rules} --fix`
+    const cmd = `cross-env NODE_OPTIONS=--max-old-space-size=8192 eslint ${stagedFiles} ${rules} --fix`
 
     console.log(`Running: ${cmd}`)
 
     return cmd
   },
-  // '*.{ts,tsx,json,graphql,md}': files => `gulp prettify --files
-  // ${files.filter(file => true)}`,
+  '**/*.json': (files) => {
+    const stagedFiles = files.join(' ')
+
+    const cmd = `prettier --write ${stagedFiles}`
+
+    console.log(`Running: ${cmd}`)
+
+    return cmd
+  },
 }

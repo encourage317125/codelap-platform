@@ -11,7 +11,8 @@
     },
     "tslint.json": "*",
     "nx.json": "*",
-    "tsconfig.base.json": "*"
+    "tsconfig.base.json": "*",
+    ".eslintrc.js": "*"
   },
   "tasksRunnerOptions": {
     "default": {
@@ -24,9 +25,6 @@
     }
   },
   "projects": {
-    "api": {
-      "tags": []
-    },
     "api-config": {
       "tags": []
     },
@@ -131,6 +129,18 @@
       "tags": []
     },
     "state-apollo": {
+      "tags": []
+    },
+    "api-gateway": {
+      "tags": []
+    },
+    "api-services-props": {
+      "tags": []
+    },
+    "api-services-user": {
+      "tags": []
+    },
+    "api-prisma": {
       "tags": []
     }
   }
