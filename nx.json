@@ -34,12 +34,6 @@
     "api-router": {
       "tags": []
     },
-    "api-restify": {
-      "tags": []
-    },
-    "api-database": {
-      "tags": []
-    },
     "tools-eslint-config-codelab": {
       "tags": []
     },
@@ -122,17 +116,12 @@
     "ui-hoc": {
       "tags": []
     },
-    "api-neo4j": {
-      "tags": []
-    },
-    "api-graphql": {
-      "tags": []
-    },
     "state-apollo": {
       "tags": []
     },
     "api-gateway": {
-      "tags": []
+      "tags": [],
+      "implicitDependencies": ["api-services-props", "api-services-graph"]
     },
     "api-services-props": {
       "tags": []
@@ -140,7 +129,34 @@
     "api-services-user": {
       "tags": []
     },
-    "api-prisma": {
+    "api-drivers-neo4j": {
+      "tags": []
+    },
+    "api-drivers-prisma": {
+      "tags": []
+    },
+    "api-drivers-restify": {
+      "tags": []
+    },
+    "api-drivers-graphql": {
+      "tags": []
+    },
+    "api-drivers-database": {
+      "tags": []
+    },
+    "api-services-graph": {
+      "tags": []
+    },
+    "api-schema-props": {
+      "tags": []
+    },
+    "api-schema-node": {
+      "tags": []
+    },
+    "api-drivers-mongoose": {
+      "tags": []
+    },
+    "api-logger": {
       "tags": []
     },
     "state-ui": {

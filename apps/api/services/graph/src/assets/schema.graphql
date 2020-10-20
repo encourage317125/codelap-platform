@@ -1,0 +1,11 @@
+enum NodeType {
+  REACT_BUTTON,
+  REACT_DIV
+}
+
+type Node @key(fields: "id") {
+  id: ID! @id
+  type: NodeType
+}
+
+

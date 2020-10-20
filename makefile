@@ -2,8 +2,8 @@
 
 .PHONY: %
 
-# NODE_OPTIONS_DEV=NODE_OPTIONS=--max-old-space-size=4096
-NODE_OPTIONS_DEV=NODE_OPTIONS=--max-old-space-size=2048
+NODE_OPTIONS_DEV=NODE_OPTIONS=--max-old-space-size=4096
+#NODE_OPTIONS_DEV=NODE_OPTIONS=--max-old-space-size=2048
 
 #
 # BUILD
@@ -36,6 +36,9 @@ build-prod:
 # Generate
 #
 
+generate-prisma:
+	@npx prisma generate --schema libs/api/prisma/schema.prisma
+
 generate-graphql:
 	@npx graphql-codegen --config codegen.yml
 
@@ -66,6 +69,11 @@ docker-push:
 	@docker-compose \
 		-f .docker/docker-compose.yml \
 		push app
+
+docker-log:
+	docker-compose \
+		-f .docker/docker-compose.yml \
+		up fluentd
 
 #
 # LINT
@@ -106,18 +114,33 @@ test-ci:
 #
 
 start-dev:
-	@npx concurrently \
-	--names="start,codegen" \
-		'nx run-many \
+	@npx nx run-many \
+		--maxParallel=6 \
 		--target=serve \
-		--projects=web,api-gateway,api-services-props \
+		--projects=api-gateway,web \
+		--with-deps \
 		--parallel \
-		"$@"' \
-		'nodemon \
-			--ext graphql \
-			--watch "apps/api/gateway/src/assets/**/*.graphql" \
-			--verbose \
-			--exec "wait-on http://localhost:4000 && make generate-graphql"'
+		"$@"
+
+start-dev-gateway:
+	@npx nx run-many \
+		--target=serve \
+		--projects=api-gateway \
+		--parallel \
+		"$@"
+
+#	@npx concurrently \
+#	--names="start" \
+#		'nx run-many \
+#		--target=serve \
+#		--projects=web,api-gateway,api-services-props,api-services-graph \
+#		--parallel \
+#		"$@"' \
+#		'nodemon \
+#			--ext graphql \
+#			--watch "apps/api/gateway/src/assets/**/*.graphql" \
+#			--verbose \
+#			--exec "wait-on http://localhost:4000 && make generate-graphql"'
 		# Need to wait for graphql server to finish reloading
 
 start-prod:

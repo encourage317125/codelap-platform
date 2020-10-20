@@ -1,24 +1,27 @@
 import { Module } from '@nestjs/common'
-import { ConfigService } from '@nestjs/config'
-import { MongooseModule } from '@nestjs/mongoose'
+import { GraphQLFederationModule } from '@nestjs/graphql'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
-import { ApiConfig, ConfigModule } from '@codelab/api/config'
-import { RestifyModule } from '@codelab/api/restify'
+import { ConfigModule } from '@codelab/api/config'
+import { LoggerModule } from '@codelab/api/logger'
+import { PropsModule } from '@codelab/api/schema/props'
 
 @Module({
   imports: [
-    ConfigModule,
-    RestifyModule,
-    MongooseModule.forRootAsync({
-      imports: [],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<ApiConfig>) => {
+    LoggerModule,
+    GraphQLFederationModule.forRootAsync({
+      imports: [PropsModule],
+      useFactory: () => {
         return {
-          uri: config.get('mongoEndpoint'),
+          include: [PropsModule],
+          autoSchemaFile: true,
+          // here provide all the types that are missing in schema
+          // since we're not importing .graphql typedefs
+          buildSchemaOptions: { orphanedTypes: [] },
         }
       },
     }),
+    ConfigModule,
   ],
   controllers: [AppController],
   providers: [AppService],
