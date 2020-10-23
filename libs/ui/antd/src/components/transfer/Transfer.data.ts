@@ -1,11 +1,12 @@
 import { Transfer } from './Transfer.types'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const transferData: NodeReactI<Transfer.Props | Transfer.RenderProps> = {
-  type: 'React.Fragment',
+  type: NodeType.React_Fragment,
   props: {
     ctx: {
-      __type: ['Eval', 'Leaf'],
+      __type: [PropType.Eval, PropType.Leaf],
       value: `
         const [targetKeys, setTargetKeys] = this.React.useState(["4", "5"]); 
         
@@ -15,7 +16,7 @@ export const transferData: NodeReactI<Transfer.Props | Transfer.RenderProps> = {
   },
   children: [
     {
-      type: 'React.Transfer',
+      type: NodeType.React_Transfer,
       props: {
         titles: ['Source', 'Target'],
         dataSource: [
@@ -51,16 +52,16 @@ export const transferData: NodeReactI<Transfer.Props | Transfer.RenderProps> = {
           },
         ],
         targetKeys: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return this.ctx.targetKeys',
         },
         onChange: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value:
             'return (nextTargetKeys) => this.ctx.setTargetKeys(nextTargetKeys)',
         },
         render: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return (item) => item.title',
         },
       },

@@ -1,22 +1,23 @@
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const providerData: NodeReactI = {
-  type: 'React.Provider',
+  type: NodeType.React_Provider,
   props: {
     onClick: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return () => console.log("Root onClick cb is fired")',
     },
   },
   children: [
     {
-      type: 'React.Html.div',
+      type: NodeType.React_Html_Div,
       children: [
         {
-          type: 'React.Button',
+          type: NodeType.React_Button,
           children: [
             {
-              type: 'React.Text',
+              type: NodeType.React_Text,
               props: {
                 value: 'Click me',
               },

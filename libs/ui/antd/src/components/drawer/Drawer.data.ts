@@ -1,13 +1,14 @@
 import { Button } from '../button'
 import { Text } from '../text'
 import { DrawerProps } from './Drawer.types'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const drawerData: NodeReactI<DrawerProps | Button.Props | Text.Props> = {
-  type: 'React.Fragment',
+  type: NodeType.React_Fragment,
   props: {
     ctx: {
-      __type: ['Eval', 'Single'],
+      __type: [PropType.Eval, PropType.Single],
       value: `
         const [visible, setVisible] = this.React.useState(false);
 
@@ -17,17 +18,17 @@ export const drawerData: NodeReactI<DrawerProps | Button.Props | Text.Props> = {
   },
   children: [
     {
-      type: 'React.Button',
+      type: NodeType.React_Button,
       props: {
         type: 'primary',
         onClick: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return () => this.ctx.setVisible(true)',
         },
       },
       children: [
         {
-          type: 'React.Text',
+          type: NodeType.React_Text,
           props: {
             value: 'Open',
           },
@@ -35,24 +36,24 @@ export const drawerData: NodeReactI<DrawerProps | Button.Props | Text.Props> = {
       ],
     },
     {
-      type: 'React.Drawer',
+      type: NodeType.React_Drawer,
       props: {
         title: 'Basic Drawer',
         onClose: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return () => this.ctx.setVisible(false)',
         },
         visible: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return this.ctx.visible',
         },
       },
       children: [
         {
-          type: 'React.Html.p',
+          type: NodeType.React_Html_P,
           children: [
             {
-              type: 'React.Text',
+              type: NodeType.React_Text,
 
               props: {
                 value: 'Some contents...',
@@ -61,10 +62,10 @@ export const drawerData: NodeReactI<DrawerProps | Button.Props | Text.Props> = {
           ],
         },
         {
-          type: 'React.Html.p',
+          type: NodeType.React_Html_P,
           children: [
             {
-              type: 'React.Text',
+              type: NodeType.React_Text,
               props: {
                 value: 'Some contents...',
               },
@@ -72,10 +73,10 @@ export const drawerData: NodeReactI<DrawerProps | Button.Props | Text.Props> = {
           ],
         },
         {
-          type: 'React.Html.p',
+          type: NodeType.React_Html_P,
           children: [
             {
-              type: 'React.Text',
+              type: NodeType.React_Text,
               props: {
                 value: 'Some contents...',
               },

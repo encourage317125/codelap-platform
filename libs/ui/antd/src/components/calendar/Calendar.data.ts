@@ -1,11 +1,12 @@
 import { Calendar } from './Calendar.types'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const calendarData: NodeReactI<Calendar.Props> = {
-  type: 'React.Calendar',
+  type: NodeType.React_Calendar,
   props: {
     onSelect: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return (value) => { console.log(value.format("YYYY-MM-DD")) }',
     },
   },

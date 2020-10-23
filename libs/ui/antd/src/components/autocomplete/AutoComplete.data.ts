@@ -1,11 +1,12 @@
 import { AutoComplete } from './AutoComplete.types'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const autocompleteData: NodeReactI<AutoComplete.Props> = {
-  type: 'React.Fragment',
+  type: NodeType.React_Fragment,
   props: {
     ctx: {
-      __type: ['Eval', 'Leaf'],
+      __type: [PropType.Eval, PropType.Leaf],
       value: `\
         const [options, setOptions] = this.React.useState([]);\
         const mockVal = (str, repeat = 1) => ({ value: str.repeat(repeat)});\
@@ -16,10 +17,10 @@ export const autocompleteData: NodeReactI<AutoComplete.Props> = {
   },
   children: [
     {
-      type: 'React.AutoComplete',
+      type: NodeType.React_AutoComplete,
       props: {
         onSearch: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: `return (searchText) => \
             this.ctx.setOptions( \
               !searchText ? [] : [ \
@@ -31,11 +32,11 @@ export const autocompleteData: NodeReactI<AutoComplete.Props> = {
           `,
         },
         onSelect: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return (searchText) => console.log("Select", searchText)',
         },
         options: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return this.ctx.options',
         },
         placeholder: 'input here',

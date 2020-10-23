@@ -1,32 +1,33 @@
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 import { Button, Modal, Text } from '@codelab/ui/antd'
 
 export const modalButton: NodeReactI<Button.Props | Text.Props> = {
-  type: 'React.Button',
+  type: NodeType.React_Button,
   props: {
     type: 'primary',
     onClick: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: `return () => this.send({ type: 'OPEN_MODAL' })`,
     },
   },
-  children: [{ type: 'React.Text', props: { value: 'Open modal' } }],
+  children: [{ type: NodeType.React_Text, props: { value: 'Open modal' } }],
 }
 
 export const modal: NodeReactI<Modal.Props | Text.Props> = {
-  type: 'React.Modal',
+  type: NodeType.React_Modal,
   props: {
     title: 'Basic Modal',
     onOk: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: `return () => this.send({ type: 'CLOSE_MODAL' })`,
     },
     onCancel: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: `return () => this.send({ type: 'CLOSE_MODAL' })`,
     },
     visible: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return this.state.context.modal.visible',
     },
   },
@@ -35,7 +36,7 @@ export const modal: NodeReactI<Modal.Props | Text.Props> = {
   //     type: 'React.Html.p',
   //     children: [
   //       {
-  //         type: 'React.Text',
+  //         type: NodeType.React_Text,
   //         props: {
   //           value: 'Some contents...',
   //         },

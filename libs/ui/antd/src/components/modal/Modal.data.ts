@@ -1,52 +1,53 @@
 import { Button } from '../button'
 import { Text } from '../text'
 import { Modal } from '.'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const modalData: NodeReactI<Modal.Props | Button.Props | Text.Props> = {
-  type: 'React.Fragment',
+  type: NodeType.React_Fragment,
   props: {
     ctx: {
-      __type: ['Eval', 'Leaf'],
+      __type: [PropType.Eval, PropType.Leaf],
       value:
         'const [visible, setVisible] = this.React.useState(false); return { visible, setVisible }',
     },
   },
   children: [
     {
-      type: 'React.Button',
+      type: NodeType.React_Button,
       props: {
         type: 'primary',
         onClick: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'console.log(this); return () => this.ctx.setVisible(true)',
         },
       },
-      children: [{ type: 'React.Text', props: { value: 'Open modal' } }],
+      children: [{ type: NodeType.React_Text, props: { value: 'Open modal' } }],
     },
     {
-      type: 'React.Modal',
+      type: NodeType.React_Modal,
       props: {
         title: 'Basic Modal',
         onOk: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return () => this.ctx.setVisible(false)',
         },
         onCancel: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return () => this.ctx.setVisible(false)',
         },
         visible: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return this.ctx.visible',
         },
       },
       children: [
         {
-          type: 'React.Html.p',
+          type: NodeType.React_Html_P,
           children: [
             {
-              type: 'React.Text',
+              type: NodeType.React_Text,
               props: {
                 value: 'Some contents...',
               },

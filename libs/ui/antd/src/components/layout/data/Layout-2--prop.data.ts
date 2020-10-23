@@ -1,16 +1,17 @@
 import { Text } from '../../text'
 import { Layout } from '../Layout.types'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const propLayoutData: NodeReactI<
   Layout.Props | Layout.SiderProps | Text.Props
 > = {
-  type: 'React.Layout',
+  type: NodeType.React_Layout,
   props: {
     style: { minHeight: '100vh' },
     hasSider: true,
     ctx: {
-      __type: ['Eval', 'Leaf'],
+      __type: [PropType.Eval, PropType.Leaf],
       value: `
         const [collapsed, setCollapsed] = this.React.useState(false); 
           
@@ -20,38 +21,38 @@ export const propLayoutData: NodeReactI<
   },
   children: [
     {
-      type: 'React.Layout.Sider',
+      type: NodeType.React_Layout_Sider,
       props: {
         collapsible: true,
         onCollapse: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return () => this.ctx.setCollapsed(!this.ctx.collapsed)',
         },
         collapsed: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return this.ctx.collapsed',
         },
       },
       children: [
         {
-          type: 'React.Text',
+          type: NodeType.React_Text,
           props: {
-            value: { __type: ['Eval'], value: 'return this.sidebar' },
+            value: { __type: [PropType.Eval], value: 'return this.sidebar' },
           },
         },
       ],
     },
     {
-      type: 'React.Layout',
+      type: NodeType.React_Layout,
       children: [
         {
-          type: 'React.Layout.Header',
+          type: NodeType.React_Layout_Header,
           children: [
             {
-              type: 'React.Text',
+              type: NodeType.React_Text,
               props: {
                 value: {
-                  __type: ['Eval'],
+                  __type: [PropType.Eval],
                   value: 'return this.header',
                 },
               },
@@ -59,7 +60,7 @@ export const propLayoutData: NodeReactI<
           ],
         },
         {
-          type: 'React.Layout.Content',
+          type: NodeType.React_Layout_Content,
           props: {
             style: {
               margin: '24px 16px 0',
@@ -67,14 +68,14 @@ export const propLayoutData: NodeReactI<
           },
           children: [
             {
-              type: 'React.Html.div',
+              type: NodeType.React_Html_Div,
               props: { style: { padding: 24 } },
               children: [
                 {
-                  type: 'React.Text',
+                  type: NodeType.React_Text,
                   props: {
                     value: {
-                      __type: ['Eval'],
+                      __type: [PropType.Eval],
                       value: 'return this.content',
                     },
                   },
@@ -84,17 +85,17 @@ export const propLayoutData: NodeReactI<
           ],
         },
         {
-          type: 'React.Layout.Footer',
+          type: NodeType.React_Layout_Footer,
           children: [
             {
-              type: 'React.Html.p',
+              type: NodeType.React_Html_P,
 
               children: [
                 {
-                  type: 'React.Text',
+                  type: NodeType.React_Text,
                   props: {
                     value: {
-                      __type: ['Eval'],
+                      __type: [PropType.Eval],
                       value: 'return this.footer',
                     },
                   },

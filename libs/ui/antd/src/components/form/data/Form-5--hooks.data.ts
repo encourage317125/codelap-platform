@@ -1,15 +1,16 @@
 import { Button } from '../../button'
 import { Text } from '../../text'
 import { Form } from '../Form.types'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const hooksData: NodeReactI<
   Form.Props | Form.ItemProps | Text.Props | Button.Props
 > = {
-  type: 'React.Fragment',
+  type: NodeType.React_Fragment,
   props: {
     form: {
-      __type: ['Eval', 'Single'],
+      __type: [PropType.Eval, PropType.Single],
       value: `
         const [form] = this.antd.Form.useForm();
         return form
@@ -18,52 +19,52 @@ export const hooksData: NodeReactI<
   },
   children: [
     {
-      type: 'React.Form',
+      type: NodeType.React_Form,
       props: {
         name: 'form-hooks',
         initialValues: {
           name: 'Codelab',
         },
         form: {
-          __type: ['Eval', 'Leaf'],
+          __type: [PropType.Eval, PropType.Leaf],
           value: `return this.form`,
         },
         onFinish: {
-          __type: ['Leaf', 'Eval'],
+          __type: [PropType.Leaf, PropType.Eval],
           value: 'console.log(this); return (values) => console.log(values)',
         },
       },
       children: [
         {
-          type: 'React.Form.Item',
+          type: NodeType.React_Form_Item,
           props: {
             label: 'Name',
             name: ['name'],
           },
           children: [
             {
-              type: 'React.Input',
+              type: NodeType.React_Input,
             },
           ],
         },
         {
-          type: 'React.Form.Item',
+          type: NodeType.React_Form_Item,
           props: {
             name: 'reset_button',
           },
           children: [
             {
-              type: 'React.Button',
+              type: NodeType.React_Button,
               props: {
                 type: 'primary',
                 onClick: {
-                  __type: ['Eval'],
+                  __type: [PropType.Eval],
                   value: 'return () => this.form.resetFields()',
                 },
               },
               children: [
                 {
-                  type: 'React.Text',
+                  type: NodeType.React_Text,
                   props: {
                     value: 'Reset',
                   },

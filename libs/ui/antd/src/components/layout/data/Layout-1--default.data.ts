@@ -2,7 +2,8 @@ import { Icon } from '../../icon'
 import { Menu } from '../../menu'
 import { Text } from '../../text'
 import { Layout } from '../Layout.types'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const layoutData: NodeReactI<
   | Layout.Props
@@ -12,32 +13,32 @@ export const layoutData: NodeReactI<
   | Menu.ItemProps
   | Icon.Props
 > = {
-  type: 'React.Layout',
+  type: NodeType.React_Layout,
   props: {
     style: { minHeight: '100vh' },
     ctx: {
-      __type: ['Eval', 'Leaf'],
+      __type: [PropType.Eval, PropType.Leaf],
       value:
         'const [collapsed, setCollapsed] = this.React.useState(false); return { collapsed, setCollapsed }',
     },
   },
   children: [
     {
-      type: 'React.Layout.Sider',
+      type: NodeType.React_Layout_Sider,
       props: {
         collapsible: true,
         onCollapse: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return () => this.ctx.setCollapsed(!this.ctx.collapsed);',
         },
         collapsed: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return this.ctx.collapsed',
         },
       },
       children: [
         {
-          type: 'React.Menu',
+          type: NodeType.React_Menu,
           props: {
             theme: 'dark',
             mode: 'inline',
@@ -45,20 +46,20 @@ export const layoutData: NodeReactI<
           },
           children: [
             {
-              type: 'React.Menu.Item',
+              type: NodeType.React_Menu_Item,
               props: {
                 key: '1',
               },
               children: [
                 {
-                  type: 'React.Icon',
+                  type: NodeType.React_Icon,
                   props: { type: 'user', theme: 'outlined' },
                 },
                 {
-                  type: 'React.Html.span',
+                  type: NodeType.React_Html_Span,
                   children: [
                     {
-                      type: 'React.Text',
+                      type: NodeType.React_Text,
 
                       props: {
                         value: 'Option 1',
@@ -69,20 +70,20 @@ export const layoutData: NodeReactI<
               ],
             },
             {
-              type: 'React.Menu.Item',
+              type: NodeType.React_Menu_Item,
               props: {
                 key: '2',
               },
               children: [
                 {
-                  type: 'React.Icon',
+                  type: NodeType.React_Icon,
                   props: { type: 'videoCamera', theme: 'outlined' },
                 },
                 {
-                  type: 'React.Html.span',
+                  type: NodeType.React_Html_Span,
                   children: [
                     {
-                      type: 'React.Text',
+                      type: NodeType.React_Text,
                       props: {
                         value: 'Option 2',
                       },
@@ -96,13 +97,13 @@ export const layoutData: NodeReactI<
       ],
     },
     {
-      type: 'React.Layout',
+      type: NodeType.React_Layout,
       children: [
         {
-          type: 'React.Layout.Header',
+          type: NodeType.React_Layout_Header,
           children: [
             {
-              type: 'React.Menu',
+              type: NodeType.React_Menu,
               props: {
                 theme: 'dark',
                 mode: 'horizontal',
@@ -110,13 +111,13 @@ export const layoutData: NodeReactI<
               },
               children: [
                 {
-                  type: 'React.Menu.Item',
+                  type: NodeType.React_Menu_Item,
                   props: {
                     key: '1',
                   },
                   children: [
                     {
-                      type: 'React.Text',
+                      type: NodeType.React_Text,
                       props: {
                         value: 'nav 1',
                       },
@@ -124,13 +125,13 @@ export const layoutData: NodeReactI<
                   ],
                 },
                 {
-                  type: 'React.Menu.Item',
+                  type: NodeType.React_Menu_Item,
                   props: {
                     key: '2',
                   },
                   children: [
                     {
-                      type: 'React.Text',
+                      type: NodeType.React_Text,
                       props: {
                         value: 'nav 2',
                       },
@@ -138,13 +139,13 @@ export const layoutData: NodeReactI<
                   ],
                 },
                 {
-                  type: 'React.Menu.Item',
+                  type: NodeType.React_Menu_Item,
                   props: {
                     key: '3',
                   },
                   children: [
                     {
-                      type: 'React.Text',
+                      type: NodeType.React_Text,
                       props: {
                         value: 'nav 3',
                       },
@@ -156,7 +157,7 @@ export const layoutData: NodeReactI<
           ],
         },
         {
-          type: 'React.Layout.Content',
+          type: NodeType.React_Layout_Content,
           props: {
             style: {
               margin: '24px 16px 0',
@@ -164,11 +165,11 @@ export const layoutData: NodeReactI<
           },
           children: [
             {
-              type: 'React.Html.div',
+              type: NodeType.React_Html_Div,
               props: { style: { padding: 24 } },
               children: [
                 {
-                  type: 'React.Text',
+                  type: NodeType.React_Text,
                   props: { value: 'Content' },
                 },
               ],
@@ -176,13 +177,13 @@ export const layoutData: NodeReactI<
           ],
         },
         {
-          type: 'React.Layout.Footer',
+          type: NodeType.React_Layout_Footer,
           children: [
             {
-              type: 'React.Html.p',
+              type: NodeType.React_Html_P,
               children: [
                 {
-                  type: 'React.Text',
+                  type: NodeType.React_Text,
                   props: { value: 'Footer' },
                 },
               ],

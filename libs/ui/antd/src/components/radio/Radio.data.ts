@@ -1,14 +1,15 @@
 import { Text } from '../text'
 import { Radio } from './Radio.types'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const radioData: NodeReactI<
   Radio.Props | Radio.GroupProps | Text.Props
 > = {
-  type: 'React.Fragment',
+  type: NodeType.React_Fragment,
   props: {
     ctx: {
-      __type: ['Eval', 'Leaf'],
+      __type: [PropType.Eval, PropType.Leaf],
       value: `
         const [value, setValue] = this.React.useState("a"); 
         
@@ -18,37 +19,37 @@ export const radioData: NodeReactI<
   },
   children: [
     {
-      type: 'React.Radio.Group',
+      type: NodeType.React_Radio_Group,
       props: {
         onChange: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return (e) => this.ctx.setValue(e.target.value)',
         },
         value: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return this.ctx.value',
         },
       },
       children: [
         {
-          type: 'React.Radio',
+          type: NodeType.React_Radio,
           props: { value: 'a' },
-          children: [{ type: 'React.Text', props: { value: 'A' } }],
+          children: [{ type: NodeType.React_Text, props: { value: 'A' } }],
         },
         {
-          type: 'React.Radio',
+          type: NodeType.React_Radio,
           props: { value: 'b' },
-          children: [{ type: 'React.Text', props: { value: 'B' } }],
+          children: [{ type: NodeType.React_Text, props: { value: 'B' } }],
         },
         {
-          type: 'React.Radio',
+          type: NodeType.React_Radio,
           props: { value: 'c' },
-          children: [{ type: 'React.Text', props: { value: 'C' } }],
+          children: [{ type: NodeType.React_Text, props: { value: 'C' } }],
         },
         {
-          type: 'React.Radio',
+          type: NodeType.React_Radio,
           props: { value: 'd' },
-          children: [{ type: 'React.Text', props: { value: 'D' } }],
+          children: [{ type: NodeType.React_Text, props: { value: 'D' } }],
         },
       ],
     },

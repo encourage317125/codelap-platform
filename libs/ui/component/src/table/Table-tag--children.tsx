@@ -1,16 +1,17 @@
 import React from 'react'
-import { NodeReactI } from '@codelab/shared/interface/node'
+import { NodeReactI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 export const tagChildren: NodeReactI = {
-  type: 'React.Table',
+  type: NodeType.React_Table,
   props: {
-    selectNode: { __type: ['Eval'], value: 'return this.selectnode' },
+    selectNode: { __type: [PropType.Eval], value: 'return this.selectnode' },
     rowKey: 'id',
     showHeader: false,
     pagination: false,
     locale: { emptyText: ' ' },
     dataSource: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return this.record.children',
     },
     columns: [
@@ -18,20 +19,20 @@ export const tagChildren: NodeReactI = {
         dataIndex: 'id',
         key: 'id',
         render: {
-          type: 'React.Tag',
+          type: NodeType.React_Tag,
           props: {
             color: 'magenta',
             onClick: {
-              __type: ['Eval'],
+              __type: [PropType.Eval],
               value: 'return () => this.selectnode(this.record.id)',
             },
           },
           children: [
             {
-              type: 'React.Text',
+              type: NodeType.React_Text,
               props: {
                 value: {
-                  __type: ['Eval'],
+                  __type: [PropType.Eval],
                   value: 'return this.record.id',
                 },
               },

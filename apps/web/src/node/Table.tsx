@@ -1,18 +1,23 @@
 import { Renderer } from '@codelab/core/renderer'
-import { NodeReactI, nodeTypeLiterals } from '@codelab/shared/interface/node'
+import {
+  NodeReactI,
+  NodeType,
+  nodeTypeLiterals,
+} from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 const deleteButton: NodeReactI = {
-  type: 'React.Button',
+  type: NodeType.React_Button,
   props: {
     type: 'danger',
     onClick: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return () => this.handleDelete(this.record.id)',
     },
   },
   children: [
     {
-      type: 'React.Text',
+      type: NodeType.React_Text,
       props: {
         value: 'Delete',
       },
@@ -21,17 +26,17 @@ const deleteButton: NodeReactI = {
 }
 
 const editButton: NodeReactI = {
-  type: 'React.Button',
+  type: NodeType.React_Button,
   props: {
-    type: 'React.warning',
+    type: 'warning',
     onClick: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return () => this.handleEdit(this.record.id)',
     },
   },
   children: [
     {
-      type: 'React.Text',
+      type: NodeType.React_Text,
       props: {
         value: 'Edit',
       },
@@ -40,23 +45,23 @@ const editButton: NodeReactI = {
 }
 
 const parentTag: NodeReactI = {
-  type: 'React.Tag',
+  type: NodeType.React_Tag,
   props: {
     color: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return this.record.parent? "geekblue" : "white"',
     },
     onClick: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return () => this.selectNode(this.record.parent)',
     },
   },
   children: [
     {
-      type: 'React.Text',
+      type: NodeType.React_Text,
       props: {
         value: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return this.record.parent ?? ""',
         },
       },
@@ -65,13 +70,13 @@ const parentTag: NodeReactI = {
 }
 
 const propsTable: NodeReactI = {
-  type: 'React.Table',
+  type: NodeType.React_Table,
   props: {
     showHeader: false,
     pagination: false,
     locale: { emptyText: ' ' },
     dataSource: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return this.record.props',
     },
     columns: [
@@ -87,28 +92,28 @@ const propsTable: NodeReactI = {
 }
 
 const childrenTags: NodeReactI = {
-  type: 'React.Mapper',
+  type: NodeType.React_Mapper,
   props: {
-    selectNode: { __type: ['Eval'], value: 'return this.selectNode' },
+    selectNode: { __type: [PropType.Eval], value: 'return this.selectNode' },
     dataSource: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return this.record.children',
     },
     render: {
-      type: 'React.Tag',
+      type: NodeType.React_Tag,
       props: {
         color: 'magenta',
         onClick: {
-          __type: ['Eval'],
+          __type: [PropType.Eval],
           value: 'return () => this.selectNode(this.item.id)',
         },
       },
       children: [
         {
-          type: 'React.Text',
+          type: NodeType.React_Text,
           props: {
             value: {
-              __type: ['Eval'],
+              __type: [PropType.Eval],
               value: 'return this.item.id',
             },
           },
@@ -125,19 +130,19 @@ const filters = nodeTypeLiterals.map((type) => {
 const onTypeFilter = (value: any, record: any) => record.type === value
 
 export const tableData: NodeReactI = {
-  type: 'React.Table',
+  type: NodeType.React_Table,
   props: {
     handleEdit: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return this.handleedit',
     },
     handleDelete: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return this.handledelete',
     },
-    selectNode: { __type: ['Eval'], value: 'return this.selectnode' },
+    selectNode: { __type: [PropType.Eval], value: 'return this.selectnode' },
     dataSource: {
-      __type: ['Eval'],
+      __type: [PropType.Eval],
       value: 'return this.data',
     },
     columns: [
@@ -176,7 +181,7 @@ export const tableData: NodeReactI = {
         dataIndex: 'action',
         key: 'action',
         render: {
-          type: 'React.Space',
+          type: NodeType.React_Space,
           children: [editButton, deleteButton],
         },
       },

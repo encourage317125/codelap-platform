@@ -1,32 +1,33 @@
 import { mount } from 'enzyme'
 import React from 'react'
 import { Renderer } from '@codelab/core/renderer'
-import { NodeI } from '@codelab/shared/interface/node'
+import { NodeI, NodeType } from '@codelab/shared/interface/node'
+import { PropType } from '@codelab/shared/interface/props'
 
 describe('RootRenderProps', () => {
   const data: NodeI = {
-    type: 'React.Html.div',
+    type: NodeType.React_Html_Div,
     props: {
       parentprops: {
-        __type: ['Eval'],
+        __type: [PropType.Eval],
         value: 'return this.rootprops',
       },
     },
     children: [
       {
-        type: 'React.Html.div',
+        type: NodeType.React_Html_Div,
         props: {
           childprops: {
-            __type: ['Eval'],
+            __type: [PropType.Eval],
             value: 'return this.rootprops',
           },
         },
         children: [
           {
-            type: 'React.Html.div',
+            type: NodeType.React_Html_Div,
             props: {
               grandchildprops: {
-                __type: ['Eval'],
+                __type: [PropType.Eval],
                 value: 'return this.rootprops',
               },
             },
