@@ -5,14 +5,17 @@ import { NestFactory } from '@nestjs/core'
 import { Transport } from '@nestjs/microservices'
 import { GrpcOptions } from '@nestjs/microservices/interfaces/microservice-configuration.interface'
 import { AppModule } from './app/app.module'
-import { ApiConfig, ApiConfigTypes } from '@codelab/api/config'
+import { ApiConfig, ApiConfigTypes } from '@codelab/api/providers/config'
 
 const bootstrapMicroservices = async (app: INestApplication) => {
   app.connectMicroservice<GrpcOptions>({
     transport: Transport.GRPC,
     options: {
-      package: `${ApiConfigTypes.SERVICES_PROPS_NAME}`,
-      protoPath: join(__dirname, 'app/props.proto'),
+      package: `${ApiConfigTypes.FEDERATION_PROPS_NAME}`,
+      protoPath: join(
+        process.cwd(),
+        'apps/api/federation/props/src/proto/props.proto',
+      ),
     },
   })
 
@@ -24,7 +27,9 @@ const bootstrap = async () => {
 
   // Config
   const config: ConfigService<ApiConfig> = app.get(ConfigService)
-  const port = config.get(ApiConfigTypes.SERVICES_PROPS_PORT)
+  const port = config.get(ApiConfigTypes.FEDERATION_PROPS_PORT)
+
+  console.log(port)
 
   await bootstrapMicroservices(app)
 

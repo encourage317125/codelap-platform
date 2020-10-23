@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { GraphQLGatewayModule } from '@nestjs/graphql'
-import { ApiConfig, ApiConfigTypes } from '@codelab/api/config'
+import { ApiConfig, ApiConfigTypes } from '@codelab/api/providers/config'
 
 @Module({
   imports: [
@@ -15,15 +15,15 @@ import { ApiConfig, ApiConfigTypes } from '@codelab/api/config'
           gateway: {
             serviceList: [
               {
-                name: `${ApiConfigTypes.SERVICES_GRAPH_NAME}`,
+                name: `${ApiConfigTypes.FEDERATION_GRAPH_NAME}`,
                 url: `http://localhost:${config.get(
-                  ApiConfigTypes.SERVICES_GRAPH_PORT,
+                  ApiConfigTypes.FEDERATION_GRAPH_PORT,
                 )}/graphql`,
               },
               {
-                name: `${ApiConfigTypes.SERVICES_PROPS_NAME}`,
+                name: `${ApiConfigTypes.FEDERATION_PROPS_NAME}`,
                 url: `http://localhost:${config.get(
-                  ApiConfigTypes.SERVICES_PROPS_PORT,
+                  ApiConfigTypes.FEDERATION_PROPS_PORT,
                 )}/graphql`,
               },
             ],
