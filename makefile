@@ -2,29 +2,30 @@
 
 .PHONY: %
 
-NODE_OPTIONS_DEV=NODE_OPTIONS=--max-old-space-size=4096
-#NODE_OPTIONS_DEV=NODE_OPTIONS=--max-old-space-size=2048
+# NODE_OPTIONS_DEV=NODE_OPTIONS=--max-old-space-size=2048
 
 #
 # BUILD
 #
 
 build-dev:
-	$(NODE_OPTIONS_DEV) npx nx run-many \
+	npx nx run-many \
 	--target=build \
 	--all \
 	--parallel \
 	"$@"
 
 build-ci:
-	@npx nx run-many \
+	npx nx run-many \
+		--memoryLimit=4096 \
     --target=build \
     --all \
     --parallel \
     --maxWorkers=4
 
 build-prod:
-	@npx nx run-many \
+	npx nx run-many \
+		--memoryLimit=4096 \
     --target=build \
     --projects=web,api-gateway,api-services-props \
     --with-deps \
@@ -37,13 +38,13 @@ build-prod:
 #
 
 generate-prisma:
-	@npx prisma generate --schema libs/api/prisma/schema.prisma
+	npx prisma generate --schema libs/api/prisma/schema.prisma
 
 generate-graphql:
-	@npx graphql-codegen --config codegen.yml
+	npx graphql-codegen --config codegen.yml
 
 generate-graphql-watch:
-	@npx graphql-codegen --config codegen.yml --watch "apps/api/src/assets/**/*.graphql"
+	npx graphql-codegen --config codegen.yml --watch "apps/api/src/assets/**/*.graphql"
 
 
 #
@@ -60,13 +61,13 @@ docker-start:
 	up --build app
 
 docker-build:
-	@docker-compose \
+	docker-compose \
   --verbose \
   -f .docker/docker-compose.yml \
   build app
 
 docker-push:
-	@docker-compose \
+	docker-compose \
 		-f .docker/docker-compose.yml \
 		push app
 
@@ -81,10 +82,10 @@ docker-log:
 
 lint-commit-ci:
 	@echo "${CIRCLE_BASE_REVISION}"
-	@npx commitlint --from="${CIRCLE_BASE_REVISION}" "$@"
+	npx commitlint --from="${CIRCLE_BASE_REVISION}" "$@"
 
 lint-commit-dev:
-	$(NODE_OPTIONS_DEV) npx commitlint -E HUSKY_GIT_PARAMS
+	npx commitlint -E HUSKY_GIT_PARAMS
 
 lint-eslint:
 	node scripts/lint/eslint.js
@@ -94,7 +95,7 @@ lint-eslint:
 #
 
 test-dev:
-	$(NODE_OPTIONS_DEV) npx nx run-many \
+	npx nx run-many \
 	--target=test \
 	--all \
 	--parallel \
@@ -102,7 +103,8 @@ test-dev:
 	"$@"
 
 test-ci:
-	@npx nx run-many \
+	npx nx run-many \
+	--memoryLimit=4096 \
 	--target=test \
 	--all \
 	--parallel \
@@ -114,7 +116,7 @@ test-ci:
 #
 
 start-dev:
-	@npx nx run-many \
+	npx nx run-many \
 		--maxParallel=6 \
 		--target=serve \
 		--projects=api-gateway,web \
@@ -123,15 +125,8 @@ start-dev:
 		"$@"
 
 start-api:
-	@npx nx serve api-gateway \
+	npx nx serve api-gateway \
 		--with-deps \
-		--parallel \
-		"$@"
-
-start-dev-gateway:
-	@npx nx run-many \
-		--target=serve \
-		--projects=api-gateway \
 		--parallel \
 		"$@"
 
@@ -150,7 +145,7 @@ start-dev-gateway:
 		# Need to wait for graphql server to finish reloading
 
 start-prod:
-	@pm2 startOrReload config/pm2.json
+	pm2 startOrReload config/pm2.json
 
 #
 # Other

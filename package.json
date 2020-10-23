@@ -16,7 +16,9 @@
   "scripts": {
     "nx": "nx",
     "build": "make build-dev",
+    "init": "make init",
     "start": "make start-dev",
+    "docker": "./scripts/docker/start.sh",
     "test": "make test-dev",
     "commit": "git-cz",
     "lint": "nx workspace-lint && nx lint",
@@ -176,6 +178,7 @@
     "babel-plugin-module-resolver": "4.0.0",
     "commitizen": "4.2.1",
     "concurrently": "5.3.0",
+    "copyfiles": "^2.4.0",
     "cross-env": "7.0.2",
     "cypress": "5.3.0",
     "cz-customizable": "6.3.0",
