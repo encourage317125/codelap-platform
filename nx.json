@@ -117,6 +117,9 @@
     "api-services-props": {
       "tags": []
     },
+    "api-federation-node": {
+      "tags": []
+    },
     "state-ui": {
       "tags": []
     },
@@ -141,7 +144,7 @@
     "api-providers-router": {
       "tags": []
     },
-    "api-federation-node": {
+    "api-external": {
       "tags": []
     }
   }
