@@ -1,6 +1,8 @@
-import { RightCircleOutlined } from '@ant-design/icons'
-import { ITypeRecord, ITypeService } from '@codelab/frontend/abstract/core'
-import { PageType } from '@codelab/frontend/abstract/types'
+import {
+  IFieldService,
+  ITypeRecord,
+  ITypeService,
+} from '@codelab/frontend/abstract/core'
 import {
   DisplayIf,
   ListItemDeleteButton,
@@ -9,26 +11,26 @@ import {
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { Space } from 'antd'
 import { observer } from 'mobx-react-lite'
-import Link from 'next/link'
 import React from 'react'
 import { typeRef } from '../../../../store'
+import { CreateFieldButton } from '../../../fields'
 import { InterfaceDefaultsButton } from '../../../interface-defaults'
 
 interface ActionColumnProps {
   type: ITypeRecord
   typeService: ITypeService
+  fieldService: IFieldService
 }
 
 export const ActionColumn = observer<ActionColumnProps>(
-  ({ type, typeService }) => {
+  ({ type, typeService, fieldService }) => {
     return (
       <Space size="middle">
         {type.typeKind === ITypeKind.InterfaceType ? (
-          <Link
-            href={PageType.InterfaceDetail.replace('[interfaceId]', type.id)}
-          >
-            <RightCircleOutlined />
-          </Link>
+          <CreateFieldButton
+            fieldService={fieldService}
+            interfaceId={type.id}
+          />
         ) : null}
 
         <DisplayIf condition={type.typeKind === ITypeKind.InterfaceType}>
