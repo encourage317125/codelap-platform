@@ -10,11 +10,7 @@ import type {
 } from '@codelab/frontend/abstract/core'
 import { DATA_ELEMENT_ID } from '@codelab/frontend/abstract/core'
 import { elementRef, elementTreeRef } from '@codelab/frontend/domain/element'
-import {
-  getActionService,
-  getState,
-  storeRef,
-} from '@codelab/frontend/domain/store'
+import { getActionService, storeRef } from '@codelab/frontend/domain/store'
 import { getTypeService } from '@codelab/frontend/domain/type'
 import { getElementService } from '@codelab/frontend/presenter/container'
 import { ITypeKind } from '@codelab/shared/abstract/core'
@@ -120,8 +116,7 @@ export class Renderer
       /**
        * Store attached to app, needed to access its actions
        */
-      appStore: prop<Nullable<Ref<IStore>>>(null),
-
+      appStore: prop<Ref<IStore>>(),
       /**
        * The tree that's being rendered, we assume that this is properly constructed
        */
@@ -223,7 +218,7 @@ export class Renderer
       return () => undefined
     }
 
-    return this.state[action.name].run()
+    return this.state.values[action.name].run()
   }
 
   getPostAction = (element: IElement) => {
@@ -240,12 +235,12 @@ export class Renderer
       return () => undefined
     }
 
-    return this.state[action.name].run
+    return this.state.values[action.name].run
   }
 
   @computed
   get state() {
-    return this.appStore?.current.state || {}
+    return this.appStore.current.state
   }
 
   /**
@@ -376,9 +371,10 @@ export class Renderer
     props = mapDeep(
       props,
       // value mapper
-      (v, k) => (isString(v) ? getState(v, this.state) : v),
+      (v, k) => (isString(v) ? this.appStore.current.getByExpression(v) : v),
       // key mapper
-      (v, k) => (isString(k) ? getState(k, this.state) : k),
+      (v, k) =>
+        (isString(k) ? this.appStore.current.getByExpression(k) : k) as string,
     )
 
     return props

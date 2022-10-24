@@ -79,7 +79,7 @@ export const StoreEditorPane = observer<StoreEditorPaneProps>(
           actionService.createModal.open()
         }}
         size="small"
-        title="Add Field"
+        title="Add Action"
         type="primary"
       />
     )
@@ -95,7 +95,7 @@ export const StoreEditorPane = observer<StoreEditorPaneProps>(
           <GetStateList fieldService={fieldService} store={appStore} />
         </ResizableColumn>
 
-        <motion.div css={tw`flex-1  h-full`}>
+        <motion.div css={tw`flex-1 h-full`}>
           <EditorPaneHeader extra={createActionButton}>
             Actions
           </EditorPaneHeader>

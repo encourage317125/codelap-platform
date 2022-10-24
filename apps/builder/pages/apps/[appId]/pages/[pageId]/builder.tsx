@@ -25,7 +25,6 @@ import {
   SidebarNavigation,
 } from '@codelab/frontend/view/templates'
 import { auth0Instance } from '@codelab/shared/adapter/auth0'
-import merge from 'lodash/merge'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
 import React, { useEffect } from 'react'
@@ -33,8 +32,8 @@ import { useAsync } from 'react-use'
 
 const PageBuilder: CodelabPage = observer(() => {
   const {
-    userService,
     appService,
+    storeService,
     typeService,
     componentService,
     builderRenderService,
@@ -72,7 +71,7 @@ const PageBuilder: CodelabPage = observer(() => {
       return
     }
 
-    const { pageElementTree, page, store } = appService.load({
+    const { pageElementTree, page } = appService.load({
       app: apps[0],
       pageId,
     })
@@ -110,9 +109,9 @@ const PageBuilder: CodelabPage = observer(() => {
       builderService.selectPageElementTreeNode(elementRef(pageRootElement))
     }
 
-    store.updateState(
-      appService.appsList.map((a) => a.toJson).reduce(merge, {}),
-    )
+    // hydrate after types and resources
+    const store = storeService.writeCache(apps[0].store)
+    store.state.setMany(appService.appsJson)
 
     const renderer = await builderRenderService.addRenderer({
       id: pageId,
@@ -212,7 +211,7 @@ PageBuilder.Layout = observer((page) => {
         ))}
         EditorPane={observer(({ resizable }) => (
           <>
-            {pageBuilderRenderer?.appStore?.current && (
+            {pageBuilderRenderer?.appStore.current && (
               <EditorPaneBuilder
                 actionService={actionService}
                 appStore={pageBuilderRenderer.appStore.current}
@@ -234,7 +233,7 @@ PageBuilder.Layout = observer((page) => {
             elementService={elementService}
             pageId={pageId}
             renderService={builderRenderService}
-            storeId={pageBuilderRenderer?.appStore?.id as string}
+            storeId={pageBuilderRenderer?.appStore.id as string}
             userService={userService}
           />
         ))}

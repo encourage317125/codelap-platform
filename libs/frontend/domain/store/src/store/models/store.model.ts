@@ -1,13 +1,14 @@
 import {
-  IAnyAction,
   IInterfaceType,
-  IPropData,
+  IProp,
   IStore,
   IStoreDTO,
+  STATE_PATH_TEMPLATE_REGEX,
 } from '@codelab/frontend/abstract/core'
+import { Prop } from '@codelab/frontend/domain/prop'
 import { typeRef } from '@codelab/frontend/domain/type'
 import merge from 'lodash/merge'
-import { computed } from 'mobx'
+import { computed, reaction } from 'mobx'
 import {
   detach,
   idProp,
@@ -18,14 +19,18 @@ import {
   Ref,
   rootRef,
 } from 'mobx-keystone'
-import { actionRef } from './action.ref'
+import { getActionService } from '../action.service'
+import {
+  hasStateExpression,
+  isSingleStateExpression,
+  stripStateExpression,
+} from './state.utils'
 
-export const hydrate = ({ actions, id, name, api }: IStoreDTO) =>
+export const hydrate = ({ id, name, api }: IStoreDTO) =>
   new Store({
     id,
     name,
     api: typeRef(api.id) as Ref<IInterfaceType>,
-    actions: actions.map((a) => actionRef(a.id)),
   })
 
 @model('@codelab/Store')
@@ -34,28 +39,32 @@ export class Store
     id: idProp,
     name: prop<string>(),
     api: prop<Ref<IInterfaceType>>().withSetter(),
-    actions: prop<Array<Ref<IAnyAction>>>().withSetter(),
-    _state: prop<IPropData>(() => ({})),
+    state: prop<IProp>(() => new Prop({})),
   }))
   implements IStore
 {
-  @modelAction
-  updateState(data: IPropData) {
-    this._state = merge(this._state, data)
-  }
+  onAttachedToRootStore() {
+    // every time the snapshot of the configuration changes
+    const reactionDisposer = reaction(
+      () => [this._actionsRunners, this._defaults],
+      () => {
+        console.debug('Previous state', this.state.values)
 
-  @computed
-  get state() {
-    const state: IPropData = merge(
-      this.api.current.fields
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        ?.map((f) => ({ [f.key]: f.defaultValues?.maybeCurrent?.values }))
-        .reduce(merge, {}),
-      { ...this._actionsRunners },
-      { ...this._state },
+        console.debug('actions changed:', this._actionsRunners)
+        this.state.setMany(this._actionsRunners)
+
+        console.debug('defaults changed:', this._defaults)
+        this.state.setMany(this._defaults)
+
+        console.debug('New state', this.state.values)
+      },
+      { fireImmediately: true },
     )
 
-    return state
+    // when the model is no longer part of the root store stop saving
+    return () => {
+      reactionDisposer()
+    }
   }
 
   @modelAction
@@ -68,14 +77,57 @@ export class Store
   }
 
   @computed
+  get actions() {
+    return getActionService(this).actionsList.filter(
+      (x) => x.storeId === this.id,
+    )
+  }
+
+  @computed
+  get _defaults() {
+    return this.api.current.defaults
+  }
+
+  @computed
   get _actionsRunners() {
     return this.actions
-      .map((a) => ({
-        [a.current.name]: {
-          run: a.current.createRunner(this._state, this.updateState.bind(this)),
-        },
-      }))
+      .map((a) => ({ [a.name]: { run: a.createRunner(this.state) } }))
       .reduce(merge, {})
+  }
+
+  @modelAction
+  private evaluateExpression(expression: string) {
+    try {
+      const code = `return ${stripStateExpression(expression)}`
+
+      // eslint-disable-next-line no-new-func
+      return new Function(code).call(this.state.values)
+    } catch (error) {
+      console.log(error)
+
+      return expression
+    }
+  }
+
+  @modelAction
+  public getByExpression(key: string) {
+    if (!hasStateExpression(key)) {
+      return key
+    }
+
+    /**
+     * return typed value for : {{expression}}
+     */
+    if (isSingleStateExpression(key)) {
+      return this.evaluateExpression(key)
+    }
+
+    /**
+     * return string value for : [text1]? {{expression1}} [text2]? {{expression2}}...
+     */
+    return key.replace(STATE_PATH_TEMPLATE_REGEX, (v) =>
+      this.evaluateExpression(v),
+    )
   }
 
   static hydrate = hydrate

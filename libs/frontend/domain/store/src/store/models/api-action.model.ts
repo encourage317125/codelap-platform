@@ -4,7 +4,7 @@ import {
   IApiActionConfig,
   IApiActionDTO,
   IGraphQLActionConfig,
-  IPropData,
+  IProp,
   IResource,
   IRestActionConfig,
 } from '@codelab/frontend/abstract/core'
@@ -16,6 +16,7 @@ import {
   IActionKind,
   IResourceType,
 } from '@codelab/shared/abstract/core'
+import { Nullish } from '@codelab/shared/abstract/types'
 import { Method } from 'axios'
 import { ExtendedModel, model, modelAction, prop, Ref } from 'mobx-keystone'
 import { actionRef } from './action.ref'
@@ -33,8 +34,10 @@ const hydrate = (action: IApiActionDTO): IApiAction => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     config: Prop.hydrate(action.config) as any,
     resource: resourceRef(action.resource.id),
-    successAction: actionRef(action.successAction.id),
-    errorAction: actionRef(action.errorAction.id),
+    successAction: action.successAction
+      ? actionRef(action.successAction.id)
+      : null,
+    errorAction: action.errorAction ? actionRef(action.errorAction.id) : null,
   })
 }
 
@@ -65,17 +68,17 @@ export class ApiAction
   extends ExtendedModel(createBaseAction(IActionKind.ApiAction), {
     resource: prop<Ref<IResource>>(),
     config: prop<IApiActionConfig>(),
-    successAction: prop<Ref<IAnyAction>>(),
-    errorAction: prop<Ref<IAnyAction>>(),
+    successAction: prop<Nullish<Ref<IAnyAction>>>(),
+    errorAction: prop<Nullish<Ref<IAnyAction>>>(),
   })
   implements IApiAction
 {
   static hydrate = hydrate
 
   @modelAction
-  createRunner(context: IPropData, updateState: (state: IPropData) => void) {
-    const successAction = this.successAction.current
-    const errorAction = this.errorAction.current
+  createRunner(state: IProp) {
+    const successAction = this.successAction?.current
+    const errorAction = this.errorAction?.current
     const resource = this.resource.current
     const config = this.config.values
 
@@ -87,14 +90,14 @@ export class ApiAction
 
       fetchPromise
         .then((response) => {
-          updateState({ [this.name]: { response } })
+          state.set(this.name, { response })
 
-          return successAction.createRunner(context, updateState)(...args)
+          return successAction?.createRunner(state)(...args)
         })
         .catch((error) => {
-          updateState({ [this.name]: { error: JSON.stringify(error) } })
+          state.set(this.name, { error: JSON.stringify(error) })
 
-          return errorAction.createRunner(context, updateState)(...args)
+          return errorAction?.createRunner(state)(...args)
         })
     }
 
@@ -107,8 +110,12 @@ export class ApiAction
 
     this.resource = resourceRef(action.resource.id)
     this.config.writeCache(action.config)
-    this.errorAction = actionRef(action.errorAction.id)
-    this.successAction = actionRef(action.successAction.id)
+    this.errorAction = action.errorAction
+      ? actionRef(action.errorAction.id)
+      : null
+    this.successAction = action.successAction
+      ? actionRef(action.successAction.id)
+      : null
 
     return this
   }

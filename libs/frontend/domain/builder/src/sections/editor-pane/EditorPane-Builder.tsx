@@ -49,7 +49,8 @@ const Container = styled.div`
 
   .ant-tabs,
   .ant-tabs-content-holder,
-  .ant-tabs-content {
+  .ant-tabs-content,
+  .ant-tabs-tabpane {
     height: 100%;
   }
 `
@@ -105,7 +106,7 @@ export const EditorPaneBuilder = observer(
                 `}
                 singleLine={false}
                 title="Current props"
-                value={propSafeStringify(appStore.state)}
+                value={propSafeStringify(appStore.state.values)}
               />
             </TabPane>
           </Tabs>

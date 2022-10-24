@@ -17,6 +17,7 @@ import { AppCreateInput, AppWhere } from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { IEntity } from '@codelab/shared/abstract/types'
 import { connectOwner, connectTypeOwner } from '@codelab/shared/data'
+import merge from 'lodash/merge'
 import { computed } from 'mobx'
 import {
   _async,
@@ -60,6 +61,11 @@ export class AppService
     return getPageService(this)
   }
 
+  @computed
+  get appsJson() {
+    return this.appsList.map((a) => a.toJson).reduce(merge, {})
+  }
+
   /**
    * Aggregate root method to setup all data invariants
    */
@@ -67,7 +73,6 @@ export class AppService
   load = ({ app, pageId }: IPageBuilderAppProps) => {
     console.debug('AppService.load', app, pageId)
 
-    const storeModel = this.storeService.writeCache(app.store)
     /**
      * Need to create nested model
      */
@@ -105,7 +110,6 @@ export class AppService
       pageElementTree,
       app: appModel,
       page: pageModel,
-      store: storeModel,
     }
   }
 

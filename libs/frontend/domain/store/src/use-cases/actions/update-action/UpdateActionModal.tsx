@@ -48,11 +48,11 @@ export const UpdateActionModal = observer<{
         : undefined,
     successActionId:
       updateAction?.type === IActionKind.ApiAction
-        ? updateAction.successAction.id
+        ? updateAction.successAction?.id
         : undefined,
     errorActionId:
       updateAction?.type === IActionKind.ApiAction
-        ? updateAction.errorAction.id
+        ? updateAction.errorAction?.id
         : undefined,
 
     code:
@@ -102,18 +102,8 @@ export const UpdateActionModal = observer<{
           condition={(c) => c.model.type === IActionKind.ApiAction}
         >
           <SelectResource name="resourceId" resourceService={resourceService} />
-
-          <SelectAction
-            actionService={actionService}
-            name="successActionId"
-            storeId={updateAction?.storeId as string}
-          />
-
-          <SelectAction
-            actionService={actionService}
-            name="errorActionId"
-            storeId={updateAction?.storeId as string}
-          />
+          <AutoField component={SelectAction} name="successActionId" />
+          <AutoField component={SelectAction} name="errorActionId" />
 
           {/** GraphQL Config Form */}
           <DisplayIfField<IUpdateActionDTO>
