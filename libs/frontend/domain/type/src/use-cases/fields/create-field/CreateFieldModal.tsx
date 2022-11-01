@@ -2,69 +2,48 @@ import {
   ICreateFieldDTO,
   IFieldService,
   ITypeService,
-  IValidationRules,
 } from '@codelab/frontend/abstract/core'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
-import { ModalForm } from '@codelab/frontend/view/components'
+import { DisplayIfField, ModalForm } from '@codelab/frontend/view/components'
 import { PrimitiveTypeKind } from '@codelab/shared/abstract/codegen'
-import { Nullish } from '@codelab/shared/abstract/types'
-import cloneDeep from 'lodash/cloneDeep'
-import set from 'lodash/set'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
-import { useAsync } from 'react-use'
 import tw from 'twin.macro'
 import { AutoFields } from 'uniforms-antd'
 import { v4 } from 'uuid'
+import { SelectDefaultValue } from '../../../interface-form'
 import { TypeSelect } from '../../../shared'
 import { createFieldSchema } from './createFieldSchema'
+import {
+  filterValidationRules,
+  isFloat,
+  isInteger,
+  isPrimitive,
+  isString,
+} from './field-utils'
 
 export interface CreateFieldModalProps {
   typeService: ITypeService
   fieldService: IFieldService
 }
 
-const generateDefaultFormModel = () =>
-  ({
-    id: v4(),
-    key: '',
-    fieldType: '',
-  } as ICreateFieldDTO)
-
-export const filterValidationRules = (
-  rules: Nullish<IValidationRules>,
-  primitiveKind: Nullish<Omit<PrimitiveTypeKind, 'Boolean'>>,
-) => {
-  if (!rules) {
-    return {}
-  }
-
-  const { general } = rules
-
-  const rest =
-    primitiveKind === 'String'
-      ? { String: rules.String }
-      : primitiveKind === 'Float'
-      ? { Float: rules.Float }
-      : primitiveKind === 'Integer'
-      ? { Integer: rules.Integer }
-      : {}
-
-  return {
-    general,
-    ...rest,
-  }
-}
-
 export const CreateFieldModal = observer<CreateFieldModalProps>(
   ({ fieldService, typeService }) => {
     const closeModal = () => fieldService.createModal.close()
+    const interfaceTypeId = fieldService.createModal.interface?.id
 
-    const [model, setModel] = React.useState<ICreateFieldDTO>(
-      generateDefaultFormModel(),
-    )
+    const onSubmit = (input: ICreateFieldDTO) => {
+      if (!interfaceTypeId) {
+        throw new Error('Missing interface type id')
+      }
 
-    useAsync(() => typeService.getAll(), [])
+      const validationRules = filterValidationRules(
+        input.validationRules,
+        typeService.primitiveKind(input.fieldType),
+      )
+
+      return fieldService.create([{ ...input, validationRules }])
+    }
 
     return (
       <ModalForm.Modal
@@ -74,73 +53,60 @@ export const CreateFieldModal = observer<CreateFieldModalProps>(
         title={<span css={tw`font-semibold`}>Create field</span>}
         visible={fieldService.createModal.isOpen}
       >
-        <ModalForm.Form<Omit<ICreateFieldDTO, 'interfaceTypeId'>>
+        <ModalForm.Form<ICreateFieldDTO>
           model={{
-            ...model,
+            id: v4(),
+            interfaceTypeId,
           }}
-          onChange={(key, value) => {
-            setModel((prev) => set(cloneDeep(prev), key, value))
-          }}
-          onSubmit={(input) => {
-            const interfaceTypeId = fieldService.createModal.interface?.id
-
-            if (!interfaceTypeId) {
-              throw new Error('Missing interface type id')
-            }
-
-            return fieldService.create([
-              {
-                ...input,
-                interfaceTypeId,
-                validationRules: filterValidationRules(
-                  input.validationRules,
-                  typeService.primitiveKind(input.fieldType),
-                ),
-              },
-            ])
-          }}
+          onSubmit={onSubmit}
           onSubmitError={createNotificationHandler({
             title: 'Error while creating field',
             type: 'error',
           })}
-          onSubmitSuccess={() => {
-            setModel(generateDefaultFormModel())
-            closeModal()
-          }}
+          onSubmitSuccess={closeModal}
           schema={createFieldSchema}
         >
-          <AutoFields omitFields={['fieldType', 'validationRules']} />
+          <AutoFields
+            omitFields={[
+              'fieldType',
+              'validationRules',
+              'interfaceTypeId',
+              'defaultValues',
+            ]}
+          />
           <TypeSelect
             label="Type"
             name="fieldType"
             types={typeService.typesList}
           />
-
           <AutoFields fields={['validationRules.general']} />
-
-          {model.fieldType &&
-            typeService.primitiveKind(model.fieldType) ===
-              PrimitiveTypeKind.String && (
+          <DisplayIfField<ICreateFieldDTO>
+            condition={({ model }) => isPrimitive(typeService, model.fieldType)}
+          >
+            <DisplayIfField<ICreateFieldDTO>
+              condition={({ model }) => isString(typeService, model.fieldType)}
+            >
               <AutoFields
                 fields={[`validationRules.${PrimitiveTypeKind.String}`]}
               />
-            )}
-
-          {model.fieldType &&
-            typeService.primitiveKind(model.fieldType) ===
-              PrimitiveTypeKind.Integer && (
+            </DisplayIfField>
+            <DisplayIfField<ICreateFieldDTO>
+              condition={({ model }) => isInteger(typeService, model.fieldType)}
+            >
               <AutoFields
                 fields={[`validationRules.${PrimitiveTypeKind.Integer}`]}
               />
-            )}
-
-          {model.fieldType &&
-            typeService.primitiveKind(model.fieldType) ===
-              PrimitiveTypeKind.Float && (
+            </DisplayIfField>
+            <DisplayIfField<ICreateFieldDTO>
+              condition={({ model }) => isFloat(typeService, model.fieldType)}
+            >
               <AutoFields
                 fields={[`validationRules.${PrimitiveTypeKind.Float}`]}
               />
-            )}
+            </DisplayIfField>
+          </DisplayIfField>
+
+          <SelectDefaultValue typeService={typeService} />
         </ModalForm.Form>
       </ModalForm.Modal>
     )

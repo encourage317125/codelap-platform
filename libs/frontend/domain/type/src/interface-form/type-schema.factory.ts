@@ -21,6 +21,7 @@ import { Maybe } from '@codelab/shared/abstract/types'
 import { pascalCaseToWords } from '@codelab/shared/utils'
 import { JSONSchema7 } from 'json-schema'
 import { UiPropertiesContext } from './types'
+import { getUiProperties } from './ui-properties'
 
 export type JsonSchema = JSONSchema7 & { uniforms?: object; label?: string }
 
@@ -36,7 +37,7 @@ export interface TransformTypeOptions {
 export const blankUniforms = { component: () => null }
 export const nullUniforms = { component: null }
 
-const primitives = {
+export const primitives = {
   [PrimitiveTypeKind.String]: 'string' as const,
   [PrimitiveTypeKind.Integer]: 'integer' as const,
   [PrimitiveTypeKind.Float]: 'number' as const,
@@ -304,3 +305,7 @@ export class TypeSchemaFactory {
     return this.options?.extraProperties?.(type, context) || undefined
   }
 }
+
+export const schemaTransformer = new TypeSchemaFactory({
+  extraProperties: getUiProperties,
+})

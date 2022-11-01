@@ -6,17 +6,11 @@ import type {
 } from '@codelab/frontend/abstract/core'
 import { IFieldService } from '@codelab/frontend/abstract/core'
 import { getElementService } from '@codelab/frontend/presenter/container'
-import { throwIfUndefined } from '@codelab/frontend/shared/utils'
 import {
   FieldCreateInput,
   FieldUpdateInput,
 } from '@codelab/shared/abstract/codegen'
-import { assertIsTypeKind, ITypeKind } from '@codelab/shared/abstract/core'
-import { Nullable } from '@codelab/shared/abstract/types'
 import { connectNode, reconnectNode } from '@codelab/shared/data'
-import mapKeys from 'lodash/mapKeys'
-import merge from 'lodash/merge'
-import omit from 'lodash/omit'
 import { computed } from 'mobx'
 import {
   _async,
@@ -31,17 +25,19 @@ import {
   transaction,
 } from 'mobx-keystone'
 import { fieldApi } from './apis/field.api'
-import { FieldModalService } from './field-modal.service'
+import {
+  CreateFieldModalService,
+  FieldModalService,
+} from './field-modal.service'
 import { Field } from './models'
 import { getTypeService } from './type.service.context'
-import { InterfaceTypeModalService } from './type-modal.service'
 
 @model('@codelab/FieldService')
 export class FieldService
   extends Model({
     id: idProp,
     fields: prop(() => objectMap<IField>()),
-    createModal: prop(() => new InterfaceTypeModalService({})),
+    createModal: prop(() => new CreateFieldModalService({})),
     updateModal: prop(() => new FieldModalService({})),
     deleteModal: prop(() => new FieldModalService({})),
   })
@@ -67,6 +63,7 @@ export class FieldService
       id: field.id,
       key: field.key,
       name: field.name,
+      defaultValues: JSON.stringify(field.defaultValues),
       validationRules: JSON.stringify(field.validationRules),
       fieldType: connectNode(field.fieldType),
       api: connectNode(field.interfaceTypeId),
@@ -84,10 +81,6 @@ export class FieldService
       interfaceType.writeFieldCache(fields)
     }
 
-    // const interfaceType = yield* _await(
-    //   this.updateDefaults(interfaceTypeId, key, null),
-    // )
-
     return fields.map((field) => this.writeCache(field))
   })
 
@@ -104,6 +97,7 @@ export class FieldService
       id: data.id,
       key: data.key,
       name: data.name,
+      defaultValues: JSON.stringify(data.defaultValues),
       validationRules: JSON.stringify(data.validationRules),
     }
 
@@ -117,10 +111,6 @@ export class FieldService
         update: input,
       }),
     )
-
-    // const interfaceType = yield* _await(
-    //   this.updateDefaults(interfaceTypeId, key, null),
-    // )
 
     return fields.map((field) => this.writeCache(field))
   })
@@ -142,8 +132,6 @@ export class FieldService
     )
 
     return nodesDeleted
-
-    // yield* _await(this.updateDefaults(interfaceId, null, field.key))
 
     // yield* _await(
     //   this.elementService.removeDeletedPropDataFromElements(
@@ -176,45 +164,4 @@ export class FieldService
 
     return fieldModel
   }
-
-  @modelFlow
-  @transaction
-  private updateDefaults = _async(function* (
-    this: FieldService,
-    interfaceId: string,
-    addedKey: Nullable<string>,
-    removedKey: Nullable<string>,
-  ): Generator {
-    const interfaceType = throwIfUndefined(this.typeService.type(interfaceId))
-    assertIsTypeKind(interfaceType.kind, ITypeKind.InterfaceType)
-
-    let data = {}
-
-    if (addedKey && removedKey) {
-      // update key
-      data = mapKeys(interfaceType.defaults, (value, key) =>
-        key === removedKey ? addedKey : key,
-      )
-    } else if (addedKey) {
-      // add key
-      data = merge(interfaceType.defaults, { [addedKey]: null })
-    } else if (removedKey) {
-      // remove key
-      data = omit(interfaceType.defaults, [removedKey])
-    }
-
-    const updateInput = {
-      id: interfaceType.id,
-      kind: interfaceType.kind,
-      name: interfaceType.name,
-      interfaceDefaults: {
-        auth0Id: interfaceType.ownerAuthId,
-        data,
-      },
-    }
-
-    yield* _await(this.typeService.update(interfaceType, updateInput))
-
-    return interfaceType
-  })
 }

@@ -13,9 +13,8 @@ import { IBaseType } from '../base-type'
 export interface IInterfaceType extends IBaseType {
   kind: ITypeKind.InterfaceType
   field(id: string): Maybe<IField>
-  ownerAuthId: string
   fields: Array<IField>
-  defaults: IPropData
+  defaultValues: IPropData
   deleteField(field: IField): void
   writeFieldCache(fields: Array<IFieldDTO>): void
 }

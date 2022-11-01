@@ -6,7 +6,6 @@ import {
   DeleteFieldModal,
   DeleteTypeModal,
   GetTypesTable,
-  InterfaceDefaultsModal,
   UpdateFieldModal,
   UpdateTypeModal,
   useCurrentTypeId,
@@ -67,7 +66,6 @@ const TypesPage: CodelabPage<DashboardTemplateProps> = observer(() => {
       <CreateTypeModal typeService={typeService} userService={userService} />
       <DeleteTypeModal typeService={typeService} />
       <UpdateTypeModal typeService={typeService} />
-      <InterfaceDefaultsModal typeService={typeService} />
       <ContentSection>
         <GetTypesTable
           fieldService={fieldService}

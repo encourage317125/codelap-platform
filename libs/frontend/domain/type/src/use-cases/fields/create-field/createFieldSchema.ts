@@ -7,13 +7,17 @@ import {
 import { PrimitiveTypeKind } from '@codelab/shared/abstract/codegen'
 import { JSONSchemaType } from 'ajv'
 
-export const createFieldSchema: JSONSchemaType<
-  Omit<ICreateFieldDTO, 'interfaceTypeId'>
-> = {
+export const createFieldSchema: JSONSchemaType<ICreateFieldDTO> = {
   title: 'Create Field Input',
   type: 'object',
   properties: {
-    id: { type: 'string', disabled: true },
+    id: {
+      type: 'string',
+      nullable: true,
+      uniforms: {
+        component: () => null,
+      },
+    },
     key: { type: 'string', autoFocus: true },
     name: { type: 'string', nullable: true },
     description: { type: 'string', nullable: true },
@@ -100,12 +104,23 @@ export const createFieldSchema: JSONSchemaType<
         },
       },
     },
-    defaultValues: { type: 'string', nullable: true },
+    interfaceTypeId: {
+      type: 'string',
+      nullable: true,
+      uniforms: {
+        component: () => null,
+      },
+    },
     /**
      * TODO: Refactor to match interface
      * Could somehow modify the form so we can accept an object of TypeRef, then the interface would match up better
      */
     fieldType: { type: 'string', nullable: true },
+    defaultValues: {
+      nullable: true,
+      // schema limitation adding object or array to type causes an error
+      type: ['string', 'number', 'boolean', 'integer'],
+    },
   },
   required: ['id', 'key', 'fieldType'],
 }

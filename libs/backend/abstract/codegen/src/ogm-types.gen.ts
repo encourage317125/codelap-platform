@@ -2045,10 +2045,6 @@ export type IBaseTypeOwnerConnectionArgs = {
   sort?: InputMaybe<Array<IBaseTypeOwnerConnectionSort>>
 }
 
-export type OwnedBy = {
-  data: Scalars['String']
-}
-
 export type WithDescendants = {
   descendantTypesIds: Array<Scalars['ID']>
 }
@@ -2128,12 +2124,6 @@ export type ActionTypeUserOwnerAggregationSelection = {
   __typename?: 'ActionTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<ActionTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<ActionTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type ActionTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'ActionTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type ActionTypeUserOwnerNodeAggregateSelection = {
@@ -2607,12 +2597,6 @@ export type AppTypeUserOwnerAggregationSelection = {
   __typename?: 'AppTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<AppTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<AppTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type AppTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'AppTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type AppTypeUserOwnerNodeAggregateSelection = {
@@ -2744,12 +2728,6 @@ export type ArrayTypeUserOwnerAggregationSelection = {
   __typename?: 'ArrayTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<ArrayTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<ArrayTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type ArrayTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'ArrayTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type ArrayTypeUserOwnerNodeAggregateSelection = {
@@ -2984,12 +2962,6 @@ export type BaseTypeUserOwnerAggregationSelection = {
   __typename?: 'BaseTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<BaseTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<BaseTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type BaseTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'BaseTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type BaseTypeUserOwnerNodeAggregateSelection = {
@@ -3122,12 +3094,6 @@ export type CodeMirrorTypeUserOwnerAggregationSelection = {
   __typename?: 'CodeMirrorTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<CodeMirrorTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<CodeMirrorTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type CodeMirrorTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'CodeMirrorTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type CodeMirrorTypeUserOwnerNodeAggregateSelection = {
@@ -4346,12 +4312,6 @@ export type ElementTypeUserOwnerAggregationSelection = {
   __typename?: 'ElementTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<ElementTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<ElementTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type ElementTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'ElementTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type ElementTypeUserOwnerNodeAggregateSelection = {
@@ -4498,12 +4458,6 @@ export type EnumTypeUserOwnerAggregationSelection = {
   __typename?: 'EnumTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<EnumTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<EnumTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type EnumTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'EnumTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type EnumTypeUserOwnerNodeAggregateSelection = {
@@ -4596,7 +4550,7 @@ export type Field = {
   name?: Maybe<Scalars['String']>
   description?: Maybe<Scalars['String']>
   validationRules?: Maybe<Scalars['String']>
-  defaultValues?: Maybe<Prop>
+  defaultValues?: Maybe<Scalars['String']>
   fieldType: IBaseType
   api: InterfaceType
   apiAggregate?: Maybe<FieldInterfaceTypeApiAggregationSelection>
@@ -4645,6 +4599,7 @@ export type FieldAggregateSelection = {
   name: StringAggregateSelectionNullable
   description: StringAggregateSelectionNullable
   validationRules: StringAggregateSelectionNullable
+  defaultValues: StringAggregateSelectionNullable
 }
 
 export type FieldApiConnection = {
@@ -4856,11 +4811,10 @@ export type IBaseTypeOwnerConnection = {
   pageInfo: PageInfo
 }
 
-export type IBaseTypeOwnerRelationship = OwnedBy & {
+export type IBaseTypeOwnerRelationship = {
   __typename?: 'IBaseTypeOwnerRelationship'
   cursor: Scalars['String']
   node: User
-  data: Scalars['String']
 }
 
 export type IdAggregateSelectionNonNullable = {
@@ -5014,6 +4968,7 @@ export type InterfaceTypeFieldFieldsNodeAggregateSelection = {
   name: StringAggregateSelectionNullable
   description: StringAggregateSelectionNullable
   validationRules: StringAggregateSelectionNullable
+  defaultValues: StringAggregateSelectionNullable
 }
 
 export type InterfaceTypeFieldsConnection = {
@@ -5040,12 +4995,6 @@ export type InterfaceTypeUserOwnerAggregationSelection = {
   __typename?: 'InterfaceTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<InterfaceTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<InterfaceTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type InterfaceTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'InterfaceTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type InterfaceTypeUserOwnerNodeAggregateSelection = {
@@ -5113,12 +5062,6 @@ export type LambdaTypeUserOwnerAggregationSelection = {
   __typename?: 'LambdaTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<LambdaTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<LambdaTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type LambdaTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'LambdaTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type LambdaTypeUserOwnerNodeAggregateSelection = {
@@ -5327,12 +5270,6 @@ export type PageTypeUserOwnerAggregationSelection = {
   __typename?: 'PageTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<PageTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<PageTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type PageTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'PageTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type PageTypeUserOwnerNodeAggregateSelection = {
@@ -5401,12 +5338,6 @@ export type PrimitiveTypeUserOwnerAggregationSelection = {
   __typename?: 'PrimitiveTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<PrimitiveTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<PrimitiveTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type PrimitiveTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'PrimitiveTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type PrimitiveTypeUserOwnerNodeAggregateSelection = {
@@ -5672,12 +5603,6 @@ export type ReactNodeTypeUserOwnerAggregationSelection = {
   __typename?: 'ReactNodeTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<ReactNodeTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<ReactNodeTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type ReactNodeTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'ReactNodeTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type ReactNodeTypeUserOwnerNodeAggregateSelection = {
@@ -5785,12 +5710,6 @@ export type RenderPropsTypeUserOwnerAggregationSelection = {
   __typename?: 'RenderPropsTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<RenderPropsTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<RenderPropsTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type RenderPropsTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'RenderPropsTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type RenderPropsTypeUserOwnerNodeAggregateSelection = {
@@ -6383,12 +6302,6 @@ export type UnionTypeUserOwnerAggregationSelection = {
   __typename?: 'UnionTypeUserOwnerAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<UnionTypeUserOwnerNodeAggregateSelection>
-  edge?: Maybe<UnionTypeUserOwnerEdgeAggregateSelection>
-}
-
-export type UnionTypeUserOwnerEdgeAggregateSelection = {
-  __typename?: 'UnionTypeUserOwnerEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type UnionTypeUserOwnerNodeAggregateSelection = {
@@ -6794,12 +6707,6 @@ export type UserBaseTypeTypesAggregationSelection = {
   __typename?: 'UserBaseTypeTypesAggregationSelection'
   count: Scalars['Int']
   node?: Maybe<UserBaseTypeTypesNodeAggregateSelection>
-  edge?: Maybe<UserBaseTypeTypesEdgeAggregateSelection>
-}
-
-export type UserBaseTypeTypesEdgeAggregateSelection = {
-  __typename?: 'UserBaseTypeTypesEdgeAggregateSelection'
-  data: StringAggregateSelectionNonNullable
 }
 
 export type UserBaseTypeTypesNodeAggregateSelection = {
@@ -6910,11 +6817,10 @@ export type UserTypesConnection = {
   pageInfo: PageInfo
 }
 
-export type UserTypesRelationship = OwnedBy & {
+export type UserTypesRelationship = {
   __typename?: 'UserTypesRelationship'
   cursor: Scalars['String']
   node: BaseType
-  data: Scalars['String']
 }
 
 export type VercelDomainConfig = {
@@ -7087,32 +6993,6 @@ export type ActionTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<ActionTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<ActionTypeOwnerAggregateInput>>
   node?: InputMaybe<ActionTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<ActionTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type ActionTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<ActionTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<ActionTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type ActionTypeOwnerNodeAggregationWhereInput = {
@@ -8458,32 +8338,6 @@ export type AppTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<AppTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<AppTypeOwnerAggregateInput>>
   node?: InputMaybe<AppTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<AppTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type AppTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<AppTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<AppTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type AppTypeOwnerNodeAggregationWhereInput = {
@@ -9620,32 +9474,6 @@ export type ArrayTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<ArrayTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<ArrayTypeOwnerAggregateInput>>
   node?: InputMaybe<ArrayTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<ArrayTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type ArrayTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<ArrayTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<ArrayTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type ArrayTypeOwnerNodeAggregationWhereInput = {
@@ -10311,32 +10139,6 @@ export type BaseTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<BaseTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<BaseTypeOwnerAggregateInput>>
   node?: InputMaybe<BaseTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<BaseTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type BaseTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<BaseTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<BaseTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type BaseTypeOwnerNodeAggregationWhereInput = {
@@ -10665,32 +10467,6 @@ export type CodeMirrorTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<CodeMirrorTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<CodeMirrorTypeOwnerAggregateInput>>
   node?: InputMaybe<CodeMirrorTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<CodeMirrorTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type CodeMirrorTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<CodeMirrorTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<CodeMirrorTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type CodeMirrorTypeOwnerNodeAggregationWhereInput = {
@@ -13543,32 +13319,6 @@ export type ElementTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<ElementTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<ElementTypeOwnerAggregateInput>>
   node?: InputMaybe<ElementTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<ElementTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type ElementTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<ElementTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<ElementTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type ElementTypeOwnerNodeAggregationWhereInput = {
@@ -14069,32 +13819,6 @@ export type EnumTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<EnumTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<EnumTypeOwnerAggregateInput>>
   node?: InputMaybe<EnumTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<EnumTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type EnumTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<EnumTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<EnumTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type EnumTypeOwnerNodeAggregationWhereInput = {
@@ -14545,6 +14269,7 @@ export type FieldCreateInput = {
   name?: InputMaybe<Scalars['String']>
   description?: InputMaybe<Scalars['String']>
   validationRules?: InputMaybe<Scalars['String']>
+  defaultValues?: InputMaybe<Scalars['String']>
   fieldType?: InputMaybe<FieldFieldTypeFieldInput>
   api?: InputMaybe<FieldApiFieldInput>
 }
@@ -14626,6 +14351,7 @@ export type FieldSort = {
   name?: InputMaybe<SortDirection>
   description?: InputMaybe<SortDirection>
   validationRules?: InputMaybe<SortDirection>
+  defaultValues?: InputMaybe<SortDirection>
 }
 
 export type FieldUpdateInput = {
@@ -14634,6 +14360,7 @@ export type FieldUpdateInput = {
   name?: InputMaybe<Scalars['String']>
   description?: InputMaybe<Scalars['String']>
   validationRules?: InputMaybe<Scalars['String']>
+  defaultValues?: InputMaybe<Scalars['String']>
   fieldType?: InputMaybe<FieldFieldTypeUpdateFieldInput>
   api?: InputMaybe<FieldApiUpdateFieldInput>
 }
@@ -14691,6 +14418,16 @@ export type FieldWhere = {
   validationRules_NOT_STARTS_WITH?: InputMaybe<Scalars['String']>
   validationRules_ENDS_WITH?: InputMaybe<Scalars['String']>
   validationRules_NOT_ENDS_WITH?: InputMaybe<Scalars['String']>
+  defaultValues?: InputMaybe<Scalars['String']>
+  defaultValues_NOT?: InputMaybe<Scalars['String']>
+  defaultValues_IN?: InputMaybe<Array<InputMaybe<Scalars['String']>>>
+  defaultValues_NOT_IN?: InputMaybe<Array<InputMaybe<Scalars['String']>>>
+  defaultValues_CONTAINS?: InputMaybe<Scalars['String']>
+  defaultValues_NOT_CONTAINS?: InputMaybe<Scalars['String']>
+  defaultValues_STARTS_WITH?: InputMaybe<Scalars['String']>
+  defaultValues_NOT_STARTS_WITH?: InputMaybe<Scalars['String']>
+  defaultValues_ENDS_WITH?: InputMaybe<Scalars['String']>
+  defaultValues_NOT_ENDS_WITH?: InputMaybe<Scalars['String']>
   api?: InputMaybe<InterfaceTypeWhere>
   api_NOT?: InputMaybe<InterfaceTypeWhere>
   apiAggregate?: InputMaybe<FieldApiAggregateInput>
@@ -15297,25 +15034,20 @@ export type IBaseTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<IBaseTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<IBaseTypeOwnerAggregateInput>>
   node?: InputMaybe<IBaseTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<IBaseTypeOwnerEdgeAggregationWhereInput>
 }
 
 export type IBaseTypeOwnerConnectFieldInput = {
   where?: InputMaybe<UserConnectWhere>
   connect?: InputMaybe<UserConnectInput>
-  edge: OwnedByCreateInput
 }
 
 export type IBaseTypeOwnerConnectionSort = {
-  edge?: InputMaybe<OwnedBySort>
   node?: InputMaybe<UserSort>
 }
 
 export type IBaseTypeOwnerConnectionWhere = {
   AND?: InputMaybe<Array<IBaseTypeOwnerConnectionWhere>>
   OR?: InputMaybe<Array<IBaseTypeOwnerConnectionWhere>>
-  edge?: InputMaybe<OwnedByWhere>
-  edge_NOT?: InputMaybe<OwnedByWhere>
   node?: InputMaybe<UserWhere>
   node_NOT?: InputMaybe<UserWhere>
 }
@@ -15327,12 +15059,10 @@ export type IBaseTypeOwnerConnectOrCreateFieldInput = {
 
 export type IBaseTypeOwnerConnectOrCreateFieldInputOnCreate = {
   node: UserOnCreateInput
-  edge: OwnedByCreateInput
 }
 
 export type IBaseTypeOwnerCreateFieldInput = {
   node: UserCreateInput
-  edge: OwnedByCreateInput
 }
 
 export type IBaseTypeOwnerDeleteFieldInput = {
@@ -15343,31 +15073,6 @@ export type IBaseTypeOwnerDeleteFieldInput = {
 export type IBaseTypeOwnerDisconnectFieldInput = {
   where?: InputMaybe<IBaseTypeOwnerConnectionWhere>
   disconnect?: InputMaybe<UserDisconnectInput>
-}
-
-export type IBaseTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<IBaseTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<IBaseTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type IBaseTypeOwnerFieldInput = {
@@ -15444,7 +15149,6 @@ export type IBaseTypeOwnerNodeAggregationWhereInput = {
 
 export type IBaseTypeOwnerUpdateConnectionInput = {
   node?: InputMaybe<UserUpdateInput>
-  edge?: InputMaybe<OwnedByUpdateInput>
 }
 
 export type IBaseTypeOwnerUpdateFieldInput = {
@@ -15797,6 +15501,26 @@ export type InterfaceTypeFieldsNodeAggregationWhereInput = {
   validationRules_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
   validationRules_LONGEST_LTE?: InputMaybe<Scalars['Int']>
   validationRules_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
+  defaultValues_EQUAL?: InputMaybe<Scalars['String']>
+  defaultValues_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
+  defaultValues_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
+  defaultValues_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
+  defaultValues_GT?: InputMaybe<Scalars['Int']>
+  defaultValues_AVERAGE_GT?: InputMaybe<Scalars['Float']>
+  defaultValues_LONGEST_GT?: InputMaybe<Scalars['Int']>
+  defaultValues_SHORTEST_GT?: InputMaybe<Scalars['Int']>
+  defaultValues_GTE?: InputMaybe<Scalars['Int']>
+  defaultValues_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
+  defaultValues_LONGEST_GTE?: InputMaybe<Scalars['Int']>
+  defaultValues_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
+  defaultValues_LT?: InputMaybe<Scalars['Int']>
+  defaultValues_AVERAGE_LT?: InputMaybe<Scalars['Float']>
+  defaultValues_LONGEST_LT?: InputMaybe<Scalars['Int']>
+  defaultValues_SHORTEST_LT?: InputMaybe<Scalars['Int']>
+  defaultValues_LTE?: InputMaybe<Scalars['Int']>
+  defaultValues_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
+  defaultValues_LONGEST_LTE?: InputMaybe<Scalars['Int']>
+  defaultValues_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type InterfaceTypeFieldsUpdateConnectionInput = {
@@ -15833,32 +15557,6 @@ export type InterfaceTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<InterfaceTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<InterfaceTypeOwnerAggregateInput>>
   node?: InputMaybe<InterfaceTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<InterfaceTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type InterfaceTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<InterfaceTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<InterfaceTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type InterfaceTypeOwnerNodeAggregationWhereInput = {
@@ -16081,32 +15779,6 @@ export type LambdaTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<LambdaTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<LambdaTypeOwnerAggregateInput>>
   node?: InputMaybe<LambdaTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<LambdaTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type LambdaTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<LambdaTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<LambdaTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type LambdaTypeOwnerNodeAggregationWhereInput = {
@@ -16229,33 +15901,6 @@ export type LambdaTypeWhere = {
   ownerAggregate?: InputMaybe<LambdaTypeOwnerAggregateInput>
   ownerConnection?: InputMaybe<IBaseTypeOwnerConnectionWhere>
   ownerConnection_NOT?: InputMaybe<IBaseTypeOwnerConnectionWhere>
-}
-
-export type OwnedByCreateInput = {
-  data?: Scalars['String']
-}
-
-export type OwnedBySort = {
-  data?: InputMaybe<SortDirection>
-}
-
-export type OwnedByUpdateInput = {
-  data?: InputMaybe<Scalars['String']>
-}
-
-export type OwnedByWhere = {
-  OR?: InputMaybe<Array<OwnedByWhere>>
-  AND?: InputMaybe<Array<OwnedByWhere>>
-  data?: InputMaybe<Scalars['String']>
-  data_NOT?: InputMaybe<Scalars['String']>
-  data_IN?: InputMaybe<Array<Scalars['String']>>
-  data_NOT_IN?: InputMaybe<Array<Scalars['String']>>
-  data_CONTAINS?: InputMaybe<Scalars['String']>
-  data_NOT_CONTAINS?: InputMaybe<Scalars['String']>
-  data_STARTS_WITH?: InputMaybe<Scalars['String']>
-  data_NOT_STARTS_WITH?: InputMaybe<Scalars['String']>
-  data_ENDS_WITH?: InputMaybe<Scalars['String']>
-  data_NOT_ENDS_WITH?: InputMaybe<Scalars['String']>
 }
 
 export type PageAppAggregateInput = {
@@ -16726,32 +16371,6 @@ export type PageTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<PageTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<PageTypeOwnerAggregateInput>>
   node?: InputMaybe<PageTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<PageTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type PageTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<PageTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<PageTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type PageTypeOwnerNodeAggregationWhereInput = {
@@ -16997,32 +16616,6 @@ export type PrimitiveTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<PrimitiveTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<PrimitiveTypeOwnerAggregateInput>>
   node?: InputMaybe<PrimitiveTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<PrimitiveTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type PrimitiveTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<PrimitiveTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<PrimitiveTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type PrimitiveTypeOwnerNodeAggregationWhereInput = {
@@ -17861,32 +17454,6 @@ export type ReactNodeTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<ReactNodeTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<ReactNodeTypeOwnerAggregateInput>>
   node?: InputMaybe<ReactNodeTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<ReactNodeTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type ReactNodeTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<ReactNodeTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<ReactNodeTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type ReactNodeTypeOwnerNodeAggregationWhereInput = {
@@ -18063,32 +17630,6 @@ export type RenderPropsTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<RenderPropsTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<RenderPropsTypeOwnerAggregateInput>>
   node?: InputMaybe<RenderPropsTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<RenderPropsTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type RenderPropsTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<RenderPropsTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<RenderPropsTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type RenderPropsTypeOwnerNodeAggregationWhereInput = {
@@ -19579,32 +19120,6 @@ export type UnionTypeOwnerAggregateInput = {
   AND?: InputMaybe<Array<UnionTypeOwnerAggregateInput>>
   OR?: InputMaybe<Array<UnionTypeOwnerAggregateInput>>
   node?: InputMaybe<UnionTypeOwnerNodeAggregationWhereInput>
-  edge?: InputMaybe<UnionTypeOwnerEdgeAggregationWhereInput>
-}
-
-export type UnionTypeOwnerEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<UnionTypeOwnerEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<UnionTypeOwnerEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type UnionTypeOwnerNodeAggregationWhereInput = {
@@ -21559,25 +21074,20 @@ export type UserTypesAggregateInput = {
   AND?: InputMaybe<Array<UserTypesAggregateInput>>
   OR?: InputMaybe<Array<UserTypesAggregateInput>>
   node?: InputMaybe<UserTypesNodeAggregationWhereInput>
-  edge?: InputMaybe<UserTypesEdgeAggregationWhereInput>
 }
 
 export type UserTypesConnectFieldInput = {
   where?: InputMaybe<BaseTypeConnectWhere>
   connect?: InputMaybe<Array<BaseTypeConnectInput>>
-  edge: OwnedByCreateInput
 }
 
 export type UserTypesConnectionSort = {
-  edge?: InputMaybe<OwnedBySort>
   node?: InputMaybe<BaseTypeSort>
 }
 
 export type UserTypesConnectionWhere = {
   AND?: InputMaybe<Array<UserTypesConnectionWhere>>
   OR?: InputMaybe<Array<UserTypesConnectionWhere>>
-  edge?: InputMaybe<OwnedByWhere>
-  edge_NOT?: InputMaybe<OwnedByWhere>
   node?: InputMaybe<BaseTypeWhere>
   node_NOT?: InputMaybe<BaseTypeWhere>
 }
@@ -21589,12 +21099,10 @@ export type UserTypesConnectOrCreateFieldInput = {
 
 export type UserTypesConnectOrCreateFieldInputOnCreate = {
   node: BaseTypeOnCreateInput
-  edge: OwnedByCreateInput
 }
 
 export type UserTypesCreateFieldInput = {
   node: BaseTypeCreateInput
-  edge: OwnedByCreateInput
 }
 
 export type UserTypesDeleteFieldInput = {
@@ -21605,31 +21113,6 @@ export type UserTypesDeleteFieldInput = {
 export type UserTypesDisconnectFieldInput = {
   where?: InputMaybe<UserTypesConnectionWhere>
   disconnect?: InputMaybe<BaseTypeDisconnectInput>
-}
-
-export type UserTypesEdgeAggregationWhereInput = {
-  AND?: InputMaybe<Array<UserTypesEdgeAggregationWhereInput>>
-  OR?: InputMaybe<Array<UserTypesEdgeAggregationWhereInput>>
-  data_EQUAL?: InputMaybe<Scalars['String']>
-  data_AVERAGE_EQUAL?: InputMaybe<Scalars['Float']>
-  data_LONGEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_EQUAL?: InputMaybe<Scalars['Int']>
-  data_GT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GT?: InputMaybe<Scalars['Int']>
-  data_GTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_GTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_GTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_GTE?: InputMaybe<Scalars['Int']>
-  data_LT?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LT?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LT?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LT?: InputMaybe<Scalars['Int']>
-  data_LTE?: InputMaybe<Scalars['Int']>
-  data_AVERAGE_LTE?: InputMaybe<Scalars['Float']>
-  data_LONGEST_LTE?: InputMaybe<Scalars['Int']>
-  data_SHORTEST_LTE?: InputMaybe<Scalars['Int']>
 }
 
 export type UserTypesFieldInput = {
@@ -21666,7 +21149,6 @@ export type UserTypesNodeAggregationWhereInput = {
 
 export type UserTypesUpdateConnectionInput = {
   node?: InputMaybe<BaseTypeUpdateInput>
-  edge?: InputMaybe<OwnedByUpdateInput>
 }
 
 export type UserTypesUpdateFieldInput = {
@@ -22147,6 +21629,7 @@ export interface FieldAggregateSelectionInput {
   name?: StringAggregateInputNullable
   description?: StringAggregateInputNullable
   validationRules?: StringAggregateInputNullable
+  defaultValues?: StringAggregateInputNullable
 }
 
 export declare class FieldModel {
