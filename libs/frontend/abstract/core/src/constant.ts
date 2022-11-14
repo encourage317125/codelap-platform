@@ -20,11 +20,6 @@ export const ROOT_ELEMENT_NAME = 'Body'
 
 export const COMPONENT_TREE_CONTAINER = 'components'
 
-export const ROOT_COMPONENT_ELEMENT_NAME = 'Component Root Element'
-export const PROVIDER_ROOT_ELEMENT_NAME = 'Provider Root Element'
-export const DETACHED_ROOT_ELEMENT_NAME = 'Detached Root Element'
-
-export const PROVIDER_TREE_PAGE_NAME = 'Provider Tree'
 export const STATE_PATH_TEMPLATE_START = '{{'
 export const STATE_PATH_TEMPLATE_START_REGEX = /\{\{/g
 // start bracket that is not closed with }}
@@ -37,3 +32,13 @@ export const LAST_WORD_AFTER_DOT_REGEX = /\.\w+$/
 export const WORD_BEFORE_DOT_REGEX = /\w*(\.)?/
 
 export const CUSTOM_TEXT_PROP_KEY = 'customText'
+
+export const APP_PAGE_NAME = '_app'
+export const APP_PAGE_SLUG = '_app'
+export const DEFAULT_GET_SERVER_SIDE_PROPS = `async function (context) {
+  return {
+    props: {},
+    redirect: undefined,
+    notFound: false,
+  }
+}`
