@@ -64,7 +64,6 @@ export const ConfigPane = observer<MetaPaneProps>(
           <Tabs.TabPane
             destroyInactiveTabPane
             key="inspector"
-            // style={{ overflow: 'auto', maxHeight: '100%' }}
             tab={
               <div>
                 <EditOutlined />
@@ -99,7 +98,7 @@ export const ConfigPane = observer<MetaPaneProps>(
                           trackPromises={trackPromises}
                         />
                         <DeleteElementButton
-                          css={tw`mt-3`}
+                          css={tw`my-3`}
                           disabled={node.isRoot}
                           element={node}
                           elementService={elementService}
@@ -129,7 +128,6 @@ export const ConfigPane = observer<MetaPaneProps>(
           <Tabs.TabPane
             destroyInactiveTabPane
             key="component"
-            // style={{ overflow: 'auto', maxHeight: '100%' }}
             tab={
               <div>
                 <CodeSandboxOutlined />
