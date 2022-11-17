@@ -1,8 +1,11 @@
 import { OGM_TYPES } from '@codelab/backend/abstract/codegen'
 import { ITagExport } from '@codelab/backend/abstract/core'
-import { Repository } from '@codelab/backend/infra/adapter/neo4j'
+import {
+  Repository,
+  tagSelectionSet,
+} from '@codelab/backend/infra/adapter/neo4j'
 import { BaseUniqueWhereCallback } from '@codelab/shared/abstract/types'
-import { connectNode, whereNodeId } from '@codelab/shared/data'
+import { connectNode, whereNode } from '@codelab/shared/data'
 import { logTask } from '../shared/utils/log-task'
 
 /**
@@ -13,24 +16,42 @@ export const connectChildTagToParent = async (
 ): Promise<void> => {
   const Tag = await Repository.instance.Tag
 
-  const input = {
-    where: { id: tag.id },
-    connect: {
-      children: tag.children?.map((childTag) => whereNodeId(childTag.id)),
-      parent: whereNodeId(tag.parent?.id),
-    },
-    disconnect: {
-      children: [{ where: {} }],
-      parent: { where: {} },
-    },
+  // At this point, connections may be missing if it's first time
+  const currentTag = (
+    await Tag.find({
+      where: {
+        name: tag.name,
+      },
+      selectionSet: tagSelectionSet,
+    })
+  )[0]
+
+  if (!currentTag) {
+    throw new Error('Missing current tag')
   }
 
-  // cLog(input)
+  const input = {
+    where: { name: tag.name },
+    /**
+     * Reconnect the parent
+     */
+    connect: {
+      parent: tag.parent?.name ? whereNode('name', tag.parent.name) : undefined,
+    },
+    // disconnect: {
+    //   parent: { where: {} },
+    // },
+  }
+
+  logTask('Connect Input', tag.name, input)
+  console.log(tag)
 
   try {
     await Tag.update(input)
   } catch (e) {
-    console.error(e)
+    console.log(tag)
+    console.log(input)
+    console.log(e)
     throw new Error('Error connecting tag to parent')
   }
 }
