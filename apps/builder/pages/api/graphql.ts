@@ -140,7 +140,7 @@ const handler: NextApiHandler = async (req, res) => {
   ) {
     const user = session.user as Auth0SessionUser
     const User = await Repository.instance.User
-    console.log('create new user', user)
+    console.log('Upsert user', user)
 
     await upsertUser(User, user)
   }
