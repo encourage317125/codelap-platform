@@ -22845,6 +22845,19 @@ export type DeleteFieldsMutation = {
   deleteFields: { __typename?: 'DeleteInfo'; nodesDeleted: number }
 }
 
+export type GetBaseTypesQueryVariables = Exact<{
+  options?: InputMaybe<GetBaseTypesOptions>
+}>
+
+export type GetBaseTypesQuery = {
+  __typename?: 'Query'
+  baseTypes: {
+    __typename?: 'GetBaseTypesReturn'
+    totalCount: number
+    items: Array<{ __typename?: 'BaseType' } & BaseType_BaseType_Fragment>
+  }
+}
+
 export type GetTypesQueryVariables = Exact<{
   ids?: InputMaybe<Array<Scalars['ID']> | Scalars['ID']>
 }>
