@@ -3,9 +3,8 @@ import type { Completion, CompletionSource } from '@codemirror/autocomplete'
 import { css } from '@codemirror/lang-css'
 import { javascript } from '@codemirror/lang-javascript'
 import { json } from '@codemirror/lang-json'
-import { StreamLanguage } from '@codemirror/language'
 import { lintGutter } from '@codemirror/lint'
-import { graphql } from 'codemirror-graphql/cm6-legacy/mode'
+import { graphql } from 'cm6-graphql'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 import { CodeMirrorInput, CodeMirrorInputProps } from './CodeMirrorInput'
@@ -16,6 +15,7 @@ export interface CodeMirrorEditorProps extends CodeMirrorInputProps {
   defaultSource?: CompletionSource
   defaultOptions?: Array<Completion>
   customOptions?: Array<Completion>
+  overrideExtensions?: boolean
 }
 
 const languageExtension = {
@@ -33,12 +33,18 @@ const languageExtension = {
   [ICodeMirrorLanguage.Json]: [json()],
   [ICodeMirrorLanguage.CssInJs]: [css()],
   // once https://github.com/graphql/graphiql/pull/2620 is merged will add full support for graphql
-  [ICodeMirrorLanguage.Graphql]: [StreamLanguage.define(graphql)],
+  [ICodeMirrorLanguage.Graphql]: [graphql()],
 }
 
 export const CodeMirrorEditor = observer((props: CodeMirrorEditorProps) => {
-  const { language, extensions = [], expandable = true } = props
-  const basicExtensions = defaultExtensions(props)
+  const {
+    language,
+    extensions = [],
+    expandable = true,
+    overrideExtensions = false,
+  } = props
+
+  const basicExtensions = overrideExtensions ? [] : defaultExtensions(props)
 
   const mergedExtension = language
     ? [...languageExtension[language], ...basicExtensions, ...extensions]
