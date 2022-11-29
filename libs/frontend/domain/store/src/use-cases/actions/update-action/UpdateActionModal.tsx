@@ -33,7 +33,7 @@ export const UpdateActionModal = observer<{
   })
 
   const model = {
-    storeId: updateAction?.storeId,
+    storeId: updateAction?.store.current.id,
     name: updateAction?.name,
     type: updateAction?.type,
     id: updateAction?.id,
@@ -64,6 +64,11 @@ export const UpdateActionModal = observer<{
   const getResourceType = (c: Context<IUpdateActionDTO>) =>
     c.model.resourceId
       ? resourceService.resource(c.model.resourceId)?.type
+      : null
+
+  const getResourceApiUrl = (c: Context<IUpdateActionDTO>) =>
+    c.model.resourceId
+      ? resourceService.resource(c.model.resourceId)?.config.get('url')
       : null
 
   return (
@@ -109,7 +114,7 @@ export const UpdateActionModal = observer<{
           <DisplayIfField<IUpdateActionDTO>
             condition={(c) => getResourceType(c) === IResourceType.GraphQL}
           >
-            <AutoField name="config.query" />
+            <AutoField getUrl={getResourceApiUrl} name="config.query" />
             <AutoField name="config.variables" />
             <AutoField name="config.headers" />
           </DisplayIfField>

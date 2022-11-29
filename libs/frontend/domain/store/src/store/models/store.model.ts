@@ -1,13 +1,15 @@
 import {
   IInterfaceType,
   IProp,
+  IPropData,
   IStore,
   IStoreDTO,
   STATE_PATH_TEMPLATE_REGEX,
 } from '@codelab/frontend/abstract/core'
 import { Prop } from '@codelab/frontend/domain/prop'
 import { typeRef } from '@codelab/frontend/domain/type'
-import { getElementService } from '@codelab/frontend/presenter/container'
+import { mapDeep } from '@codelab/shared/utils'
+import isString from 'lodash/isString'
 import merge from 'lodash/merge'
 import { computed, reaction } from 'mobx'
 import {
@@ -47,7 +49,7 @@ export class Store
   onAttachedToRootStore() {
     // every time the snapshot of the configuration changes
     const reactionDisposer = reaction(
-      () => [this._actionsRunners, this._defaultValues, this._elementsRefs],
+      () => [this._actionsRunners, this._defaultValues],
       () => {
         console.debug('Previous state', this.state.values)
 
@@ -56,9 +58,6 @@ export class Store
 
         console.debug('defaults changed:', this._defaultValues)
         this.state.setMany(this._defaultValues)
-
-        console.debug('elementRefs changed:', this._elementsRefs)
-        this.state.setMany(this._elementsRefs)
 
         console.debug('New state', this.state.values)
       },
@@ -83,18 +82,13 @@ export class Store
   @computed
   get actions() {
     return getActionService(this).actionsList.filter(
-      (x) => x.storeId === this.id,
+      (x) => x.store.id === this.id,
     )
   }
 
   @computed
   get _defaultValues() {
     return this.api.current.defaultValues
-  }
-
-  @computed
-  get _elementsRefs() {
-    return getElementService(this).elementsDomRefs
   }
 
   @computed
@@ -116,6 +110,19 @@ export class Store
 
       return expression
     }
+  }
+
+  @modelAction
+  public replaceStateInProps = (props: IPropData) => {
+    props = mapDeep(
+      props,
+      // value mapper
+      (v, k) => (isString(v) ? this.getByExpression(v) : v),
+      // key mapper
+      (v, k) => (isString(k) ? this.getByExpression(k) : k) as string,
+    )
+
+    return props
   }
 
   @modelAction

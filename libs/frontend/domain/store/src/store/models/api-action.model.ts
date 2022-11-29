@@ -5,6 +5,7 @@ import {
   IApiActionDTO,
   IGraphQLActionConfig,
   IProp,
+  IPropData,
   IResource,
   IRestActionConfig,
 } from '@codelab/frontend/abstract/core'
@@ -17,10 +18,14 @@ import {
   IResourceType,
 } from '@codelab/shared/abstract/core'
 import { Nullish } from '@codelab/shared/abstract/types'
-import { Method } from 'axios'
+import axios, { Axios, Method } from 'axios'
+import { GraphQLClient } from 'graphql-request'
+import merge from 'lodash/merge'
+import { computed } from 'mobx'
 import { ExtendedModel, model, modelAction, prop, Ref } from 'mobx-keystone'
 import { actionRef } from './action.ref'
 import { createBaseAction, updateBaseAction } from './base-action.model'
+import { storeRef } from './store.model'
 
 const hydrate = (action: IApiActionDTO): IApiAction => {
   assertIsActionKind(action.type, IActionKind.ApiAction)
@@ -28,7 +33,7 @@ const hydrate = (action: IApiActionDTO): IApiAction => {
   return new ApiAction({
     id: action.id,
     name: action.name,
-    storeId: action.store.id,
+    store: storeRef(action.store.id),
     type: action.type,
     // TODO: fix up type
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,12 +46,20 @@ const hydrate = (action: IApiActionDTO): IApiAction => {
   })
 }
 
-const restFetch = (resource: IResource, config: IRestActionConfig) => {
-  const data = tryParse(config.body)
-  const params = tryParse(config.queryParams)
-  const headers = tryParse(config.headers)
+const restFetch = (
+  client: Axios,
+  config: IRestActionConfig,
+  overrideConfig?: IPropData,
+) => {
+  const data = merge(tryParse(config.body), overrideConfig?.body)
+  const headers = merge(tryParse(config.headers), overrideConfig?.headers)
 
-  return resource.restClient.request({
+  const params = merge(
+    tryParse(config.queryParams),
+    overrideConfig?.queryParams,
+  )
+
+  return client.request({
     method: config.method as Method,
     url: config.urlSegment,
     responseType: config.responseType,
@@ -56,11 +69,15 @@ const restFetch = (resource: IResource, config: IRestActionConfig) => {
   })
 }
 
-const graphqlFetch = (resource: IResource, config: IGraphQLActionConfig) => {
-  const headers = tryParse(config.headers)
-  const variables = tryParse(config.variables)
+const graphqlFetch = (
+  client: GraphQLClient,
+  config: IGraphQLActionConfig,
+  overrideConfig?: IPropData,
+) => {
+  const headers = merge(tryParse(config.headers), overrideConfig?.headers)
+  const variables = merge(tryParse(config.variables), overrideConfig?.variables)
 
-  return resource.graphqlClient.request(config.query, variables, headers)
+  return client.request(config.query, variables, headers)
 }
 
 @model('@codelab/ApiAction')
@@ -76,19 +93,56 @@ export class ApiAction
   static hydrate = hydrate
 
   @modelAction
+  private replaceStateInConfig(config: IProp) {
+    return this.store.current.replaceStateInProps(config.values)
+  }
+
+  @computed
+  get _resourceConfig() {
+    return this.replaceStateInConfig(this.resource.current.config)
+  }
+
+  @computed
+  get _graphqlClient() {
+    const { headers, url } = this._resourceConfig
+    const options = { headers: tryParse(headers) }
+
+    return new GraphQLClient(url, options)
+  }
+
+  @computed
+  get _restClient() {
+    const { headers, url } = this._resourceConfig
+
+    return axios.create({ baseURL: url, headers: tryParse(headers) })
+  }
+
+  @modelAction
   createRunner(state: IProp) {
     const successAction = this.successAction?.current
     const errorAction = this.errorAction?.current
     const resource = this.resource.current
-    const config = this.config.values
+    const config = this.store.current.replaceStateInProps(this.config.values)
 
     const runner = (...args: Array<unknown>) => {
+      const overrideConfig = args[0] as IPropData
+      state.set(this.name, { response: null })
+      state.set(this.name, { error: null })
+
       const fetchPromise =
         resource.type === IResourceType.GraphQL
-          ? graphqlFetch(resource, config as IGraphQLActionConfig)
-          : restFetch(resource, config as IRestActionConfig)
+          ? graphqlFetch(
+              this._graphqlClient,
+              config as IGraphQLActionConfig,
+              overrideConfig,
+            )
+          : restFetch(
+              this._restClient,
+              config as IRestActionConfig,
+              overrideConfig,
+            )
 
-      fetchPromise
+      return fetchPromise
         .then((response) => {
           state.set(this.name, { response })
 
@@ -116,6 +170,7 @@ export class ApiAction
     this.successAction = action.successAction
       ? actionRef(action.successAction.id)
       : null
+    this.store = storeRef(action.store.id)
 
     return this
   }

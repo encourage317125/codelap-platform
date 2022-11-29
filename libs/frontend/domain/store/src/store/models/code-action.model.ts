@@ -6,6 +6,7 @@ import {
 import { assertIsActionKind, IActionKind } from '@codelab/shared/abstract/core'
 import { ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
 import { createBaseAction, updateBaseAction } from './base-action.model'
+import { storeRef } from './store.model'
 
 const hydrate = (action: ICodeActionDTO): ICodeAction => {
   assertIsActionKind(action.type, IActionKind.CodeAction)
@@ -14,7 +15,7 @@ const hydrate = (action: ICodeActionDTO): ICodeAction => {
     id: action.id,
     name: action.name,
     code: action.code,
-    storeId: action.store.id,
+    store: storeRef(action.store.id),
     type: action.type,
   })
 }
@@ -30,15 +31,9 @@ export class CodeAction
 
   @modelAction
   createRunner(state: IProp) {
-    const values = state.values
-
     try {
-      return (...args: Array<unknown>) => {
-        // eslint-disable-next-line no-eval
-        eval(`(${this.code})`).bind(values)(...args)
-        // alter mobx with new state
-        state.setMany(values)
-      }
+      // eslint-disable-next-line no-eval
+      return eval(`(${this.code})`).bind(state)
     } catch (error) {
       console.log(error)
 
