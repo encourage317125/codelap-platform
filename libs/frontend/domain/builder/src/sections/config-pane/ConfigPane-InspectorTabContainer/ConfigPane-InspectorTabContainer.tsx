@@ -26,6 +26,7 @@ import {
   UpdateRichTextForm,
 } from '@codelab/frontend/domain/element'
 import {
+  FormContextProvider,
   LoadingIndicator,
   UseTrackLoadingPromises,
   useTrackLoadingPromises,
@@ -93,6 +94,10 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
       return null
     }
 
+    const autocomplete = renderService.state
+    const allowExpressions = true
+    const appStore = renderService.appStore.current
+
     const tabItems = [
       {
         key: TAB_NAMES.Node,
@@ -124,14 +129,17 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
                     trackPromises={trackPromises}
                   />
                 </div>
-                <UpdateElementPropsForm
-                  autocomplete={renderService.state}
-                  element={selectedNode}
-                  elementService={elementService}
-                  trackPromises={trackPromises}
-                  typeService={typeService}
-                  userService={userService}
-                />
+                <FormContextProvider
+                  value={{ autocomplete, appStore, allowExpressions }}
+                >
+                  <UpdateElementPropsForm
+                    element={selectedNode}
+                    elementService={elementService}
+                    trackPromises={trackPromises}
+                    typeService={typeService}
+                    userService={userService}
+                  />
+                </FormContextProvider>
               </>
             ) : (
               `Add an atom or a component to this element to edit its props`
