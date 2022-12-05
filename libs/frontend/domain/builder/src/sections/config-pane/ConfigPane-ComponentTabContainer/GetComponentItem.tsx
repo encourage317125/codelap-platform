@@ -2,6 +2,7 @@ import {
   BuilderDndType,
   IBuilderComponent,
 } from '@codelab/frontend/abstract/core'
+import { antDesignIconPrefix } from '@codelab/shared/data'
 import { Card } from 'antd'
 import React, { useMemo } from 'react'
 import tw from 'twin.macro'
@@ -38,7 +39,7 @@ export const DraggableGetComponentItem = ({
       {...listeners}
       // eslint-disable-next-line react/jsx-props-no-spreading
       {...attributes}
-      css={tw`m-1 mb-6 mr-6 cursor-pointer`}
+      css={tw`mb-6 cursor-pointer`}
     >
       <GetComponentItem component={component} />
     </div>
@@ -58,8 +59,16 @@ export const GetComponentItem = ({
     className={className}
     css={tw`mr-16`}
     hoverable
-    title={<b>{component.name}</b>}
+    title={<b css={tw`text-sm`}>{component.name}</b>}
   >
-    <img alt="" src={component.icon || '/codelab-logo-default.svg'} />
+    <img
+      alt=""
+      css={tw`w-full`}
+      src={
+        component.icon
+          ? `/${antDesignIconPrefix}/${component.icon}.svg`
+          : '/codelab-logo-default.svg'
+      }
+    />
   </Card>
 )
