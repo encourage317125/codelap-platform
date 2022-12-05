@@ -6,6 +6,7 @@ import {
 } from '@codelab/frontend/abstract/core'
 import { UseTrackLoadingPromises } from '@codelab/frontend/view/components'
 import { Col, Row } from 'antd'
+import debounce from 'lodash/debounce'
 import { observer } from 'mobx-react-lite'
 import { useCallback, useState } from 'react'
 import ReactQuill from './ReactQuill'
@@ -47,18 +48,40 @@ export const UpdateRichTextForm = observer<UpdateRichTextFormProps>(
       [element.children.length],
     )
 
-    const onSubmit = (data: IPropData) => {
-      const promise = elementService.patchElement(element, {
-        props: {
-          update: {
-            node: {
-              data: JSON.stringify(data),
+    const onSubmit = useCallback(
+      (data: IPropData) => {
+        const promise = elementService.patchElement(element, {
+          props: {
+            update: {
+              node: {
+                data: JSON.stringify(data),
+              },
             },
           },
-        },
-      })
+        })
 
-      return trackPromise?.(promise) ?? promise
+        return trackPromise?.(promise) ?? promise
+      },
+      [element, elementService, trackPromise],
+    )
+
+    const handleDebounce = useCallback(debounce(onSubmit, 1000), [])
+
+    const handleOnchange = (newCustomText: string) => {
+      setValue(newCustomText)
+
+      const currentElement = elementService.element(element.id)
+
+      if (currentElement?.props) {
+        currentElement.props.setMany({
+          [CUSTOM_TEXT_PROP_KEY]: newCustomText,
+        })
+      }
+
+      void handleDebounce({
+        ...element.props?.values,
+        [CUSTOM_TEXT_PROP_KEY]: newCustomText,
+      })
     }
 
     return element.atom?.current.allowCustomTextInjection ? (
@@ -71,13 +94,7 @@ export const UpdateRichTextForm = observer<UpdateRichTextFormProps>(
         <Col span={24}>
           <ReactQuill
             modules={modules}
-            onChange={(newCustomText) => {
-              setValue(newCustomText)
-              void onSubmit({
-                ...element.props?.values,
-                [CUSTOM_TEXT_PROP_KEY]: newCustomText,
-              })
-            }}
+            onChange={handleOnchange}
             theme="snow"
             value={value}
           />
