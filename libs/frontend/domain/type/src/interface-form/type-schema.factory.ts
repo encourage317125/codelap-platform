@@ -59,17 +59,17 @@ export class TypeSchemaFactory {
       case ITypeKind.AppType:
         return this.fromAppType(type)
       case ITypeKind.ActionType:
-        return this.fromActionType(type)
+        return this.fromActionType(type, context)
       case ITypeKind.LambdaType:
         return this.fromLambdaType(type)
       case ITypeKind.PageType:
         return this.fromPageType(type)
       case ITypeKind.RenderPropsType:
-        return this.fromRenderPropsType(type)
+        return this.fromRenderPropsType(type, context)
       case ITypeKind.PrimitiveType:
         return this.fromPrimitiveType(type, context)
       case ITypeKind.ReactNodeType:
-        return this.fromReactNodeType(type)
+        return this.fromReactNodeType(type, context)
       case ITypeKind.CodeMirrorType:
         return this.fromCodeMirrorType(type, context)
       case ITypeKind.ElementType:
@@ -97,11 +97,12 @@ export class TypeSchemaFactory {
 
   fromInterfaceType(type: IInterfaceType): JsonSchema {
     const makeFieldSchema = (field: IField) => ({
+      label: field.name || pascalCaseToWords(field.key),
       ...this.transform(field.type.current, {
         validationRules: field.validationRules ?? undefined,
+        fieldName: field.name,
       }),
       ...field.validationRules?.general,
-      label: field.name || pascalCaseToWords(field.key),
     })
 
     const makeFieldProperties = (
@@ -163,16 +164,22 @@ export class TypeSchemaFactory {
     return this.simpleReferenceType(type)
   }
 
-  fromActionType(type: IAnyActionType): JsonSchema {
-    return this.transformTypedValueType(type)
+  fromActionType(
+    type: IAnyActionType,
+    context?: UiPropertiesContext,
+  ): JsonSchema {
+    return this.transformTypedValueType(type, context)
   }
 
   fromPageType(type: IPageType): JsonSchema {
     return this.simpleReferenceType(type)
   }
 
-  fromRenderPropsType(type: IRenderPropsType): JsonSchema {
-    return this.transformTypedValueType(type)
+  fromRenderPropsType(
+    type: IRenderPropsType,
+    context?: UiPropertiesContext,
+  ): JsonSchema {
+    return this.transformTypedValueType(type, context)
   }
 
   fromCodeMirrorType(
@@ -186,12 +193,23 @@ export class TypeSchemaFactory {
     return this.simpleReferenceType(type)
   }
 
-  fromReactNodeType(type: IReactNodeType): JsonSchema {
-    return this.transformTypedValueType(type)
+  fromReactNodeType(
+    type: IReactNodeType,
+    context?: UiPropertiesContext,
+  ): JsonSchema {
+    return this.transformTypedValueType(type, context)
   }
 
   fromElementType(type: IElementType): JsonSchema {
-    return this.transformTypedValueType(type)
+    const extra = this.getExtraProperties(type)
+
+    const properties = TypeSchemaFactory.schemaForTypedValue(
+      type.id,
+      { type: 'string', label: '', ...extra },
+      '',
+    )
+
+    return { type: 'object', properties, uniforms: nullUniforms }
   }
 
   fromPrimitiveType(
@@ -230,23 +248,7 @@ export class TypeSchemaFactory {
   fromEnumType(type: IEnumType): JsonSchema {
     const extra = this.getExtraProperties(type)
 
-    const uniforms = {
-      options: type.allowedValues.map((v) => ({
-        value: v.value,
-        label: v.key,
-      })),
-      showSearch: true,
-      optionFilterProp: 'label',
-      getPopupContainer: (triggerNode: Element) => triggerNode.parentElement,
-      ...extra?.uniforms,
-    }
-
-    return {
-      type: 'string',
-      enum: type.allowedValues.map((v) => v.value),
-      uniforms,
-      ...extra,
-    } as const
+    return { type: 'string', ...extra } as const
   }
 
   /**
@@ -289,13 +291,15 @@ export class TypeSchemaFactory {
    * Produces a {@link TypedValue} shaped schema
    */
   private transformTypedValueType(
-    type: IElementType | IReactNodeType | IRenderPropsType | IAnyActionType,
+    type: IReactNodeType | IRenderPropsType | IAnyActionType,
+    context?: UiPropertiesContext,
   ): JsonSchema {
     const extra = this.getExtraProperties(type)
+    const label = context?.fieldName ?? ''
 
     const properties = TypeSchemaFactory.schemaForTypedValue(
       type.id,
-      { type: 'string', label: '', ...extra },
+      { label, ...extra },
       '',
     )
 
