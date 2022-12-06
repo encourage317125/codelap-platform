@@ -1,25 +1,27 @@
-import { ITypeService } from '@codelab/frontend/abstract/core'
+import { BaseTypesOptions, ITypeService } from '@codelab/frontend/abstract/core'
 import { useAsyncFn } from 'react-use'
 
 export const useGetTypesTableData = (typeService: ITypeService) => {
-  const [{ loading: isLoadingBaseTypes }, getBaseTypesOfPage] = useAsyncFn(
-    typeService.getBaseTypesOfPage.bind(typeService),
+  const [{ loading: isLoadingBaseTypes }, _getBaseTypes] = useAsyncFn(
+    typeService.getBaseTypes.bind(typeService),
     [],
   )
 
-  const [{ loading: isloadingTypeDependencies }, getBaseTypeDepdencies] =
+  const [{ loading: isLoadingTypeDependencies }, getBaseTypeDependencies] =
     useAsyncFn(typeService.getAll.bind(typeService), [])
 
-  const changePage = async (page: number, pageSize: number) => {
-    await getBaseTypesOfPage(page, pageSize)
-    await getBaseTypeDepdencies({
-      id_IN: typeService.entityIdsOfcurrentLoadedPage,
+  const getBaseTypes = async (options: BaseTypesOptions) => {
+    await _getBaseTypes(options)
+    await getBaseTypeDependencies({
+      id_IN: typeService.typesList
+        .filter((type) => typeService.entityIdsOfCurrentPage.includes(type.id))
+        .map((type) => type.id),
     })
   }
 
   return {
     isLoadingBaseTypes,
-    isloadingTypeDependencies,
-    changePage,
+    isLoadingTypeDependencies,
+    getBaseTypes,
   }
 }

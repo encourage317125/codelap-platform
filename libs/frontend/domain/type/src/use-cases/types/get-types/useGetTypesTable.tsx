@@ -15,12 +15,12 @@ import { ActionColumn } from './columns'
 interface UseTypesTableParams {
   typeService: ITypeService
   fieldService: IFieldService
-  isloadingTypeDependencies: boolean
+  isLoadingTypeDependencies: boolean
 }
 
 export const useTypesTable = ({
   typeService,
-  isloadingTypeDependencies,
+  isLoadingTypeDependencies,
   fieldService,
 }: UseTypesTableParams) => {
   const columns: ColumnsType<IAnyType> = [
@@ -29,14 +29,19 @@ export const useTypesTable = ({
       dataIndex: 'name',
       key: 'name',
       onHeaderCell: headerCellProps,
-      ...useColumnSearchProps('name'),
+      ...useColumnSearchProps({
+        dataIndex: 'name',
+        onSearch: (searchText) => {
+          // void typeService.getBaseTypes({ where: { name: searchText } })
+        },
+      }),
     },
     {
       title: 'Kind',
       dataIndex: 'kind',
       key: 'kind',
       onHeaderCell: headerCellProps,
-      ...useColumnSearchProps('kind'),
+      ...useColumnSearchProps({ dataIndex: 'kind' }),
     },
     {
       title: 'Action',
@@ -44,7 +49,7 @@ export const useTypesTable = ({
       onHeaderCell: headerCellProps,
       width: 100,
       render: (record) => {
-        if (isloadingTypeDependencies) {
+        if (isLoadingTypeDependencies) {
           return <Skeleton paragraph={false} />
         }
 
