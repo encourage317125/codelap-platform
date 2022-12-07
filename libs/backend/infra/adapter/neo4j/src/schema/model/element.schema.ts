@@ -19,7 +19,8 @@ export const elementSchema = gql`
     parentComponent: Component
       @relationship(type: "COMPONENT_ROOT", direction: IN)
 
-    # fixedId: String!, // This could be no longer needed with neo4j
+    # format : pageId-slug because element slug is unique inside page.
+    slug: String! @unique
     name: String
     # Used for the css the user types it manually using the integrated code editor. This is
     # a pure css string.

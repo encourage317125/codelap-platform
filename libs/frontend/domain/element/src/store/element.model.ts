@@ -26,6 +26,7 @@ import {
   componentRef,
   getElementService,
 } from '@codelab/frontend/presenter/container'
+import { extractSlug } from '@codelab/frontend/shared/utils'
 import { ElementUpdateInput } from '@codelab/shared/abstract/codegen'
 import type { Maybe, Nullable, Nullish } from '@codelab/shared/abstract/types'
 import { connectNode, disconnectNode } from '@codelab/shared/data'
@@ -61,6 +62,7 @@ export const hydrate = ({
   guiCss,
   renderAtomType,
   parent,
+  slug,
   parentComponent,
   renderComponentType,
   nextSibling,
@@ -85,8 +87,10 @@ export const hydrate = ({
     name,
     customCss,
     guiCss,
+    originId: '',
     // parent of first child
     parentId: parent?.id,
+    slug: extractSlug(slug),
     nextSiblingId: nextSibling?.id,
     prevSiblingId: prevSibling?.id,
     firstChildId: firstChild?.id,
@@ -136,6 +140,7 @@ export class Element
     orderInParent: prop<Nullable<number>>(null).withSetter(),
 
     name: prop<Nullable<string>>(null).withSetter(),
+    slug: prop<string>().withSetter(),
     customCss: prop<Nullable<string>>(null).withSetter(),
     guiCss: prop<Nullable<string>>(null),
     atom: prop<Nullable<Ref<IAtom>>>(null).withSetter(),
@@ -154,6 +159,10 @@ export class Element
     // Marks the element as an instance of a specific component
     renderComponentType: prop<Nullable<Ref<IComponent>>>(null).withSetter(),
     hooks: prop<Array<IHook>>(() => []),
+
+    // element origin could be a page or a component
+    // used to create unique slug for element
+    originId: prop<string>().withSetter(),
   })
   implements IElement
 {
@@ -452,8 +461,8 @@ export class Element
       return undefined
     }
 
-    // eslint-disable-next-line no-eval
     // the parentheses allow us to return a function from eval
+    // eslint-disable-next-line no-eval
     const result = attempt(eval, `(${this.propTransformationJs})`)
 
     if (isError(result)) {
@@ -731,6 +740,7 @@ export class Element
     name,
     customCss,
     guiCss,
+    slug,
     renderAtomType,
     renderComponentType,
     parentComponent,
@@ -768,6 +778,7 @@ export class Element
     this.nextSiblingId = nextSibling?.id ?? null
     this.prevSiblingId = prevSibling?.id ?? null
     this.firstChildId = firstChild?.id ?? null
+    this.slug = extractSlug(slug)
 
     if (props) {
       this.props?.writeCache({ ...props, apiRef })

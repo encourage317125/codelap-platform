@@ -1,3 +1,5 @@
+import { createSlug } from '@codelab/frontend/shared/utils'
+import { AppCreateInput } from '@codelab/shared/abstract/codegen'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import { connectOwner } from '@codelab/shared/data'
 import { v4 } from 'uuid'
@@ -39,10 +41,12 @@ describe('CSS CRUD', () => {
     cy.getCurrentUserId()
       .as(uidCache)
       .then((userId) => {
-        const appInput = {
-          ...createAppInput(userId),
+        const initialAppInput = createAppInput(userId)
+
+        const appInput: AppCreateInput = {
+          ...initialAppInput,
           pages: {
-            create: [{ node: createPageInput() }],
+            create: [{ node: createPageInput(initialAppInput.id) }],
           },
         }
 
@@ -68,10 +72,11 @@ describe('CSS CRUD', () => {
 
     cy.then(function () {
       const app = this[appCache][0]
-
+      const elementId = v4()
       cy.createElement({
-        id: v4(),
+        id: elementId,
         name: elementName,
+        slug: createSlug(elementName, elementId),
         parent: {
           connect: {
             where: { node: { id: app.pages[0].rootElement.id } },

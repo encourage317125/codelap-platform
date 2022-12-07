@@ -16,7 +16,7 @@ import {
   getStoreService,
 } from '@codelab/frontend/domain/store'
 import { getElementService } from '@codelab/frontend/presenter/container'
-import { ModalService } from '@codelab/frontend/shared/utils'
+import { createSlug, ModalService } from '@codelab/frontend/shared/utils'
 import { AppCreateInput, AppWhere } from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { IEntity } from '@codelab/shared/abstract/types'
@@ -34,7 +34,6 @@ import {
   prop,
   transaction,
 } from 'mobx-keystone'
-import slugify from 'slugify'
 import { v4 } from 'uuid'
 import { appApi } from './app.api'
 import { App } from './app.model'
@@ -155,7 +154,7 @@ export class AppService
       updateApps: { apps },
     } = yield* _await(
       appApi.UpdateApps({
-        update: { name, slug: slugify(slug) },
+        update: { name, slug: createSlug(slug) },
         where: { id: entity.id },
       }),
     )
@@ -180,9 +179,10 @@ export class AppService
   create = _async(function* (this: AppService, data: Array<ICreateAppDTO>) {
     const input: Array<AppCreateInput> = data.map((app) => {
       const appId = app.id ?? v4()
+      const pageId = v4()
 
       const providerPage = {
-        id: v4(),
+        id: pageId,
         name: APP_PAGE_NAME,
         slug: APP_PAGE_SLUG,
         getServerSideProps: DEFAULT_GET_SERVER_SIDE_PROPS,
@@ -190,7 +190,13 @@ export class AppService
           connect: { where: { node: { id: appId } } },
         },
         rootElement: {
-          create: { node: { id: v4(), name: ROOT_ELEMENT_NAME } },
+          create: {
+            node: {
+              id: v4(),
+              name: ROOT_ELEMENT_NAME,
+              slug: createSlug(ROOT_ELEMENT_NAME, pageId),
+            },
+          },
         },
         isProvider: true,
       }
@@ -199,7 +205,7 @@ export class AppService
         id: appId,
         name: app.name,
         owner: connectOwner(app.auth0Id),
-        slug: slugify(app.slug),
+        slug: createSlug(app.slug),
         store: {
           create: {
             node: {

@@ -67,10 +67,12 @@ export interface IElement
   descendants: Array<IElement>
   __metadataProps: object
   atomName: string
+  slug: string
   nextSibling: Maybe<IElement>
   nextSiblingId: Nullable<string>
   prevSibling: Maybe<IElement>
   prevSiblingId: Nullable<string>
+  originId: string
 
   detachNextSibling(): () => void
   detachPrevSibling(): () => void
@@ -94,6 +96,8 @@ export interface IElement
   firstChildId: Nullable<string>
   addPropMapBinding(propMapBinding: IPropMapBinding): void
   setOrderInParent(order: number | null): void
+  setOriginId(origin: string): void
+  setSlug(slug: string): void
   /**
    * Keeps the ref in place
    */

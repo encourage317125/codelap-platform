@@ -79,15 +79,12 @@ export const ConfigPane = observer<MetaPaneProps>(
                     {node.__nodeType === ELEMENT_NODE_TYPE ? (
                       <>
                         <UpdateElementForm
-                          actionService={actionService}
-                          builderService={builderService}
                           element={node}
                           elementService={elementService}
                           key={node.id + '_update_form'}
                           providePropCompletion={(value) =>
                             providePropCompletion(value, node.id)
                           }
-                          storeId={renderService.appStore.id}
                           trackPromises={trackPromises}
                         />
                         <MoveElementForm

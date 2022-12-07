@@ -3,6 +3,7 @@ import {
   IElement,
   IUpdateElementDTO,
 } from '@codelab/frontend/abstract/core'
+import { createSlug } from '@codelab/frontend/shared/utils'
 import {
   ElementCreateInput,
   ElementUpdateInput,
@@ -30,6 +31,7 @@ export const makeCreateInput = (
     renderComponentTypeId,
     atomId,
     name,
+    slug,
     postRenderActionId,
     preRenderActionId,
     propsData,
@@ -46,6 +48,7 @@ export const makeCreateInput = (
     renderComponentType: connectNode(renderComponentTypeId),
     renderAtomType: connectNode(atomId),
     props,
+    slug,
     postRenderActionId,
     preRenderActionId,
     name,
@@ -53,7 +56,10 @@ export const makeCreateInput = (
   }
 }
 
-export const makeDuplicateInput = (element: IElement): ElementCreateInput => {
+export const makeDuplicateInput = (
+  element: IElement,
+  duplicate_slug: string,
+): ElementCreateInput => {
   const props: ElementCreateInput['props'] = element.props
     ? { create: { node: { data: element.props.jsonString } } }
     : undefined
@@ -63,6 +69,7 @@ export const makeDuplicateInput = (element: IElement): ElementCreateInput => {
     renderComponentType: connectNode(element.renderComponentType?.id),
     renderAtomType: connectNode(element.atom?.id),
     props,
+    slug: createSlug(duplicate_slug, element.originId),
     propTransformationJs: element.propTransformationJs,
     renderIfPropKey: element.renderIfPropKey,
     renderForEachPropKey: element.renderForEachPropKey,
@@ -81,6 +88,7 @@ export const makeUpdateInput = (
   return {
     name: input.name,
     renderAtomType,
+    slug: input.slug,
     props: {
       update: {
         node: {

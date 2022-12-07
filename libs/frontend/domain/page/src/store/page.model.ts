@@ -1,6 +1,11 @@
-import type { IPageDTO, IPropData } from '@codelab/frontend/abstract/core'
+import type {
+  IElement,
+  IPageDTO,
+  IPropData,
+} from '@codelab/frontend/abstract/core'
 import { IPage } from '@codelab/frontend/abstract/core'
 import { ElementTreeService } from '@codelab/frontend/domain/element'
+import { extractSlug } from '@codelab/frontend/shared/utils'
 import { IEntity, Nullish } from '@codelab/shared/abstract/types'
 import { computed } from 'mobx'
 import { ExtendedModel, idProp, model, modelAction, prop } from 'mobx-keystone'
@@ -30,7 +35,7 @@ const hydrate = (page: IPageDTO) => {
   return new Page({
     id: page.id,
     name: page.name,
-    slug: page.slug,
+    slug: extractSlug(page.slug),
     rootElement: { id: page.rootElement.id },
     getServerSideProps: page.getServerSideProps,
     app: { id: page.app.id },
@@ -68,6 +73,7 @@ export class Page
     this.setName(page.name)
     this.rootElement = page.rootElement
     this.app = page.app
+    this.slug = extractSlug(page.slug)
     this.getServerSideProps = page.getServerSideProps
     this.isProvider = page.isProvider
 
@@ -75,6 +81,15 @@ export class Page
   }
 
   static hydrate = hydrate
+
+  @modelAction
+  override initTree(rootElement: IElement, elements: Array<IElement>) {
+    super.initTree(rootElement, elements)
+
+    this.elementTree.elementsList.forEach((e) => e.setOriginId(this.id))
+
+    return this.elementTree
+  }
 
   static getServerSideProps = getServerSideProps
 }

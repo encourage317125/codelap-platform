@@ -34,6 +34,7 @@ interface CreateElementModalProps {
   userService: IUserService
   componentService: IComponentService
   storeId: string
+  pageId: string
 }
 
 export const CreateElementModal = observer<CreateElementModalProps>(
@@ -43,8 +44,7 @@ export const CreateElementModal = observer<CreateElementModalProps>(
     userService,
     pageTree,
     renderService,
-    actionService,
-    storeId,
+    pageId,
   }) => {
     const onSubmit = async (data: ICreateElementDTO) => {
       const { prevSiblingId } = data

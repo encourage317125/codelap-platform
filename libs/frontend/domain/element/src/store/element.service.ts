@@ -17,7 +17,7 @@ import {
   PropMapBindingModalService,
 } from '@codelab/frontend/domain/prop'
 import { getComponentService } from '@codelab/frontend/presenter/container'
-import { runSequentially } from '@codelab/frontend/shared/utils'
+import { createSlug, runSequentially } from '@codelab/frontend/shared/utils'
 import {
   ElementCreateInput,
   ElementUpdateInput,
@@ -40,6 +40,7 @@ import {
   prop,
   transaction,
 } from 'mobx-keystone'
+import { until } from 'ramda'
 import { v4 } from 'uuid'
 import { UpdateElementsMutationVariables } from '../graphql/element.endpoints.graphql.gen'
 import {
@@ -180,7 +181,15 @@ export class ElementService
     this: ElementService,
     data: Array<ICreateElementDTO>,
   ) {
-    const input = data.map((element) => makeCreateInput(element))
+    const input = data.map((element) => {
+      const parentElement = this.elements.get(element.parentElementId as string)
+      const slug = createSlug(element.slug, parentElement?.originId)
+
+      return makeCreateInput({
+        ...element,
+        slug,
+      })
+    })
 
     const {
       createElements: { elements },
@@ -205,7 +214,7 @@ export class ElementService
       return []
     }
 
-    const elements = [
+    const elements: Array<IElementDTO> = [
       elementTrees[0],
       ...(elementTrees[0]?.descendantElements ?? []),
     ]
@@ -222,41 +231,26 @@ export class ElementService
   @transaction
   public update = _async(function* (
     this: ElementService,
-    entity: IEntity,
+    element: IElement,
     input: IUpdateElementDTO,
   ) {
-    const update = makeUpdateInput(input)
+    const slug = createSlug(input.slug, element.originId)
+
+    const update = makeUpdateInput({
+      ...input,
+      slug,
+    })
 
     const {
       updateElements: { elements },
     } = yield* _await(
       elementApi.UpdateElements({
-        where: { id: entity.id },
+        where: { id: element.id },
         update,
       }),
     )
 
-    return elements.map((element) => this.writeCache(element))
-  })
-
-  @modelFlow
-  @transaction
-  public updateElementsPropTransformationJs = _async(function* (
-    this: ElementService,
-    element: IElement,
-    newPropTransformJs: string,
-  ) {
-    const input: ElementUpdateInput = {
-      propTransformationJs: newPropTransformJs,
-    }
-
-    const updatedElement = yield* _await(this.update(element, input))
-
-    if (!updatedElement[0]) {
-      throw new Error('Update element prop failed')
-    }
-
-    return updatedElement[0]
+    return elements.map((e: IElementDTO) => this.writeCache(e))
   })
 
   /**
@@ -679,6 +673,81 @@ element is new parentElement's first child
     ),
   )
 
+  @computed
+  get elementSlugs() {
+    return [...this.elements.values()].map((e) => e.slug)
+  }
+
+  // handle slug creation where many duplicates for the same element exists
+  private createDuplicateSlug(element: IElement) {
+    const slug_root = `${element.slug}_duplicate`
+
+    if (!this.elementSlugs.includes(slug_root)) {
+      return slug_root
+    }
+
+    // find how many slug with following format `${slug_root}${index}`
+    const duplicates = this.elementSlugs.filter((s) => s.startsWith(slug_root))
+
+    /**
+     * Normally next_index = duplicates.length
+     * However, we need to make sure that index isn't used by user
+     */
+    const next_index = until(
+      (x: number) => !duplicates.includes(`${slug_root}${x}`),
+      (v: number) => v + 1,
+    )(duplicates.length)
+
+    return `${slug_root}${next_index}`
+  }
+
+  private async recursiveDuplicate(element: IElement, parent: IElement) {
+    const duplicate_slug = this.createDuplicateSlug(element)
+
+    const createInput: ElementCreateInput = makeDuplicateInput(
+      element,
+      duplicate_slug,
+    )
+
+    const {
+      createElements: {
+        elements: [createdElement],
+      },
+    } = await elementApi.CreateElements({ input: createInput })
+
+    if (!createdElement) {
+      throw new Error('No elements created')
+    }
+
+    const elementModel = this.writeCache(createdElement)
+    const lastChildId = parent.children[parent.children.length - 1]?.id
+
+    if (!lastChildId) {
+      await this.attachElementAsFirstChild({
+        elementId: elementModel.id,
+        parentElementId: parent.id,
+      })
+    } else {
+      await this.attachElementAsNextSibling({
+        elementId: elementModel.id,
+        targetElementId: lastChildId,
+      })
+    }
+
+    const children = await Promise.all(
+      element.children.map((child) =>
+        this.recursiveDuplicate(child, elementModel),
+      ),
+    )
+
+    const oldToNewIdMap: Map<string, IElement> = children.reduce(
+      (a, m) => new Map([...a, ...m]),
+      new Map([[element.id, elementModel]]),
+    )
+
+    return oldToNewIdMap
+  }
+
   @modelFlow
   @transaction
   public cloneElement = _async(
@@ -689,57 +758,18 @@ element is new parentElement's first child
         targetElement: IElement,
         targetParent: IElement,
       ) {
-        const createdElements = new Array<IElement>()
-        const oldToNewIdMap = new Map<string, string>()
+        const oldToNewIdMap = yield* _await(
+          this.recursiveDuplicate(targetElement, targetParent),
+        )
 
-        const recursiveDuplicate = async (
-          element: IElement,
-          parent: IElement,
-        ) => {
-          const createInput: ElementCreateInput = makeDuplicateInput(element)
+        console.log(oldToNewIdMap)
 
-          const {
-            createElements: {
-              elements: [createdElement],
-            },
-          } = await elementApi.CreateElements({ input: createInput })
-
-          if (!createdElement) {
-            throw new Error('No elements created')
-          }
-
-          const elementModel = this.writeCache(createdElement)
-          const lastChildId = parent.children[parent.children.length - 1]?.id
-
-          if (!lastChildId) {
-            await this.attachElementAsFirstChild({
-              elementId: elementModel.id,
-              parentElementId: parent.id,
-            })
-          } else {
-            await this.attachElementAsNextSibling({
-              elementId: elementModel.id,
-              targetElementId: lastChildId,
-            })
-          }
-
-          oldToNewIdMap.set(element.id, elementModel.id)
-          createdElements.push(elementModel)
-
-          for (const child of element.children) {
-            await recursiveDuplicate(child, elementModel)
-          }
-
-          return elementModel
-        }
-
-        yield* _await(recursiveDuplicate(targetElement, targetParent))
-
+        const createdElements = [...oldToNewIdMap.values()]
         // re-attach the prop map bindings now that we have the new ids
         const allInputs = [targetElement, ...targetElement.descendants]
 
         for (const inputElement of allInputs) {
-          const newId = oldToNewIdMap.get(inputElement.id)
+          const newId = oldToNewIdMap.get(inputElement.id)?.id
 
           if (!newId) {
             throw new Error(`Could not find new id for ${inputElement.id}`)
@@ -758,7 +788,7 @@ element is new parentElement's first child
               this.createPropMapBinding(duplicated, {
                 elementId: newId,
                 targetElementId: propMapBinding.targetElementId
-                  ? oldToNewIdMap.get(propMapBinding.targetElementId)
+                  ? oldToNewIdMap.get(propMapBinding.targetElementId)?.id
                   : undefined,
                 targetKey: propMapBinding.targetKey,
                 sourceKey: propMapBinding.sourceKey,
@@ -783,6 +813,7 @@ element is new parentElement's first child
         }
 
         const name = element.label
+        const slug = element.slug
         const elementId = element.id
         const parentElement = element.parentElement
         const prevSibling = element.prevSibling
@@ -808,6 +839,7 @@ element is new parentElement's first child
             this.create([
               {
                 name,
+                slug,
                 renderComponentTypeId: createdComponent?.id,
                 parentElementId: parentElement.id,
               },
@@ -831,6 +863,7 @@ element is new parentElement's first child
         return yield* _await(
           this.createElementAsNextSibling({
             name,
+            slug,
             renderComponentTypeId: createdComponent?.id,
             parentElementId: parentElement.id,
             prevSiblingId: prevSibling.id,

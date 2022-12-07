@@ -4,6 +4,7 @@ import { ElementFragment } from './element.fragment.graphql.gen'
 
 export interface ICreateElementDTO {
   id?: string
+  slug: string
   name?: Nullable<string>
   renderComponentTypeId?: Nullable<string>
   atomId?: Nullable<string>
@@ -18,6 +19,7 @@ export interface ICreateElementDTO {
 
 export interface IUpdateElementDTO {
   name?: Nullable<string>
+  slug: string
   renderComponentTypeId?: Nullable<string>
   atomId?: Nullable<string>
   renderForEachPropKey?: Nullable<string>
@@ -27,6 +29,7 @@ export interface IUpdateElementDTO {
   props?: Nullable<IPropData>
   preRenderActionId?: Nullish<string>
   postRenderActionId?: Nullish<string>
+  propTransformationJs?: Nullish<string>
 }
 
 /**
@@ -36,6 +39,7 @@ export type IUpdateBaseElementDTO = Pick<
   IUpdateElementDTO,
   | 'atomId'
   | 'name'
+  | 'slug'
   | 'renderIfPropKey'
   | 'renderForEachPropKey'
   | 'renderComponentTypeId'
