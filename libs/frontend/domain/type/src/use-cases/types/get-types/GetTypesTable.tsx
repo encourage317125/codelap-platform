@@ -5,14 +5,13 @@ import type {
 } from '@codelab/frontend/abstract/core'
 import { PageType } from '@codelab/frontend/abstract/types'
 import { Spin, Table } from 'antd'
-import type { TableProps } from 'antd/lib/table/Table'
 import { observer } from 'mobx-react-lite'
 import { useRouter } from 'next/router'
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import scrollIntoView from 'scroll-into-view'
 import { NestedTypeTable } from './NestedTypeTable'
-import { useTypesTable } from './useGetTypesTable'
-import { useGetTypesTableData } from './useGetTypesTableData'
+import { useTypesTable } from './useTypesTable'
+import { useTypesTableData } from './useTypesTableData'
 
 const SCROLL_ROW_CLASS_NAME = 'scroll-row'
 
@@ -21,48 +20,41 @@ export const GetTypesTable = observer<{
   typeService: ITypeService
   fieldService: IFieldService
 }>(({ typeId, typeService, fieldService }) => {
-  const {
-    currentPage,
-    pageSize,
-    entityIdsOfCurrentPage,
-    totalEntitiesCount,
-    types,
-    typesList,
-  } = typeService
-
-  const { isLoadingBaseTypes, isLoadingTypeDependencies, getBaseTypes } =
-    useGetTypesTableData(typeService)
-
-  const { columns, rowSelection } = useTypesTable({
-    typeService,
-    isLoadingTypeDependencies,
-    fieldService,
-  })
-
-  useEffect(() => {
-    void getBaseTypes({})
-  }, [])
-
-  const onChange: TableProps<IAnyType>['onChange'] = (
-    pagination,
-    filters,
-    sorter,
-    extra,
-  ) => {
-    const { current, pageSize: newPageSize } = pagination
-    const name = filters.name?.[0]?.toString() ?? ''
-
-    return getBaseTypes({
-      page: current,
-      pageSize: newPageSize,
-      where: {
-        name,
-      },
-    })
-  }
-
+  const { types, typesList } = typeService
+  const { isLoadingAllTypes, getAllTypes } = useTypesTableData(typeService)
+  const [curPage, setCurPage] = useState(1)
+  const [curPageSize, setCurPageSize] = useState(25)
   const [rowClassReady, setRowClassReady] = React.useState(false)
   const router = useRouter()
+
+  const { columns, rowSelection, baseTypeOptions, baseTypeWhere, pagination } =
+    useTypesTable({
+      typeService,
+      isLoadingTypeDependencies: isLoadingAllTypes,
+      fieldService,
+    })
+
+  const handlePageChange = useCallback(
+    (page: number, pageSize: number) => {
+      setCurPage(page)
+      setCurPageSize(pageSize)
+      pagination.onChange?.(page, pageSize)
+    },
+    [pagination, setCurPage],
+  )
+
+  useEffect(() => {
+    void getAllTypes(
+      {
+        name: baseTypeWhere?.name ?? '',
+        id_IN: [typeId ?? ''],
+      },
+      {
+        offset: baseTypeOptions.offset ?? undefined,
+        limit: baseTypeOptions.limit ?? undefined,
+      },
+    )
+  }, [baseTypeOptions, baseTypeWhere, getAllTypes, typeId])
 
   /**
    * Change the current page to the page containing the current type
@@ -76,8 +68,7 @@ export const GetTypesTable = observer<{
       }
 
       return Math.ceil(
-        (typeService.entityIdsOfCurrentPage.indexOf(currentType.id) + 1) /
-          pageSize,
+        (typesList.findIndex((t) => t.id === currentType.id) + 1) / curPageSize,
       )
     }
 
@@ -85,10 +76,15 @@ export const GetTypesTable = observer<{
       const page = findPageOfCurrentType()
 
       if (page) {
-        getBaseTypes({ page, pageSize }).catch(() => undefined)
+        handlePageChange(page, curPageSize)
+
+        /**
+         * Removing the current type id from the url because there is no use for it anymore
+         */
+        router.push(PageType.Type).catch((e) => console.error(e))
       }
     }
-  }, [typeId, pageSize, entityIdsOfCurrentPage])
+  }, [router, typeId, typesList, types, curPageSize, handlePageChange])
 
   /**
    * Scroll to the current type to make sure it is visible
@@ -103,27 +99,16 @@ export const GetTypesTable = observer<{
         },
       })
     }
-  }, [typeId, pageSize, rowClassReady, entityIdsOfCurrentPage])
-
-  /**
-   * remove current type id from url
-   */
-  useEffect(() => {
-    if (typeId) {
-      router.push(PageType.Type).catch((e) => console.error(e))
-    }
-  }, [router, typeId])
+  }, [typeId, rowClassReady])
 
   return (
     <Table<IAnyType>
       columns={columns}
-      dataSource={typesList.filter((type) =>
-        entityIdsOfCurrentPage.includes(type.id),
-      )}
+      dataSource={typesList}
       expandable={{
         defaultExpandedRowKeys: [typeId ?? ''],
         expandedRowRender: (type) =>
-          isLoadingBaseTypes ? (
+          isLoadingAllTypes ? (
             <Spin />
           ) : (
             <NestedTypeTable
@@ -133,13 +118,12 @@ export const GetTypesTable = observer<{
             />
           ),
       }}
-      loading={isLoadingBaseTypes}
-      onChange={onChange}
+      loading={isLoadingAllTypes}
       pagination={{
-        position: ['bottomCenter'],
-        pageSize,
-        current: currentPage,
-        total: totalEntitiesCount,
+        ...pagination,
+        current: curPage,
+        pageSize: curPageSize,
+        onChange: handlePageChange,
       }}
       rowClassName={(record) => {
         if (record.id === typeId) {
