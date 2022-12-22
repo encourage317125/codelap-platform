@@ -60,7 +60,7 @@ resource "vercel_project" "builder" {
     {
       target = ["production", "preview"]
       key    = "AUTH0_AUDIENCE"
-      value = "${var.auth0_issuer_base_url}api/v2"
+      value = "${var.auth0_issuer_base_url}api/v2/"
     },
     # Neo4j
     {
