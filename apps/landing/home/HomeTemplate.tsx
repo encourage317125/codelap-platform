@@ -29,7 +29,7 @@ const Content = ({ children }: PropsWithChildren) => {
   return <section>{children}</section>
 }
 
-export const HomeTemplate = ({ children }: HomeTemplateProps) => {
+const HomeTemplate = ({ children }: HomeTemplateProps) => {
   const isMobileOrTablet = useMobileOrTabletMediaQuery()
 
   if (typeof window === 'undefined') {
@@ -70,3 +70,5 @@ export const HomeTemplate = ({ children }: HomeTemplateProps) => {
 //     <Footer></Footer>
 //   </LayoutTest>
 // )
+
+export default HomeTemplate
