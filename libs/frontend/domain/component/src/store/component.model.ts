@@ -1,10 +1,10 @@
 import type { IComponent, IComponentDTO } from '@codelab/frontend/abstract/core'
-import { COMPONENT_NODE_TYPE, IElement } from '@codelab/frontend/abstract/core'
+import { COMPONENT_NODE_TYPE } from '@codelab/frontend/abstract/core'
 import { ElementTreeService } from '@codelab/frontend/domain/element'
 import type { InterfaceType } from '@codelab/frontend/domain/type'
 import { typeRef } from '@codelab/frontend/domain/type'
 import type { Ref } from 'mobx-keystone'
-import { ExtendedModel, idProp, model, modelAction, prop } from 'mobx-keystone'
+import { ExtendedModel, idProp, model, prop } from 'mobx-keystone'
 
 const hydrate = (component: IComponentDTO) => {
   return new Component({
@@ -39,14 +39,5 @@ export class Component
     this.api = typeRef(fragment.api.id) as Ref<InterfaceType>
 
     return this
-  }
-
-  @modelAction
-  override initTree(rootElement: IElement, elements: Array<IElement>) {
-    super.initTree(rootElement, elements)
-
-    this.elementTree.elementsList.forEach((e) => e.setOriginId(this.id))
-
-    return this.elementTree
   }
 }

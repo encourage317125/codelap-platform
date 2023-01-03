@@ -182,7 +182,7 @@ export class ElementService
   ) {
     const input = data.map((element) => {
       const parentElement = this.elements.get(element.parentElementId as string)
-      const slug = createSlug(element.slug, parentElement?.originId)
+      const slug = createSlug(element.slug, parentElement?.baseId)
 
       return makeCreateInput({
         ...element,
@@ -233,7 +233,7 @@ export class ElementService
     element: IElement,
     input: IUpdateElementDTO,
   ) {
-    const slug = createSlug(input.slug, element.originId)
+    const slug = createSlug(input.slug, element.baseId)
 
     const update = makeUpdateInput({
       ...input,
@@ -760,8 +760,6 @@ element is new parentElement's first child
         const oldToNewIdMap = yield* _await(
           this.recursiveDuplicate(targetElement, targetParent),
         )
-
-        console.log(oldToNewIdMap)
 
         const createdElements = [...oldToNewIdMap.values()]
         // re-attach the prop map bindings now that we have the new ids
