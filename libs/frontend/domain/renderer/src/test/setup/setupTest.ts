@@ -118,6 +118,8 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
       name: '02',
       slug: '02-slug',
       props: new Prop({}),
+      slug: `02`,
+      originId: '',
     })
 
     const compRootElementId = v4()
@@ -132,6 +134,8 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
 
     data.componentRootElement = new Element({
       id: compRootElementId,
+      slug: `${compRootElementId}-01`,
+      originId: data.componentToRender.id,
       name: '01',
       slug: 'component.rootElement-slug',
       customCss: '',
@@ -192,6 +196,20 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
           {}
         )
     }`,
+    })
+
+    data.componentInstanceElementToRender = new Element({
+      id: v4(),
+      name: '01',
+      slug: '01-instance',
+      originId: data.elementToRender.id,
+      renderComponentType: componentRef(data.componentToRender),
+      props: new Prop({
+        id: v4(),
+        data: frozen({
+          componentProp: 'instance',
+        }),
+      }),
     })
 
     const typeService = new TypeService({

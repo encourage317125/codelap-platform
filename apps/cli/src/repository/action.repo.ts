@@ -20,10 +20,15 @@ export const importActions = async (
   for (const action of actions) {
     if (action.type === IActionKind.CodeAction) {
       codeActions.push(action as OGM_TYPES.CodeAction)
+
+      continue
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (action.type === IActionKind.ApiAction) {
       apiActions.push(action as OGM_TYPES.ApiAction)
+
+      continue
     }
 
     throw new Error(`Unknown action type : ${action.type}`)
@@ -49,6 +54,14 @@ export const importActions = async (
       id: action.id,
       name: action.name,
       type: action.type,
+      successAction: {
+        ApiAction: connectNode(action.successAction?.id),
+        CodeAction: connectNode(action.successAction?.id),
+      },
+      errorAction: {
+        ApiAction: connectNode(action.errorAction?.id),
+        CodeAction: connectNode(action.errorAction?.id),
+      },
       config: { create: { node: { data: action.config.data } } },
       store: connectNode(storeId),
     })),
