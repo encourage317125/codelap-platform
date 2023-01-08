@@ -12,15 +12,32 @@ export const importFields = async (createFieldsDTO: Array<ICreateFieldDTO>) => {
 
     await fieldRepository.upsertField(
       {
-        id: field.id,
-        name: field.name,
-        key: field.key,
-        description: field.description,
-      },
-      {
+        input: {
+          id: field.id,
+          name: field.name,
+          key: field.key,
+          description: field.description,
+        },
         interfaceTypeId: field.interfaceTypeId,
         fieldTypeId: field.fieldType,
       },
+      () => ({
+        AND: [
+          {
+            key: field.key,
+          },
+          {
+            api: { id: field.interfaceTypeId },
+          },
+          // {
+          //   fieldTypeConnection: {
+          //     node: {
+          //       id: existingType.existingId,
+          //     },
+          //   },
+          // },
+        ],
+      }),
     )
   }
 }

@@ -86,9 +86,10 @@ describe('_app page', () => {
     cy.getSider()
       .find('.ant-page-header-heading')
       .getButton({ icon: 'plus' })
+      .should('exist')
       .click()
 
-    cy.getModal().findByLabelText('Name').type(pageName)
+    cy.getModal().should('be.visible').findByLabelText('Name').type(pageName)
     cy.getModal().findByLabelText('Slug').type(pageSlug)
     cy.getModal()
       .getModalAction(/Create Page/)
