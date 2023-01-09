@@ -5,9 +5,9 @@
 
 <!-- This is a short description on the Pull Request -->
 
-## Screencast Video
+## Video or Image
 
-<-- Record a short video showing how the new feature works -->
+<-- Add video or image showing how the new feature works -->
 
 ## Related Issue(s)
 
