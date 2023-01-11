@@ -66,9 +66,11 @@ export const ElementWrapper = observer<ElementWrapperProps>(
     renderService.logRendered(element, renderOutputs)
 
     // Use mapOutput because the output may be array or a single item
-    const Rendered = mapOutput(renderOutputs, (renderOutput) => {
-      // Render the element's children
-
+    /**
+     * Generates an ArrayOrSingle of functions that accepts additional props
+     * and will return the React Elements with the attached additional props
+     */
+    const renderOutputWithProps = mapOutput(renderOutputs, (renderOutput) => {
       const children = renderOutput.stop
         ? undefined
         : renderService.renderChildren(renderOutput)
@@ -80,28 +82,36 @@ export const ElementWrapper = observer<ElementWrapperProps>(
       const ReactComponent = getReactComponent(renderOutput)
       const extractedProps = extractValidProps(ReactComponent, renderOutput)
 
-      const IntermediateChildren = jsx(
-        ReactComponent,
-        // merge because some refs are not resolved
-        mergeProps(extractedProps, rest),
-        children,
-      )
-
       const withMaybeProviders = withMaybeGlobalPropsProvider(
         renderOutput,
         globalPropsContext,
       )
 
-      return withMaybeProviders(IntermediateChildren)
+      return (props?: IPropData) => {
+        const IntermediateChildren = jsx(
+          ReactComponent,
+          // merge because some refs are not resolved
+          mergeProps(extractedProps, rest, props),
+          children,
+        )
+
+        return withMaybeProviders(IntermediateChildren)
+      }
     })
 
-    // wrap to div if not draggable so that its view is the same as in builder mode
+    // to be used for dnd to be able to add necessary props later
+    const makeRenderedElements = (moreProps?: IPropData) => {
+      if (Array.isArray(renderOutputWithProps)) {
+        return renderOutputWithProps.map((fn) => fn(moreProps))
+      }
+
+      return renderOutputWithProps(moreProps)
+    }
+
+    // we need to include additional props from dnd so we need to render the element there
     const WrappedElement = renderService.isBuilder
-      ? makeDraggableElement({ children: Rendered, element })
-      : React.createElement('div', {
-          children: Rendered,
-          style: { position: 'relative' },
-        })
+      ? makeDraggableElement({ element, makeRenderedElements })
+      : makeRenderedElements()
 
     return React.createElement(
       ErrorBoundary,
