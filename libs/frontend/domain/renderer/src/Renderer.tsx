@@ -1,5 +1,6 @@
 import type { IRenderer } from '@codelab/frontend/abstract/core'
 import { ROOT_RENDER_CONTAINER_ID } from '@codelab/frontend/abstract/core'
+import type { WithStyleProp } from '@codelab/frontend/abstract/types'
 import createCache from '@emotion/cache'
 import { CacheProvider } from '@emotion/react'
 import ErrorBoundary from 'antd/lib/alert/ErrorBoundary'
@@ -36,19 +37,23 @@ const emotionCache = createCache({
   prepend: false,
 })
 
-export const Renderer = observer<RendererRoot>(({ renderRoot }) => {
-  return (
-    <ErrorBoundary>
-      <CacheProvider value={emotionCache}>
-        <div
-          id={ROOT_RENDER_CONTAINER_ID}
-          style={{ minHeight: '100%', transform: 'translatex(0)' }}
-        >
-          {renderRoot()}
-        </div>
-      </CacheProvider>
-    </ErrorBoundary>
-  )
-})
+export const Renderer = observer<WithStyleProp<RendererRoot>, HTMLDivElement>(
+  ({ renderRoot, style = {} }, ref) => {
+    return (
+      <ErrorBoundary>
+        <CacheProvider value={emotionCache}>
+          <div
+            id={ROOT_RENDER_CONTAINER_ID}
+            ref={ref}
+            style={{ minHeight: '100%', transform: 'translatex(0)', ...style }}
+          >
+            {renderRoot()}
+          </div>
+        </CacheProvider>
+      </ErrorBoundary>
+    )
+  },
+  { forwardRef: true },
+)
 
 Renderer.displayName = 'Renderer'
