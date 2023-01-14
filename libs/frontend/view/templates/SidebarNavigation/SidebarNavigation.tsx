@@ -8,7 +8,7 @@ import { sidebarWidth } from '../Dashboard'
 
 export interface SidebarNavigationProps {
   // Home icon
-  homeItem: MenuProps['items']
+  // homeItem: MenuProps['items']
   // Default menu items
   primaryItems?: MenuProps['items']
   // Menu items at the bottom
