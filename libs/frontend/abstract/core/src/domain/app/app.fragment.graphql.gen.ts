@@ -42,6 +42,7 @@ export type BuilderPageFragment = {
   isProvider: boolean
   rootElement: { descendantElements: Array<ElementFragment> } & ElementFragment
   app: { id: string }
+  pageContainerElement?: { id: string } | null
 }
 
 export type PageBuilderAppFragment = {
@@ -113,6 +114,9 @@ export const BuilderPageFragmentDoc = gql`
       id
     }
     isProvider
+    pageContainerElement {
+      id
+    }
   }
   ${ElementFragmentDoc}
 `

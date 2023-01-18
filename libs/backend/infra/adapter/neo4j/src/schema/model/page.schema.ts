@@ -11,6 +11,10 @@ export const pageSchema = gql`
     app: App! @relationship(type: "PAGES", direction: IN)
     getServerSideProps: String
     isProvider: Boolean! @default(value: false)
+    # this is an element on _app page tree inside of which child pages content is rendered
+    # default is root "Body" element, but can be changed using dropdown on Page Inspector tab
+    pageContainerElement: Element
+      @relationship(type: "CHILD_PAGE_CONTAINER_ELEMENT", direction: OUT)
   }
 
   extend type Page

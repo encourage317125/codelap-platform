@@ -52,6 +52,9 @@ fragment BuilderPage on Page {
     id
   }
   isProvider
+  pageContainerElement {
+    id
+  }
 }
 
 fragment PageBuilderApp on App {

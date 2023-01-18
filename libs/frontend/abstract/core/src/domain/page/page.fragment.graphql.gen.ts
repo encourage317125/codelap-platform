@@ -11,6 +11,7 @@ export type PageFragment = {
   isProvider: boolean
   app: { id: string }
   rootElement: { id: string; name?: string | null }
+  pageContainerElement?: { id: string } | null
 }
 
 export const PageFragmentDoc = gql`
@@ -27,6 +28,9 @@ export const PageFragmentDoc = gql`
       name
     }
     isProvider
+    pageContainerElement {
+      id
+    }
   }
 `
 
