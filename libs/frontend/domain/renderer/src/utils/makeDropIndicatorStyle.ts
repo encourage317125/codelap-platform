@@ -12,7 +12,7 @@ export const makeDropIndicatorStyle = (
   dragPosition: DragPosition,
   customStyles?: Style,
 ) => {
-  const indicatorStyle: Style = { ...customStyles }
+  const indicatorStyle: Style = { ...customStyles, zIndex: 100 }
 
   switch (dragPosition) {
     case DragPosition.After:
