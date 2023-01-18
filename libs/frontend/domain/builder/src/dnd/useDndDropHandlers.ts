@@ -1,6 +1,7 @@
 import type {
   BuilderDragData,
   BuilderDropData,
+  ICreateElementDTO,
   IElement,
   IElementService,
   IElementTree,
@@ -12,6 +13,33 @@ import type { DragEndEvent } from '@dnd-kit/core'
 export interface UseDndDropHandler {
   handleCreateElement: (event: DragEndEvent) => Promise<void>
   handleMoveElement: (event: DragEndEvent) => Promise<void>
+}
+
+const makeAutoIncrementedSlug = (
+  elementTree: IElementTree,
+  input: ICreateElementDTO,
+) => {
+  const existingSameAtoms = elementTree.elementsList.filter(({ atom }) => {
+    return atom?.id === input.atomId
+  })
+
+  if (existingSameAtoms.length) {
+    const newCount = existingSameAtoms.length + 1
+
+    return `${input.slug}-${newCount}`
+  }
+
+  return input.slug
+}
+
+const validateUniqueSlug = (elementTree: IElementTree, slug: string) => {
+  const hasSameSlug = elementTree.elementsList.some(
+    (element) => element.slug === slug,
+  )
+
+  if (hasSameSlug) {
+    throw new Error(`Found element with the same slug: ${slug}`)
+  }
 }
 
 export const useDndDropHandler = (
@@ -52,7 +80,12 @@ export const useDndDropHandler = (
     // for not mutating the actual input from the components tab
     const createElementDto = {
       ...createElementInput,
+      slug: makeAutoIncrementedSlug(elementTree, createElementInput),
     }
+
+    // theres still a chance that the auto-incremented slug already exists
+    // we can prevent it from being sent to backend by throwing early
+    validateUniqueSlug(elementTree, createElementDto.slug)
 
     let newElement: Nullable<IElement> = null
 
