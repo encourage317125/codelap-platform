@@ -1,3 +1,3 @@
-# Codelab.ai
+# Codelab.app
 
-Checkout [Codelab.ai Wiki](https://wiki.codelab.ai) to get started!
+Checkout [Codelab.app Wiki](https://wiki.codelab.app) to get started!
