@@ -5,6 +5,7 @@ import {
   StringValidationRules,
 } from '@codelab/frontend/abstract/core'
 import { PrimitiveTypeKind } from '@codelab/shared/abstract/codegen'
+import { nonEmptyString } from '@codelab/shared/utils'
 import type { JSONSchemaType } from 'ajv'
 
 export const createFieldSchema: JSONSchemaType<ICreateFieldDTO> = {
@@ -18,7 +19,10 @@ export const createFieldSchema: JSONSchemaType<ICreateFieldDTO> = {
         component: () => null,
       },
     },
-    key: { type: 'string', autoFocus: true },
+    key: {
+      autoFocus: true,
+      ...nonEmptyString,
+    },
     name: { type: 'string', nullable: true },
     description: { type: 'string', nullable: true },
     validationRules: {
@@ -117,9 +121,9 @@ export const createFieldSchema: JSONSchemaType<ICreateFieldDTO> = {
      */
     fieldType: { type: 'string', nullable: true },
     defaultValues: {
-      nullable: true,
-      // schema limitation adding object or array to type causes an error
-      type: ['string', 'number', 'boolean', 'integer'],
+      // by using ref, this can support array or object type that
+      // has items or properties of any possible default value type
+      $ref: 'customTypes#/definitions/fieldDefaultValues',
     },
   },
   required: ['id', 'key', 'fieldType'],

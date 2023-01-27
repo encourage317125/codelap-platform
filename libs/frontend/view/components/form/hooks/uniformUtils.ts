@@ -23,7 +23,41 @@ export const connectUniformSubmitRef =
 
 const ajv = new Ajv({ allErrors: true, useDefaults: true, strict: false })
 addFormats(ajv)
-addKeywords(ajv, ['typeof'])
+addKeywords(ajv, ['typeof', 'transform'])
+// we can add custom type definitions here that may be too complex to do in the actual schema
+ajv.addSchema({
+  $id: 'customTypes',
+  definitions: {
+    // this allows validation on array or object type that references itself
+    fieldDefaultValues: {
+      oneOf: [
+        {
+          type: 'string',
+          nullable: true,
+        },
+        {
+          type: 'boolean',
+        },
+        {
+          type: ['number', 'integer'],
+          nullable: true,
+        },
+        {
+          type: 'array',
+          nullable: true,
+          items: { $ref: '#/definitions/fieldDefaultValues' },
+        },
+        {
+          type: 'object',
+          nullable: true,
+          patternProperties: {
+            '^.*$': { $ref: '#/definitions/fieldDefaultValues' },
+          },
+        },
+      ],
+    },
+  },
+})
 
 export const createValidator = (schema: Schema, context?: FormContextValue) => {
   const validator = ajv.compile(schema)
