@@ -39,7 +39,7 @@ component
   rootElement
     decendantElements
    */
-  loadRenderedComponentTree(
-    renderedComponentFragment: RenderedComponentFragment,
+  loadRenderedComponentsTree(
+    renderedComponentFragments: Array<RenderedComponentFragment>,
   ): void
 }

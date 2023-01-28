@@ -1,16 +1,29 @@
-import type { IInterfaceType } from '@codelab/frontend/abstract/core'
+import type { IRenderService } from '@codelab/frontend/abstract/core'
 import { useAsync } from 'react-use'
 import { useStore } from '../providers'
 
 interface RenderedPageProps {
   appId: string
   pageId: string
+  /**
+   * builder uses builderRenderService while preview uses appRenderService
+   */
+  renderService: IRenderService
+  /**
+   * indicates whether the hook is used inside builder page or preview page
+   */
+  isBuilder: boolean
 }
 
 /**
  * Fetch related data for rendering page, and load them into store
  */
-export const useRenderedPage = ({ appId, pageId }: RenderedPageProps) => {
+export const useRenderedPage = ({
+  appId,
+  pageId,
+  isBuilder,
+  renderService,
+}: RenderedPageProps) => {
   const {
     appService,
     storeService,
@@ -30,107 +43,110 @@ export const useRenderedPage = ({ appId, pageId }: RenderedPageProps) => {
       return null
     }
 
-    const [currentPage, providerPage] = app.pages
-      .sort((page) => (page.isProvider ? 1 : -1))
-      .map((page) => appService.load({ app, pageId: page.id }))
+    const providerPage = app.pages.find((page) => page.isProvider)
 
-    if (!currentPage) {
+    if (!providerPage) {
+      // TODO: redirect to 505 page
       return null
     }
 
-    const { pageElementTree: pageTree, page } = currentPage
+    appService.load({ app: app, pageId: providerPage.id })
 
-    // handle case when user initially opens _app page
-    // providerPage is undefined and currentPage is providers page
-    const { pageElementTree: appTree } = page.isProvider
-      ? currentPage
-      : providerPage ?? {}
+    // load types by chucks so UI is not blocked
+    typeService.loadTypesByChunks(types)
 
-    // type loading is quiet a heavy operation which takes up to 500ms of blocking time.
-    // split types loading into many chunks and queue each of them as a macrotask.
-    // this will unblock UI and allow other js to execute between them, which makes UI much more responsive.
-    await new Promise((resolve) =>
-      setTimeout(() => resolve(typeService.loadFields(types.interfaceTypes))),
-    )
+    // load components trees
+    componentService.loadRenderedComponentsTree(components)
 
-    await new Promise((resolve) =>
-      setTimeout(() => resolve(typeService.loadTypes(types))),
-    )
+    // write cache for resources
+    resourceService.load(resources)
 
-    await Promise.all(
-      Object.values(types.interfaceTypes).map(
-        (type) =>
-          new Promise((resolve) =>
-            setTimeout(() => {
-              const typeModel = typeService.type(type.id) as IInterfaceType
-
-              resolve(typeModel.load(type.fields))
-            }),
-          ),
-      ),
-    )
-
-    components.map((component) =>
-      componentService.loadRenderedComponentTree(component),
-    )
-
-    resources.map((resource) => resourceService.writeCache(resource))
-
-    // hydrate after types and resources
+    // hydrate store after types and resources
     const appStore = storeService.writeCache(app.store)
     appStore.state.setMany(appService.appsJson)
-    // appStore.state.set('redirectToPage', setCurrentPageId)
 
-    return {
-      app,
-      page,
-      pageTree,
-      appTree,
-      appStore,
-      components: componentService.componentList,
-    }
+    /** 
+     FIXME: mobx-keystone 1.2.0 requires frozen data to be serializable.
+    // appStore.state.set('redirectToPage', setCurrentPageId)
+    */
+
+    return { app }
   }, [])
 
   const currentPageData = useAsync(async () => {
     if (!commonPagesData.value) {
+      // commonPageData is not loaded yet
       return null
     }
 
-    const { app, appTree, appStore, components } = commonPagesData.value
-    const alreadyLoadedPage = pageService.pages.get(pageId)
+    const { app } = commonPagesData.value
 
-    if (alreadyLoadedPage?.elementTree) {
-      const pageTree = alreadyLoadedPage.elementTree
+    /**
+     * if page was not loaded before load it.
+     */
+    if (!app.pages.find((p) => p.id === pageId)) {
+      const { pages } = await pageService.getRenderedPage(pageId)
+      const [loadedPage] = pages
 
-      return {
-        page: alreadyLoadedPage,
-        pageTree,
-        appTree,
-        appStore,
-        components,
+      if (!loadedPage) {
+        // TODO: redirect to 404 page
+        return null
       }
+
+      app.pages.push(loadedPage)
     }
 
-    const { pages } = await pageService.getRenderedPage(pageId)
-    const [loadedPage] = pages
+    /**
+     * if page.elementTree exists no need to load it again
+     * NOTICE: existingPage may exist without tree check `appService.load`
+     */
+    const existingPage = pageService.pages.get(pageId)
 
-    if (!loadedPage) {
+    const { page, pageElementTree: pageTree } = existingPage?.elementTree
+      ? {
+          page: existingPage,
+          pageElementTree: existingPage.elementTree,
+        }
+      : appService.load({ app, pageId })
+
+    /**
+     * hot-reload makes commonPagesData contains invalid values, read from mobx store.
+     */
+    const appTree = pageService.pagesList.find((p) => p.isProvider)?.elementTree
+    const appStore = storeService.stores.get(app.store.id)
+    const components = componentService.componentList
+
+    if (!appStore) {
       return null
     }
 
-    app.pages.push(loadedPage)
-
-    const { pageElementTree: pageTree, page } = appService.load({
-      app,
-      pageId: loadedPage.id,
+    const renderer = await renderService.addRenderer({
+      id: page.id,
+      pageTree,
+      appTree,
+      components,
+      appStore,
+      isBuilder,
     })
 
-    return { page, pageTree, appTree, appStore, components }
-  }, [pageId, commonPagesData])
+    return {
+      app,
+      pageTree,
+      page,
+      renderer,
+      appTree,
+      components,
+      appStore,
+    }
+  }, [pageId, commonPagesData.loading])
 
   const loading = commonPagesData.loading || currentPageData.loading
   const error = commonPagesData.error ?? currentPageData.error
   const value = currentPageData.value
 
-  return { loading, error, value }
+  return {
+    loading,
+    error,
+    value,
+  }
 }

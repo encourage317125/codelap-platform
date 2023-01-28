@@ -4,6 +4,7 @@ import type {
   IElementTree,
 } from '@codelab/frontend/abstract/core'
 import { ROOT_RENDER_CONTAINER_ID } from '@codelab/frontend/abstract/core'
+import type { Maybe } from '@codelab/shared/abstract/types'
 import type { Active, DragStartEvent } from '@dnd-kit/core'
 import { DndContext, DragOverlay, pointerWithin } from '@dnd-kit/core'
 import { observer } from 'mobx-react-lite'
@@ -18,7 +19,7 @@ export const BuilderContext = observer<
   PropsWithChildren<{
     elementService: IElementService
     builderService: IBuilderService
-    elementTree?: IElementTree
+    elementTree: Maybe<IElementTree>
   }>
 >(({ children, elementService, builderService, elementTree }) => {
   const { onDragEnd, onDragStart, sensors } = useBuilderDnd(

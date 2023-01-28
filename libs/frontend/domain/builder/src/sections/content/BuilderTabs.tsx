@@ -10,11 +10,10 @@ import type {
 import { RendererTab } from '@codelab/frontend/abstract/core'
 import { extractErrorMessage } from '@codelab/frontend/shared/utils'
 import type { Maybe, Nullish } from '@codelab/shared/abstract/types'
-import { useWindowWidth } from '@react-hook/window-size'
 import { Alert, Layout, Spin, Tabs } from 'antd'
 import { Content, Header } from 'antd/lib/layout/layout'
 import { observer } from 'mobx-react-lite'
-import React, { useEffect, useRef, useState } from 'react'
+import React from 'react'
 import { BaseBuilder } from './BaseBuilder'
 import { BuilderComponent } from './Builder-Component'
 
@@ -42,43 +41,26 @@ export const BuilderTabs = observer<BuilderTabsProps>(
     componentService,
     builderRenderService,
   }) => {
-    const windowWidth = useWindowWidth()
-    const builderTabsRef = useRef<HTMLDivElement>(null)
-    const [builderTabsWidth, setBuilderTabsWidth] = useState(0)
-    useEffect(() => {
-      setBuilderTabsWidth(builderTabsRef.current?.clientWidth ?? 0)
-    }, [windowWidth])
-
-    const tabItems = [
-      {
-        label: 'Page',
-        key: RendererTab.Page,
-      },
-      {
-        label: 'Component',
-        key: RendererTab.Component,
-      },
-    ]
-
     return (
-      <Layout ref={builderTabsRef} style={{ height: '100%' }}>
+      <Layout style={{ height: '100%' }}>
         {error && <Alert message={extractErrorMessage(error)} type="error" />}
+        {isLoading && <Spin />}
         <Header style={{ background: 'rgba(0,0,0,0)', marginBottom: '5px' }}>
           <Tabs
             activeKey={builderService.activeTree}
             defaultActiveKey={RendererTab.Page}
-            items={tabItems}
             onChange={(key) => console.log(key)}
             type="card"
-          />
+          >
+            <Tabs.TabPane key={RendererTab.Page} tab="Page" />
+            <Tabs.TabPane key={RendererTab.Component} tab="Component" />
+          </Tabs>
         </Header>
-        {isLoading && <Spin />}
         <Content>
           {builderService.activeTree === RendererTab.Page ? (
             elementTree && renderer ? (
               <BaseBuilder
                 builderService={builderService}
-                builderTabsWidth={builderTabsWidth}
                 elementService={elementService}
                 elementTree={elementTree}
                 renderer={renderer}
