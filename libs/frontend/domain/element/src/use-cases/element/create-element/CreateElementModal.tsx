@@ -8,12 +8,7 @@ import type {
   IRenderService,
   IUserService,
 } from '@codelab/frontend/abstract/core'
-import {
-  SelectAction,
-  SelectAnyElement,
-  SelectAtom,
-  SelectComponent,
-} from '@codelab/frontend/domain/type'
+import { SelectAction, SelectAnyElement } from '@codelab/frontend/domain/type'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { ModalForm } from '@codelab/frontend/view/components'
 import type { UniformSelectFieldProps } from '@codelab/shared/abstract/types'
@@ -21,6 +16,7 @@ import { observer } from 'mobx-react-lite'
 import React from 'react'
 import tw from 'twin.macro'
 import { AutoField, AutoFields } from 'uniforms-antd'
+import RenderTypeCompositeField from '../../../components/RenderTypeCompositeField'
 import { SelectLinkElement } from '../../../components/SelectLinkElement'
 import { mapElementOption } from '../../../utils/elementOptions'
 import { createElementSchema } from './createElementSchema'
@@ -80,6 +76,9 @@ export const CreateElementModal = observer<CreateElementModalProps>(
     const model = {
       parentElementId: parentElement.id,
       owner: userService.user?.auth0Id,
+      // Needs to be null initially so that required sub-fields
+      // are not validated when nothing is selected yet
+      renderType: null,
     }
 
     const closeModal = () => elementService.createModal.close()
@@ -107,14 +106,13 @@ export const CreateElementModal = observer<CreateElementModalProps>(
           <AutoFields
             omitFields={[
               'parentElementId',
-              'atomId',
-              'renderComponentTypeId',
               'customCss',
               'guiCss',
               'propsData',
               'prevSiblingId',
               'preRenderActionId',
               'postRenderActionId',
+              'renderType',
             ]}
           />
           <AutoField
@@ -131,18 +129,10 @@ export const CreateElementModal = observer<CreateElementModalProps>(
             allElementOptions={selectChildrenElementOptions}
             name="prevSiblingId"
           />
-          <AutoField
-            component={(props: UniformSelectFieldProps) => (
-              <SelectAtom
-                error={props.error}
-                label={props.label}
-                name={props.name}
-                parent={parentElement.atom?.maybeCurrent}
-              />
-            )}
-            name="atomId"
+          <RenderTypeCompositeField
+            name="renderType"
+            parent={parentElement.atom?.maybeCurrent}
           />
-          <AutoField component={SelectComponent} name="renderComponentTypeId" />
           <AutoField component={SelectAction} name="preRenderActionId" />
           <AutoField component={SelectAction} name="postRenderActionId" />
         </ModalForm.Form>

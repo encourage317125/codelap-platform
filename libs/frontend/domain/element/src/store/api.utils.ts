@@ -5,13 +5,18 @@ import type {
   IInterfaceType,
   IUpdateElementDTO,
 } from '@codelab/frontend/abstract/core'
+import { RenderTypeEnum } from '@codelab/frontend/abstract/core'
 import { createSlug } from '@codelab/frontend/shared/utils'
 import type {
   ElementCreateInput,
   ElementUpdateInput,
 } from '@codelab/shared/abstract/codegen'
 import type { Maybe } from '@codelab/shared/abstract/types'
-import { connectNode, reconnectNode } from '@codelab/shared/data'
+import {
+  connectNode,
+  disconnectNode,
+  reconnectNode,
+} from '@codelab/shared/data'
 import { isNil } from 'ramda'
 import { v4 } from 'uuid'
 
@@ -32,8 +37,7 @@ export const makeCreateInput = (
 ): ElementCreateInput => {
   const {
     id = v4(),
-    renderComponentTypeId,
-    atomId,
+    renderType,
     name,
     slug,
     postRenderActionId,
@@ -48,9 +52,19 @@ export const makeCreateInput = (
     create: { node: { data: propsData ?? JSON.stringify({}) } },
   }
 
+  const renderAtomType =
+    renderType?.model === RenderTypeEnum.Atom
+      ? connectNode(renderType.id)
+      : undefined
+
+  const renderComponentType =
+    renderType?.model === RenderTypeEnum.Component
+      ? connectNode(renderType.id)
+      : undefined
+
   return {
-    renderComponentType: connectNode(renderComponentTypeId),
-    renderAtomType: connectNode(atomId),
+    renderComponentType,
+    renderAtomType,
     props,
     slug,
     postRenderActionId,
@@ -86,27 +100,50 @@ export const makeDuplicateInput = (
 export const makeUpdateInput = (
   input: IUpdateElementDTO,
 ): ElementUpdateInput => {
-  const renderAtomType = reconnectNode(input.atomId)
-  const renderComponentType = reconnectNode(input.renderComponentTypeId)
+  const {
+    renderType,
+    name,
+    slug,
+    postRenderActionId,
+    preRenderActionId,
+    props,
+    customCss,
+    guiCss,
+    renderForEachPropKey,
+    renderIfExpression,
+    propsData,
+  } = input
+
+  // If render type changes, we replace the existing `props` connected to the
+  // element with the new `props` from the default values of the new interface type
+  const updateProps: ElementUpdateInput['props'] = {
+    update: { node: { data: propsData ?? JSON.stringify(props) } },
+  }
+
+  // We need to disconnect the atom if render type changed to component or empty
+  const renderAtomType =
+    renderType?.model === RenderTypeEnum.Atom
+      ? reconnectNode(renderType.id)
+      : disconnectNode(undefined)
+
+  // We need to disconnect the component if render type changed to atom or empty
+  const renderComponentType =
+    renderType?.model === RenderTypeEnum.Component
+      ? reconnectNode(renderType.id)
+      : disconnectNode(undefined)
 
   return {
-    name: input.name,
+    name: name,
     renderAtomType,
-    slug: input.slug,
-    props: {
-      update: {
-        node: {
-          data: JSON.stringify(input.props),
-        },
-      },
-    },
-    customCss: input.customCss,
-    postRenderActionId: input.postRenderActionId || null,
-    preRenderActionId: input.preRenderActionId || null,
-    guiCss: input.guiCss,
-    renderForEachPropKey: input.renderForEachPropKey,
     renderComponentType,
-    renderIfExpression: input.renderIfExpression,
+    slug: slug,
+    props: updateProps,
+    customCss: customCss,
+    postRenderActionId: postRenderActionId || null,
+    preRenderActionId: preRenderActionId || null,
+    guiCss: guiCss,
+    renderForEachPropKey: renderForEachPropKey,
+    renderIfExpression: renderIfExpression,
   }
 }
 

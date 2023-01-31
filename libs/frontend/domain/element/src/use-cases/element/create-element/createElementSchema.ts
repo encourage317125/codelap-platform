@@ -1,4 +1,5 @@
 import type { ICreateElementDTO } from '@codelab/frontend/abstract/core'
+import { RenderTypeEnum } from '@codelab/frontend/abstract/core'
 import { nonEmptyString } from '@codelab/shared/utils'
 import type { JSONSchemaType } from 'ajv'
 
@@ -31,16 +32,6 @@ export const createElementSchema: JSONSchemaType<ICreateElementDTO> = {
       nullable: true,
       label: 'Linked by',
     },
-    atomId: {
-      type: 'string',
-      nullable: true,
-      label: 'Atom',
-    },
-    renderComponentTypeId: {
-      type: 'string',
-      nullable: true,
-      label: 'Component',
-    },
     customCss: {
       type: 'string',
       nullable: true,
@@ -62,6 +53,22 @@ export const createElementSchema: JSONSchemaType<ICreateElementDTO> = {
       type: 'string',
       label: 'Post Render action',
       nullable: true,
+    },
+    renderType: {
+      type: 'object',
+      label: 'Render Type',
+      nullable: true,
+      properties: {
+        id: {
+          type: 'string',
+        },
+        model: {
+          type: 'string',
+          enum: Object.values(RenderTypeEnum),
+          label: 'Render Type',
+        },
+      },
+      required: ['id', 'model'],
     },
   },
   required: ['slug'],
