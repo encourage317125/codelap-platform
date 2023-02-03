@@ -62,6 +62,7 @@ import { Element } from './element.model'
 import {
   CreateElementModalService,
   ElementModalService,
+  UpdateElementModalService,
 } from './element-modal.service'
 
 /**
@@ -82,7 +83,7 @@ export class ElementService
      */
     elements: prop(() => objectMap<IElement>()),
     createModal: prop(() => new CreateElementModalService({})),
-    updateModal: prop(() => new ElementModalService({})),
+    updateModal: prop(() => new UpdateElementModalService({})),
     deleteModal: prop(() => new ElementModalService({})),
 
     createPropMapBindingModal: prop(() => new ElementModalService({})),

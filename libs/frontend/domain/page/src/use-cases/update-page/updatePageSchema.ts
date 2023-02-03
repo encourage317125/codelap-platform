@@ -1,7 +1,10 @@
 import type { IUpdatePageDTO } from '@codelab/frontend/abstract/core'
 import { CodeMirrorField } from '@codelab/frontend/view/components'
 import { CodeMirrorLanguage } from '@codelab/shared/abstract/codegen'
-import { nonEmptyString } from '@codelab/shared/utils'
+import {
+  nonEmptyString,
+  spacedLowercaseAlphanumericRegex,
+} from '@codelab/shared/utils'
 import type { JSONSchemaType } from 'ajv'
 
 export const updatePageSchema: JSONSchemaType<
@@ -16,9 +19,11 @@ export const updatePageSchema: JSONSchemaType<
     name: {
       autoFocus: true,
       ...nonEmptyString,
+      pattern: spacedLowercaseAlphanumericRegex.source,
     },
     slug: {
       ...nonEmptyString,
+      disabled: true,
     },
     getServerSideProps: {
       type: 'string',

@@ -1,6 +1,9 @@
 import type { IUpdateBaseElementDTO } from '@codelab/frontend/abstract/core'
 import { RenderTypeEnum } from '@codelab/frontend/abstract/core'
-import { nonEmptyString } from '@codelab/shared/utils'
+import {
+  nonEmptyString,
+  spacedLowercaseAlphanumericRegex,
+} from '@codelab/shared/utils'
 import type { JSONSchemaType } from 'ajv'
 
 export const updateElementSchema: JSONSchemaType<IUpdateBaseElementDTO> = {
@@ -11,9 +14,11 @@ export const updateElementSchema: JSONSchemaType<IUpdateBaseElementDTO> = {
       type: 'string',
       nullable: true,
       autoFocus: true,
+      pattern: spacedLowercaseAlphanumericRegex.source,
     },
     slug: {
       ...nonEmptyString,
+      disabled: true,
     },
     renderIfExpression: {
       type: 'string',

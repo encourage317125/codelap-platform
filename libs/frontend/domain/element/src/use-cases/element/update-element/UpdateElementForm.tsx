@@ -6,13 +6,15 @@ import type {
   RenderType,
 } from '@codelab/frontend/abstract/core'
 import { RenderTypeEnum } from '@codelab/frontend/abstract/core'
-import { SelectAction } from '@codelab/frontend/domain/type'
+import { SelectAction, SlugField } from '@codelab/frontend/domain/type'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import type { UseTrackLoadingPromises } from '@codelab/frontend/view/components'
 import { AutoCompleteField, Form } from '@codelab/frontend/view/components'
+import type { Maybe } from '@codelab/shared/abstract/types'
 import { observer } from 'mobx-react-lite'
 import React, { useRef, useState } from 'react'
 import { AutoField, AutoFields } from 'uniforms-antd'
+import { AutoComputedElementNameField } from '../../../components/auto-computed-element-name'
 import RenderTypeCompositeField from '../../../components/RenderTypeCompositeField'
 import { updateElementSchema } from './updateElementSchema'
 
@@ -64,6 +66,14 @@ export const UpdateElementForm = observer<UpdateElementFormProps>(
     // Cache the initial element model, because when it updates it will interfere with what the user is typing
     const { current: model } = useRef(makeCurrentModel(element))
 
+    const { current: computeElementNameService } = useRef(
+      elementService.updateModal.computeElementNameService!,
+    )
+
+    const [renderType, setRenderType] = useState<Maybe<RenderTypeEnum>>(
+      model.renderType?.model,
+    )
+
     const onSubmit = (data: IUpdateElementDTO) => {
       const promise = elementService.update(element, data)
 
@@ -95,6 +105,16 @@ export const UpdateElementForm = observer<UpdateElementFormProps>(
         `}
         key={element.id}
         model={model}
+        onChange={(key, value) => {
+          key === 'renderType' && setRenderType(value?.model)
+
+          if (key === 'renderType.id' && renderType) {
+            computeElementNameService.setPickedRenderType({
+              model: renderType,
+              id: value,
+            })
+          }
+        }}
         onSubmit={onSubmit}
         onSubmitError={createNotificationHandler({
           title: 'Error while updating element',
@@ -103,6 +123,16 @@ export const UpdateElementForm = observer<UpdateElementFormProps>(
         schema={updateElementSchema}
       >
         {element.id}
+        <AutoComputedElementNameField
+          computeElementNameService={computeElementNameService}
+          defaultValue={model.name ?? undefined}
+          label="Name"
+          name="name"
+        />
+        <SlugField
+          name="slug"
+          srcString={computeElementNameService.computedName}
+        />
         <AutoFields
           omitFields={[
             'renderIfExpression',
@@ -114,6 +144,8 @@ export const UpdateElementForm = observer<UpdateElementFormProps>(
             'preRenderActionId',
             'postRenderActionId',
             'renderType',
+            'slug',
+            'name',
           ]}
         />
         <RenderTypeCompositeField name="renderType" />

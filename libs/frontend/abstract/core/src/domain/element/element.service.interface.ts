@@ -19,6 +19,7 @@ import type {
   IUpdatePropMapBindingDTO,
 } from '../prop'
 import type { IAuth0Id } from '../user'
+import type { IComputeElementNameService } from './compute-element-name.service.interface'
 import type {
   ICreateElementDTO,
   IElementDTO,
@@ -35,6 +36,12 @@ export interface CreateElementData {
 
 export interface CreateElementProperties {
   parentElement: IElement
+  computeElementNameService: IComputeElementNameService
+}
+
+export interface UpdateElementProperties {
+  element: IElement
+  computeElementNameService: IComputeElementNameService
 }
 
 export interface PropMapData {
@@ -58,10 +65,8 @@ export interface IElementService
       ICRUDModalService<Ref<IElement>, { element?: IElement }>,
       'createModal'
     > {
-  createModal: IEntityModalService<
-    CreateElementData,
-    { parentElement: IElement }
-  >
+  createModal: IEntityModalService<CreateElementData, CreateElementProperties>
+  updateModal: IEntityModalService<Ref<IElement>, UpdateElementProperties>
   elements: ObjectMap<IElement>
   createPropMapBindingModal: IEntityModalService<
     Ref<IElement>,
