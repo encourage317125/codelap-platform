@@ -1,10 +1,13 @@
 import type {
+  IComponent,
   IElement,
-  IElementService,
+  IPropData,
   IRenderer,
 } from '@codelab/frontend/abstract/core'
+import { isElement } from '@codelab/frontend/abstract/core'
 import { CodeMirrorEditor } from '@codelab/frontend/view/components'
 import { ICodeMirrorLanguage } from '@codelab/shared/abstract/core'
+import { propSafeStringify } from '@codelab/shared/utils'
 import Button from 'antd/lib/button'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
@@ -12,30 +15,47 @@ import tw from 'twin.macro'
 import { usePropsInspector } from '../../hooks'
 
 export interface ElementPropsSectionProps {
-  element: IElement
+  node: IElement | IComponent
   renderer: IRenderer
-  elementService: IElementService
 }
 
 const PropsInspectorTab = observer(
-  ({ element, renderer, elementService }: ElementPropsSectionProps) => {
-    const {
-      save,
-      persistedProps,
-      setPersistedProps,
-      lastRenderedPropsString,
-      isLoading,
-      setExtraPropsForElement,
-    } = usePropsInspector(element, renderer, elementService)
+  ({ node, renderer }: ElementPropsSectionProps) => {
+    const initialProps = node.props?.values ?? {}
+    const initialEditorValue = propSafeStringify(initialProps)
+    const [editedProps, setEditedProps] = React.useState(initialProps)
+    const [isValidProps, setIsValidProps] = React.useState(true)
+
+    const { save, lastRenderedPropsString, isLoading } = usePropsInspector(
+      node,
+      renderer,
+      editedProps,
+    )
 
     const onChange = (value: string) => {
-      setPersistedProps(value)
-
       try {
-        setExtraPropsForElement(JSON.parse(value))
+        const newValue = JSON.parse(value) as IPropData
+        // only a valid IPropData will be saved
+        setEditedProps(newValue)
+        setIsValidProps(true)
       } catch (error) {
-        //
         console.log(error)
+        setIsValidProps(false)
+      }
+    }
+
+    // string argument is used for when saving in the code mirror modal
+    // TODO: Check in the code mirror component why it doesnt
+    // trigger `onChange` when editing in the modal
+    const onSave = async (data: IPropData | string) => {
+      if (typeof data === 'string') {
+        try {
+          await save(JSON.parse(data))
+        } catch (error) {
+          console.log(error)
+        }
+      } else {
+        await save(data)
       }
     }
 
@@ -51,18 +71,22 @@ const PropsInspectorTab = observer(
           value={lastRenderedPropsString}
         />
 
-        <h3 css={tw`text-gray-700`}>Element props</h3>
+        <h3 css={tw`text-gray-700`}>
+          {isElement(node) ? 'Element' : 'Component'} props
+        </h3>
         <CodeMirrorEditor
           height="150px"
           language={ICodeMirrorLanguage.Json}
-          // persistedProps is state variable which means
-          // it takes time to be updated by onChange
           onChange={(v: string) => onChange(v)}
-          onSave={(v: string) => save(v)}
-          title="Element props"
-          value={persistedProps || '{}'}
+          onSave={(v: string) => onSave(v)}
+          title={`${isElement(node) ? 'Element' : 'Component'} props`}
+          value={initialEditorValue}
         />
-        <Button loading={isLoading} onClick={() => save(persistedProps)}>
+        <Button
+          disabled={!isValidProps}
+          loading={isLoading}
+          onClick={() => onSave(editedProps)}
+        >
           Save
         </Button>
       </div>

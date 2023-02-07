@@ -1,4 +1,8 @@
-import type { ICreateComponentDTO } from '@codelab/frontend/abstract/core'
+import type {
+  IComponent,
+  ICreateComponentDTO,
+  IPropData,
+} from '@codelab/frontend/abstract/core'
 import { createSlug } from '@codelab/frontend/shared/utils'
 import type { ComponentCreateInput } from '@codelab/shared/abstract/codegen'
 import { connectOwner } from '@codelab/shared/data'
@@ -53,4 +57,17 @@ export const mapCreateInput = (
     props,
     childrenContainerElement: connectRootElement,
   }
+}
+
+/**
+ * Generates a key-value pair from the api fields of an IComponent
+ */
+export const getDefaultComponentFieldProps = (component: IComponent) => {
+  const props = component.api.current.fields.reduce<IPropData>((acc, field) => {
+    acc[field.key] = field.defaultValues
+
+    return acc
+  }, {})
+
+  return props
 }
