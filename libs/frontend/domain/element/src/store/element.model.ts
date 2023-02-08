@@ -1,7 +1,6 @@
 import type {
   IAtom,
   IComponent,
-  IElement,
   IElementDTO,
   IElementTree,
   IHook,
@@ -18,6 +17,7 @@ import {
   DATA_ELEMENT_ID,
   ELEMENT_NODE_TYPE,
   IBuilderDataNode,
+  IElement,
 } from '@codelab/frontend/abstract/core'
 import { atomRef } from '@codelab/frontend/domain/atom'
 import { Prop, PropMapBinding } from '@codelab/frontend/domain/prop'
@@ -37,6 +37,7 @@ import isError from 'lodash/isError'
 import { computed } from 'mobx'
 import type { AnyModel, Ref } from 'mobx-keystone'
 import {
+  clone,
   findParent,
   getRefsResolvingTo,
   idProp,
@@ -133,10 +134,10 @@ export class Element
     // parent: prop<Nullish<Element>>(null).withSetter(),
 
     // Data used for tree initializing, before our Element model is ready
-    parentId: prop<Nullable<string>>(null),
-    nextSiblingId: prop<Nullable<string>>(null),
-    prevSiblingId: prop<Nullable<string>>(null),
-    firstChildId: prop<Nullable<string>>(null),
+    parentId: prop<Nullable<string>>(null).withSetter(),
+    nextSiblingId: prop<Nullable<string>>(null).withSetter(),
+    prevSiblingId: prop<Nullable<string>>(null).withSetter(),
+    firstChildId: prop<Nullable<string>>(null).withSetter(),
     owner: prop<Nullable<string>>(null),
     orderInParent: prop<Nullable<number>>(null).withSetter(),
 
@@ -145,7 +146,7 @@ export class Element
     customCss: prop<Nullable<string>>(null).withSetter(),
     guiCss: prop<Nullable<string>>(null),
     atom: prop<Nullable<Ref<IAtom>>>(null).withSetter(),
-    props: prop<Nullable<IProp>>(null),
+    props: prop<Nullable<IProp>>(null).withSetter(),
     preRenderActionId: prop<Nullish<string>>(null),
     postRenderActionId: prop<Nullish<string>>(null),
     propTransformationJs: prop<Nullable<string>>(null).withSetter(),
@@ -162,12 +163,20 @@ export class Element
     // Marks the element as an instance of a specific component
     renderComponentType: prop<Nullable<Ref<IComponent>>>(null).withSetter(),
     hooks: prop<Array<IHook>>(() => []),
+
+    // if this is a duplicate, trace source element id else null
+    sourceElementId: prop<Nullable<string>>(null).withSetter(),
   })
   implements IElement
 {
   @computed
   get elementService() {
     return getElementService(this)
+  }
+
+  @computed
+  get rootElement(): IElement {
+    return this.parentElement ? this.parentElement : this
   }
 
   @computed
@@ -492,6 +501,45 @@ export class Element
     return result
   }
 
+  @modelAction
+  clone(cloneIndex: number) {
+    const clonedElement: IElement = clone<IElement>(this, {
+      generateNewIds: true,
+    })
+
+    clonedElement.setSlug(`${this.slug}.${cloneIndex}`)
+    clonedElement.setSourceElementId(this.id)
+
+    if (this.atom) {
+      clonedElement.setAtom(atomRef(this.atom.id))
+    }
+
+    if (this.props) {
+      clonedElement.setProps(this.props.clone())
+    }
+
+    // store elements in elementService
+    this.elementService.clonedElements.set(clonedElement.id, clonedElement)
+
+    return clonedElement
+  }
+
+  @modelAction
+  updateCloneIds(elementMap: Map<string, string>) {
+    this.parentId = (this.parentId && elementMap.get(this.parentId)) || null
+
+    this.nextSiblingId =
+      (this.nextSiblingId && elementMap.get(this.nextSiblingId)) || null
+
+    this.prevSiblingId =
+      (this.prevSiblingId && elementMap.get(this.prevSiblingId)) || null
+
+    this.firstChildId =
+      (this.firstChildId && elementMap.get(this.firstChildId)) || null
+
+    return this
+  }
+
   /**
    * Executes the prop transformation function
    * If successful, merges the result with the original props and returns it
@@ -796,14 +844,6 @@ export class Element
       this.props?.writeCache({ ...props, apiRef })
     } else {
       this.props = null
-    }
-
-    for (const pmb of propMapBindings) {
-      if (this.propMapBindings.has(pmb.id)) {
-        this.propMapBindings.get(pmb.id)?.writeCache(pmb)
-      } else {
-        this.propMapBindings.set(pmb.id, PropMapBinding.hydrate(pmb))
-      }
     }
 
     this.parentComponent = parentComponent

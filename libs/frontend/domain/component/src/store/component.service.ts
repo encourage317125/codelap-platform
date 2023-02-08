@@ -45,6 +45,7 @@ export class ComponentService
   extends Model({
     id: idProp,
     components: prop(() => objectMap<IComponent>()),
+    clonedComponents: prop(() => objectMap<IComponent>()),
     createModal: prop(() => new ModalService({})),
     updateModal: prop(() => new ComponentModalService({})),
     deleteModal: prop(() => new ComponentModalService({})),
@@ -76,7 +77,7 @@ export class ComponentService
   }
 
   component(id: string) {
-    return this.components.get(id)
+    return this.components.get(id) || this.clonedComponents.get(id)
   }
 
   @computed
@@ -200,7 +201,10 @@ export class ComponentService
   @modelFlow
   @transaction
   delete = _async(function* (this: ComponentService, ids: Array<string>) {
-    ids.forEach((id) => this.components.delete(id))
+    ids.forEach((id) => {
+      this.components.delete(id)
+      this.removeClones(id)
+    })
 
     const {
       deleteComponents: { nodesDeleted },
@@ -241,11 +245,26 @@ export class ComponentService
 
     if (componentModel) {
       componentModel.writeCache(componentFragment)
+      this.writeClonesCache(componentFragment)
     } else {
       componentModel = Component.hydrate(componentFragment)
       this.components.set(componentModel.id, componentModel)
     }
 
     return componentModel
+  }
+
+  @modelAction
+  writeClonesCache(componentFragment: IComponentDTO) {
+    return [...this.clonedComponents.values()]
+      .filter((c) => c.sourceComponentId === componentFragment.id)
+      .map((c) => c.writeCache(componentFragment))
+  }
+
+  @modelAction
+  removeClones(componentId: string) {
+    return [...this.clonedComponents.entries()]
+      .filter(([_, component]) => component.sourceComponentId === componentId)
+      .forEach(([elementId]) => this.clonedComponents.delete(elementId))
   }
 }

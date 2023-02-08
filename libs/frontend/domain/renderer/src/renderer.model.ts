@@ -1,5 +1,6 @@
 import type {
   IElement,
+  IInterfaceType,
   IPropData,
   IRenderer,
   IRenderOutput,
@@ -8,7 +9,6 @@ import type {
   RendererProps,
 } from '@codelab/frontend/abstract/core'
 import {
-  COMPONENT_INSTANCE_ID,
   CUSTOM_TEXT_PROP_KEY,
   IElementTree,
 } from '@codelab/frontend/abstract/core'
@@ -16,19 +16,15 @@ import { elementTreeRef } from '@codelab/frontend/domain/element'
 import { getPageService } from '@codelab/frontend/domain/page'
 import { getActionService, storeRef } from '@codelab/frontend/domain/store'
 import { getTypeService } from '@codelab/frontend/domain/type'
-import { getElementService } from '@codelab/frontend/presenter/container'
 import { expressionTransformer } from '@codelab/frontend/shared/utils'
+import type { Maybe } from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { Nullable } from '@codelab/shared/abstract/types'
 import { mapDeep, mergeProps } from '@codelab/shared/utils'
-import isEmpty from 'lodash/isEmpty'
-import merge from 'lodash/merge'
 import { computed } from 'mobx'
 import type { Ref } from 'mobx-keystone'
 import {
   detach,
-  frozen,
-  getSnapshot,
   idProp,
   Model,
   model,
@@ -48,7 +44,6 @@ import {
   getReactComponent,
   makeCustomTextContainer,
 } from './element/wrapper.utils'
-import { ExtraElementProps } from './ExtraElementProps'
 import {
   defaultPipes,
   renderPipeFactory,
@@ -77,8 +72,8 @@ const init = async ({
   pageTree,
   appStore,
   appTree,
-  components,
   isBuilder,
+  isComponentBuilder,
   set_selectedNode,
 }: RendererProps) => {
   /**
@@ -104,22 +99,17 @@ const init = async ({
     href: '#',
   }
 
-  const renderComponentMeta = components
-    .map((c) => ({ [c.id]: 0 }))
-    .reduce(merge, {})
-
   await expressionTransformer.init()
 
   return new Renderer({
     appTree: appTree ? elementTreeRef(appTree) : null,
     pageTree: elementTreeRef(pageTree),
     appStore: storeRef(appStore),
-    renderComponentMeta,
-    extraElementProps: new ExtraElementProps({
-      // pass
-      global: frozen(isBuilder ? builderGlobals : {}),
-    }),
+    // extraElementProps: new ExtraElementProps({
+    //  global: frozen(isBuilder ? builderGlobals : {}),
+    // }),
     isBuilder,
+    isComponentBuilder,
   })
 }
 
@@ -146,7 +136,7 @@ export class Renderer
       /**
        * Props passed to specific elements, such as from global props context
        */
-      extraElementProps: prop(() => new ExtraElementProps({})),
+      // extraElementProps: prop(() => new ExtraElementProps({})),
 
       /**
        * Those transform different kinds of typed values into render-ready props
@@ -165,22 +155,25 @@ export class Renderer
        */
       debugMode: prop(false).withSetter(),
 
-      renderComponentMeta: prop<IPropData>(() => ({})).withSetter(),
-
       /**
        * Used for making the element draggable if true (e.g. in builder page)
        */
       isBuilder: prop(false),
+      /**
+       * Used for to decide component props expression context :
+       * either global state + instance props + component props or just component props
+       */
+      isComponentBuilder: prop(false),
     },
-    {
-      toSnapshotProcessor(sn, modelInstance) {
-        return {
-          ...sn,
-          // Remove those, because they are runtime only and not serializable
-          extraElementProps: getSnapshot(new ExtraElementProps({})),
-        }
-      },
-    },
+    // {
+    //  toSnapshotProcessor(sn, modelInstance) {
+    //    return {
+    //      ...sn,
+    //      Remove those, because they are runtime only and not serializable
+    //      extraElementProps: getSnapshot(new ExtraElementProps({})),
+    //    }
+    //  },
+    // },
   )
   implements IRenderer
 {
@@ -300,11 +293,7 @@ export class Renderer
     return this.appStore.current.state
   }
 
-  @modelAction
-  updateComponentRenderIndex(componentId: string) {
-    this.renderComponentMeta[componentId] += 1
-  }
-
+  /*   
   computePropsForComponentElements(element: IElement) {
     const component = (element.renderComponentType ?? element.parentComponent)
       ?.maybeCurrent
@@ -334,18 +323,13 @@ export class Renderer
       this.extraElementProps.addForElement(elem.id, { props })
     })
   }
+  */
 
   /**
    * Renders a single Element using the provided RenderAdapter
    */
   renderElement = (element: IElement, extraProps?: IPropData): ReactElement => {
     this.runPreAction(element)
-
-    if (element.parentComponent?.id) {
-      this.updateComponentRenderIndex(element.parentComponent.id)
-    }
-
-    this.computePropsForComponentElements(element)
 
     const wrapperProps: ElementWrapperProps & { key: string } = {
       key: `element-wrapper-${element.id}`,
@@ -367,76 +351,76 @@ export class Renderer
     element: IElement,
     extraProps?: IPropData,
   ): ArrayOrSingle<IRenderOutput> => {
+    const component = element.rootElement.parentComponent?.current
+    const componentInstance = component?.instanceElement?.current
+    const componentApi = component?.api.current as Maybe<IInterfaceType>
+
     let props = mergeProps(
       element.__metadataProps,
+      componentApi?.defaultValues,
+      component?.props?.values,
+      componentInstance?.props?.values,
       element.props?.values,
       extraProps,
-      this.extraElementProps.getForElement(element.id),
     )
 
     props = this.processPropsForRender(props, element)
 
+    return this.renderPipe.render(element, props)
     /**
      * Pass down global props
      */
-    const { globalProps } = element.applyPropMapBindings(props)
+    // const { globalProps } = element.applyPropMapBindings(props)
 
-    const appendGlobalProps = (renderOutput: IRenderOutput) => {
-      const mergedGlobalProps = mergeProps(
-        renderOutput.globalProps,
-        globalProps,
-      )
+    // const appendGlobalProps = (renderOutput: IRenderOutput) => {
+    //  const mergedGlobalProps = mergeProps(
+    //    renderOutput.globalProps,
+    //    globalProps,
+    //  )
 
-      return isEmpty(mergedGlobalProps)
-        ? renderOutput
-        : {
-            ...renderOutput,
-            globalProps: mergedGlobalProps,
-          }
+    //  return isEmpty(mergedGlobalProps)
+    //    ? renderOutput
+    //    : {
+    //        ...renderOutput,
+    //        globalProps: mergedGlobalProps,
+    //      }
+    // }
+
+    // const output = this.renderPipe.render(element, props)
+
+    // return mapOutput(output, appendGlobalProps)
+  }
+
+  getComponentInstanceChildren(element: IElement) {
+    const parentComponent = element.parentComponent?.current
+
+    const isContainer =
+      element.id === parentComponent?.childrenContainerElementId
+
+    if (!isContainer || !parentComponent.instanceElement?.current) {
+      return []
     }
 
-    const output = this.renderPipe.render(element, props)
-
-    return mapOutput(output, appendGlobalProps)
+    return parentComponent.instanceElement.current.children
   }
 
   /**
    * Renders the elements children, createTransformer memoizes the function
    */
   renderChildren = createTransformer(
-    (parentOutput: IRenderOutput): ArrayOrSingle<ReactNode> => {
-      // const element = this.pageTree?.current.element(parentOutput.elementId)
-      const elementService = getElementService(this)
-      const element = elementService.elements.get(parentOutput.elementId)
+    ({ element, parentOutput }): ArrayOrSingle<ReactNode> => {
+      const children = [
+        ...element.children,
+        ...this.getComponentInstanceChildren(element),
+      ]
 
-      if (!element) {
-        console.warn(
-          `RenderService: Element ${parentOutput.elementId} not found in tree`,
-        )
-
-        return undefined
-      }
-
-      const componentInstance = elementService.elements.get(
-        parentOutput.props?.['props']?.[COMPONENT_INSTANCE_ID],
-      )
-
-      const componentChildrenContainerId =
-        componentInstance?.renderComponentType?.current
-          .childrenContainerElementId
-
-      const childrenToRender =
-        element.id === componentChildrenContainerId && componentInstance
-          ? [...element.children, ...componentInstance.children]
-          : element.children
-
-      const children = childrenToRender.map((child) =>
+      const renderedChildren = children.map((child) =>
         this.renderElement(child),
       )
 
-      const hasChildren = Array.isArray(children)
-        ? children.length > 0
-        : Boolean(children)
+      const hasChildren = Array.isArray(renderedChildren)
+        ? renderedChildren.length > 0
+        : Boolean(renderedChildren)
 
       if (!hasChildren) {
         // Inject text, but only if we have no regular children
@@ -459,10 +443,10 @@ export class Renderer
        * Ant Design doesn't handle array children well in some cases, like Forms
        */
       if (Array.isArray(children) && children.length === 1) {
-        return children[0]
+        return renderedChildren[0]
       }
 
-      return children
+      return renderedChildren
     },
   )
 
@@ -478,10 +462,15 @@ export class Renderer
   private processPropsForRender = (props: IPropData, element: IElement) => {
     props = this.applyPropTypeTransformers(props)
     props = element.executePropTransformJs(props)
-    props = this.appStore.current.replaceStateInProps(props)
 
-    const { localProps } = element.applyPropMapBindings(props)
-    props = mergeProps(props, localProps)
+    const context = this.isComponentBuilder
+      ? props
+      : mergeProps(this.state.values, props)
+
+    props = this.appStore.current.replaceStateInProps(props, context)
+
+    // const { localProps } = element.applyPropMapBindings(props)
+    // props = mergeProps(props, localProps)
 
     return props
   }

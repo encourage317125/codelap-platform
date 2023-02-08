@@ -2,7 +2,7 @@ import type { Nullable, Nullish } from '@codelab/shared/abstract/types'
 import type { Ref } from 'mobx-keystone'
 import type { INodeType } from '../../base'
 import type { ICacheService } from '../../service'
-import type { IElementTreeService } from '../element'
+import type { IElement, IElementTreeService } from '../element'
 import type { IProp } from '../prop'
 import type { IInterfaceType } from '../type'
 import type { IComponentDTO } from './component.dto.interface'
@@ -18,6 +18,16 @@ export interface IComponent
   ownerId: string
   api: Ref<IInterfaceType>
   props?: Nullable<IProp>
+  instanceElement: Nullable<Ref<IElement>>
+  /**
+   * to render a component we create a duplicate for each instance
+   * keeps track of source component in case this is a duplicate
+   */
+  sourceComponentId?: Nullable<string>
+  setSourceComponentId: (id: string) => void
+  setInstanceElement: (elementRef: Ref<IElement>) => void
+  setProps(t: Nullable<IProp>): void
+  clone(instanceId: string): IComponent
 }
 
 export type IComponentRef = string
