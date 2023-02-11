@@ -3,6 +3,7 @@ import type {
   IPropData,
   IRenderer,
 } from '@codelab/frontend/abstract/core'
+import { RendererType } from '@codelab/frontend/abstract/core'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import type { Nullable, Nullish } from '@codelab/shared/abstract/types'
 import { mergeProps } from '@codelab/shared/utils'
@@ -74,7 +75,8 @@ export const ElementWrapper = observer<ElementWrapperProps>(
         renderOutput.props['forwardedRef'] = onRefChange
 
         if (element.atom?.current.type === IAtomType.GridLayout) {
-          renderOutput.props['static'] = !renderService.isBuilder
+          renderOutput.props['static'] =
+            renderService.rendererType === RendererType.Preview
         }
       }
 
@@ -107,7 +109,8 @@ export const ElementWrapper = observer<ElementWrapperProps>(
 
     // we only apply dnd to the root element of a component or elements not inside a component
     const isDraggable =
-      renderService.isBuilder && (isComponentRootElement || !isInsideAComponent)
+      renderService.rendererType === RendererType.PageBuilder &&
+      (isComponentRootElement || !isInsideAComponent)
 
     // we need to include additional props from dnd so we need to render the element there
     const WrappedElement = isDraggable
@@ -118,7 +121,7 @@ export const ElementWrapper = observer<ElementWrapperProps>(
       ErrorBoundary,
       {
         fallbackRender: () => null,
-        onError({ message, stack }) {
+        onError: ({ message, stack }) => {
           element.setRenderingError({ message, stack })
         },
         resetKeys: [renderOutputs],
