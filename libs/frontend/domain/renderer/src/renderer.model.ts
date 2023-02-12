@@ -1,6 +1,5 @@
 import type {
   IElement,
-  IInterfaceType,
   IPropData,
   IRenderer,
   IRenderOutput,
@@ -18,7 +17,6 @@ import { getPageService } from '@codelab/frontend/domain/page'
 import { getActionService, storeRef } from '@codelab/frontend/domain/store'
 import { getTypeService } from '@codelab/frontend/domain/type'
 import { expressionTransformer } from '@codelab/frontend/shared/utils'
-import type { Maybe } from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { Nullable } from '@codelab/shared/abstract/types'
 import { mapDeep, mergeProps } from '@codelab/shared/utils'
@@ -347,7 +345,7 @@ export class Renderer
   ): ArrayOrSingle<IRenderOutput> => {
     const component = element.rootElement.parentComponent?.current
     const componentInstance = component?.instanceElement?.current
-    const componentApi = component?.api.current as Maybe<IInterfaceType>
+    const componentApi = component?.api.maybeCurrent
 
     let props = mergeProps(
       element.__metadataProps,
@@ -402,10 +400,10 @@ export class Renderer
    * Renders the elements children, createTransformer memoizes the function
    */
   renderChildren = createTransformer(
-    ({ element, parentOutput }): ArrayOrSingle<ReactNode> => {
+    ({ parentOutput }): ArrayOrSingle<ReactNode> => {
       const children = [
-        ...element.children,
-        ...this.getComponentInstanceChildren(element),
+        ...parentOutput.element.children,
+        ...this.getComponentInstanceChildren(parentOutput.element),
       ]
 
       const renderedChildren = children.map((child) =>
@@ -419,7 +417,9 @@ export class Renderer
       if (!hasChildren) {
         // Inject text, but only if we have no regular children
         const injectedText = parentOutput.props?.[CUSTOM_TEXT_PROP_KEY]
-        const shouldInjectText = element.atom?.current.allowCustomTextInjection
+
+        const shouldInjectText =
+          parentOutput.element.atom?.current.allowCustomTextInjection
 
         if (shouldInjectText && injectedText) {
           return makeCustomTextContainer(injectedText)
