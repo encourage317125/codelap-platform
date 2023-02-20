@@ -29,12 +29,13 @@
     "**/*.graphql",
     "next-env.d.ts",
     "index.d.ts",
+    "middleware.ts",
     "**/*.js",
     "**/*.jsx",
     ".next/types/**/*.ts",
-    "../../tmp/apps/builder/src/.next/types/**/*.ts",
-    "../../dist/apps/builder/.next/types/**/*.ts",
-    "../../dist/apps/builder-test/.next/types/**/*.ts"
+    "../../tmp/apps/websites/src/.next/types/**/*.ts",
+    "../../dist/apps/websites/.next/types/**/*.ts",
+    "../../dist/apps/websites-test/.next/types/**/*.ts"
   ],
   "exclude": [
     "jest.config.ts",
