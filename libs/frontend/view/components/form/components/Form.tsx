@@ -1,8 +1,9 @@
 import type { FormProps } from '@codelab/frontend/abstract/types'
 import { callbackWithParams } from '@codelab/frontend/shared/utils'
 import { css } from '@emotion/react'
+import { equals } from 'ramda'
 import type { ReactElement } from 'react'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Bridge } from 'uniforms'
 import { AutoForm as BaseAutoForm } from 'uniforms-antd'
 import {
@@ -39,6 +40,18 @@ export const withAutoForm = (AutoForm: typeof BaseAutoForm) => {
       )
     }, [schema])
 
+    const lastSubmitted = useRef<typeof model>({})
+    const modelRef = useRef(model)
+
+    // This prevents a new model update to interfere while user is typing.
+    // This also enables the form model to be updated when the
+    // model is updated outside the form (e.g. props inspector)
+    useEffect(() => {
+      if (!equals(model, lastSubmitted.current)) {
+        modelRef.current = model
+      }
+    }, [model])
+
     return (
       <div
         css={css`
@@ -48,7 +61,7 @@ export const withAutoForm = (AutoForm: typeof BaseAutoForm) => {
         <AutoForm<TData>
           autosave={autosave}
           autosaveDelay={500}
-          model={model}
+          model={modelRef.current}
           onChange={onChange}
           onChangeModel={onChangeModel}
           onSubmit={(formData) => {
@@ -61,6 +74,8 @@ export const withAutoForm = (AutoForm: typeof BaseAutoForm) => {
 
             return result
               .then((r) => {
+                lastSubmitted.current = formData
+
                 if (r) {
                   callbackWithParams(onSubmitSuccess, r)
                 }
