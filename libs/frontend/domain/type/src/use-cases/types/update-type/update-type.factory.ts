@@ -9,7 +9,7 @@ import {
   makeItemTypeCreateInput,
   makeTypesOfUnionTypeCreateInput,
   makeTypesOfUnionTypeDisconnectInput,
-} from '@codelab/shared/data'
+} from '@codelab/shared/domain/mapper'
 
 export const updateTypeInputFactory = (
   type: IUpdateTypeDTO,
@@ -67,7 +67,9 @@ export const updateTypeInputFactory = (
               {
                 where: {
                   node: {
-                    id_NOT_IN: type.allowedValues?.map((av) => av.id),
+                    NOT: {
+                      id_IN: type.allowedValues?.map((av) => av.id),
+                    },
                   },
                 },
               },

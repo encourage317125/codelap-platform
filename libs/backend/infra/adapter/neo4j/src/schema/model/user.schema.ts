@@ -11,7 +11,7 @@ export const userSchema = gql`
   }
 
   type User @exclude(operations: [UPDATE]) {
-    id: ID! @id
+    id: ID! @id(autogenerate: false)
     auth0Id: String! @unique
     email: String!
     username: String! @unique
@@ -19,6 +19,8 @@ export const userSchema = gql`
     apps: [App!]! @relationship(type: "OWNED_BY", direction: IN)
     elements: [Element!]! @relationship(type: "OWNED_BY", direction: IN)
     components: [Component!]! @relationship(type: "OWNED_BY", direction: IN)
+    # Some issue using required array of enum, can't add using []! signature
+    # roles: [Role!] @default(value: User)
     roles: [Role!]
     tags: [Tag!]! @relationship(type: "OWNED_BY", direction: IN)
   }

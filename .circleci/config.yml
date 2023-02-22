@@ -45,7 +45,7 @@ executor-config: &executor-config
     # Application
     NEO4J_URI: bolt://127.0.0.1:7687
     NEO4J_USER: neo4j
-    NEO4J_PASSWORD: test
+    NEO4J_PASSWORD: password
     # CircleCI
     GITHUB_ANTON_M: antonmihaylov
     SLACK_ANTON_M: <@U01HWRY2USE>
@@ -111,10 +111,10 @@ executors:
       - image: cimg/node:16.15.1-browsers
       # https://circleci.com/docs/using-docker#using-multiple-docker-images
       # The `command` key is the command issued to the image
-      - image: neo4j:4.4.10
+      - image: neo4j:5.4.0
         environment:
-          NEO4J_AUTH: neo4j/test
-          NEO4JLABS_PLUGINS: '["apoc"]'
+          NEO4J_AUTH: neo4j/password
+          NEO4J_PLUGINS: '["apoc"]'
         command: ['neo4j', 'start']
 
 commands:
@@ -514,10 +514,16 @@ workflows:
           size: large
           requires:
             - install-and-build-workspace
+      - integration:
+          <<: *filters-pr
+          e: docker-node-neo4j
+          size: medium
+          requires:
+            - install-and-build-workspace
       - e2e:
           <<: *filters-pr
           e: docker-node-neo4j
-          size: large
+          size: xlarge
           requires:
             - install-and-build-workspace
       - notify-success:
@@ -527,6 +533,7 @@ workflows:
             - lint
             - codegen
             - unit
+            - integration
             - e2e
 
   app:

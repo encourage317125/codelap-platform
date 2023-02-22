@@ -1,4 +1,7 @@
-import type { ITypeExport } from '@codelab/backend/abstract/core'
+import type {
+  IInterfaceTypeExport,
+  ITypeExport,
+} from '@codelab/backend/abstract/core'
 import {
   exportInterfaceTypeSelectionSet,
   getDriver,
@@ -65,9 +68,12 @@ export const exportUserTypes = async (): Promise<Array<ITypeExport>> => {
   // Here we get all the types that needs to be added
   const orderedInterfaceTypes = dependentTypes
     .map((type) => {
-      return interfaceTypes.find((t) => t.id === type.id)
+      return interfaceTypes.find(
+        (interfaceType) => interfaceType.id === type.id,
+      )
     })
-    .filter((x): x is OGM_TYPES.InterfaceType => Boolean(x))
+    .filter((type): type is OGM_TYPES.InterfaceType => Boolean(type))
 
-  return [...orderedInterfaceTypes] as Array<ITypeExport>
+  // TODO: Need to fix type here
+  return [...orderedInterfaceTypes] as unknown as Array<IInterfaceTypeExport>
 }

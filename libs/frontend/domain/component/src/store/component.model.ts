@@ -97,24 +97,24 @@ export class Component
     const elementMap: Map<string, string> = new Map()
 
     const elements = this.elementTree.elementsList
-      .map((e) => {
-        const clonedElement = e.clone(cloneIndex)
+      .map((element) => {
+        const clonedElement = element.clone(cloneIndex)
 
         // don't move it to element model to avoid dependency issues
-        if (e.renderComponentType?.current) {
-          const componentClone = e.renderComponentType.current.clone(
+        if (element.renderComponentType?.current) {
+          const componentClone = element.renderComponentType.current.clone(
             clonedElement.id,
           )
 
           clonedElement.setRenderComponentType(componentRef(componentClone.id))
         }
 
-        if (e.id === clonedComponent.childrenContainerElementId) {
+        if (element.id === clonedComponent.childrenContainerElementId) {
           clonedComponent.setChildrenContainerElementId(clonedElement.id)
         }
 
         // keep trace of copies to update parents
-        elementMap.set(e.id, clonedElement.id)
+        elementMap.set(element.id, clonedElement.id)
 
         return clonedElement
       })
@@ -125,7 +125,7 @@ export class Component
       ? elementMap.get(this.elementTree.root.id)
       : null
 
-    const rootElement = elements.find((e) => e.id === rootElementId)
+    const rootElement = elements.find((element) => element.id === rootElementId)
     rootElement?.setParentComponent(componentRef(clonedComponent.id))
 
     if (!rootElement) {
@@ -148,7 +148,7 @@ export class Component
     }
 
     const clonesList = [...componentService.clonedComponents.values()].filter(
-      (e) => e.sourceComponentId === this.id,
+      (component) => component.sourceComponentId === this.id,
     )
 
     const clonedComponent: IComponent = clone<IComponent>(this)

@@ -8,7 +8,11 @@ import { IAtomDTO } from '@codelab/frontend/abstract/core'
 import { getTagService } from '@codelab/frontend/domain/tag'
 import { ModalService } from '@codelab/frontend/shared/utils'
 import type { AtomOptions, AtomWhere } from '@codelab/shared/abstract/codegen'
-import { connectNode, connectOwner, reconnectNodes } from '@codelab/shared/data'
+import {
+  connectNodeId,
+  connectOwner,
+  reconnectNodeIds,
+} from '@codelab/shared/domain/mapper'
 import { computed } from 'mobx'
 import {
   _async,
@@ -60,8 +64,8 @@ export class AtomService
         update: {
           name,
           type,
-          allowedChildren: [reconnectNodes(allowedChildrenIds)],
-          tags: [reconnectNodes(tags)],
+          allowedChildren: reconnectNodeIds(allowedChildrenIds),
+          tags: reconnectNodeIds(tags),
         },
         where: { id: existingAtom.id },
       }),
@@ -147,7 +151,7 @@ export class AtomService
 
     const connectOrCreateApi = (atom: ICreateAtomDTO) =>
       atom.api
-        ? connectNode(atom.api)
+        ? connectNodeId(atom.api)
         : {
             create: { node: createApiNode(atom) },
           }

@@ -168,8 +168,6 @@ export const FieldsTable = observer<FieldsTableProps>(
       },
     )
 
-    console.log(dataSource)
-
     return (
       <Table
         columns={
@@ -192,7 +190,7 @@ export const FieldsTable = observer<FieldsTableProps>(
         }}
         loading={isLoading}
         pagination={{ disabled: false, hideOnSinglePage: true, pageSize: 25 }}
-        rowKey={(f) => f.key}
+        rowKey={({ key }) => key}
         size="small"
       />
     )

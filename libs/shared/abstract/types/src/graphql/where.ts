@@ -3,7 +3,20 @@ export type BaseUniqueWhere =
       id: string
     }
   | {
-      name: string
+      [key: string]: unknown
     }
 
-export type BaseUniqueWhereCallback<T, R = BaseUniqueWhere> = (data: T) => R
+export type BaseTypeUniqueWhere =
+  | {
+      name: string
+    }
+  | BaseUniqueWhere
+
+export type UserWhere =
+  | BaseUniqueWhere
+  | { auth0Id: string }
+  | { email: string }
+
+export type BaseTypeUniqueWhereCallback<T, R = BaseTypeUniqueWhere> = (
+  data: T,
+) => R
