@@ -4,7 +4,7 @@ import { CodeMirrorLanguage } from '@codelab/shared/abstract/codegen'
 import {
   hideField,
   nonEmptyString,
-  spacedLowercaseAlphanumericRegex,
+  singlySpacedTitleCaseWithNumbersRegex,
 } from '@codelab/shared/utils'
 import type { JSONSchemaType } from 'ajv'
 
@@ -32,11 +32,7 @@ export const createPageSchema: JSONSchemaType<
     name: {
       autoFocus: true,
       ...nonEmptyString,
-      pattern: spacedLowercaseAlphanumericRegex.source,
-    },
-    slug: {
-      ...nonEmptyString,
-      disabled: true,
+      pattern: singlySpacedTitleCaseWithNumbersRegex.source,
     },
     appId: {
       type: 'string',
@@ -49,5 +45,5 @@ export const createPageSchema: JSONSchemaType<
       },
     },
   },
-  required: ['name', 'slug'],
+  required: ['name'],
 } as const

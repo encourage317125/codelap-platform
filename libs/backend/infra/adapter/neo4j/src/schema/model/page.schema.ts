@@ -10,9 +10,9 @@ export const pageSchema = gql`
 
   type Page {
     id: ID! @id(autogenerate: false)
-    name: String!
-    # format : appId-slug because page slug is unique inside app.
-    slug: String! @unique
+    # format : appId-name because page name is unique inside app.
+    name: String! @unique
+    slug: String! @computed(from: ["name"])
     rootElement: Element!
       @relationship(type: "ROOT_PAGE_ELEMENT", direction: OUT)
     app: App! @relationship(type: "PAGES", direction: IN)

@@ -18,10 +18,9 @@ export const elementSchema = gql`
     # element is the rootElement for this component
     parentComponent: Component
       @relationship(type: "COMPONENT_ROOT", direction: IN)
-
-    # pageId-slug because element slug is unique only inside each page, we want to enable the same slug to be used in different pages
-    slug: String! @unique
-    name: String
+    slug: String! @computed(from: ["name"])
+    # format : pageId-name because element name is unique inside page.
+    name: String! @unique
     # Used for the css the user types it manually using the integrated code editor. This is
     # a pure css string.
     customCss: String

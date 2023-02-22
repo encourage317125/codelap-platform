@@ -1,6 +1,3 @@
-import type { IResolvers } from '@graphql-tools/utils'
+import slugify from 'voca/slugify'
 
-export const pageResolver: IResolvers = {
-  Mutation: {},
-  Query: {},
-}
+export const pageSlug = ({ name }: { name: string }) => slugify(name)

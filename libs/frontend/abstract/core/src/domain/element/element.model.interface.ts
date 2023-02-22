@@ -42,7 +42,7 @@ export interface IElement
   id: string
   isRoot: boolean
   owner: Nullable<IAuth0Id>
-  name: Nullable<string>
+  name: string
   customCss: Nullable<string>
   guiCss: Nullable<string>
   props?: Nullable<IProp>
@@ -107,7 +107,7 @@ export interface IElement
   firstChild: Maybe<IElement>
   firstChildId: Nullable<string>
   setOrderInParent(order: number | null): void
-  setSlug(slug: string): void
+  setName(name: string): void
   setAtom(atom: Ref<IAtom>): void
   setSourceElementId(id: string): void
   setParentComponent(componentRef: Ref<IComponent>): void

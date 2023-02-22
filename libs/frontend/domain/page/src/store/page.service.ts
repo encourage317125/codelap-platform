@@ -8,7 +8,7 @@ import {
   IPageDTO,
   ROOT_ELEMENT_NAME,
 } from '@codelab/frontend/abstract/core'
-import { createSlug, ModalService } from '@codelab/frontend/shared/utils'
+import { createUniqueName, ModalService } from '@codelab/frontend/shared/utils'
 import type { PageWhere } from '@codelab/shared/abstract/codegen'
 import { IPageKind } from '@codelab/shared/abstract/core'
 import { connectNodeId, reconnectNodeId } from '@codelab/shared/domain/mapper'
@@ -97,21 +97,14 @@ export class PageService
   update = _async(function* (
     this: PageService,
     existingPage: IPage,
-    {
-      name,
-      appId,
-      slug,
-      getServerSideProps,
-      pageContainerElementId,
-    }: IUpdatePageDTO,
+    { name, appId, getServerSideProps, pageContainerElementId }: IUpdatePageDTO,
   ) {
     const {
       updatePages: { pages },
     } = yield* _await(
       pageApi.UpdatePages({
         update: {
-          name,
-          slug: createSlug(slug, appId),
+          name: createUniqueName(name, appId),
           app: connectNodeId(appId),
           getServerSideProps,
           pageContainerElement: reconnectNodeId(pageContainerElementId),
@@ -151,8 +144,7 @@ export class PageService
 
       return {
         id: pageId,
-        name: page.name,
-        slug: createSlug(page.slug, page.appId),
+        name: createUniqueName(page.name, page.appId),
         app: connectNodeId(page.appId),
         getServerSideProps: page.getServerSideProps,
         kind: IPageKind.Regular,
@@ -160,8 +152,7 @@ export class PageService
           create: {
             node: {
               id: page.rootElementId ?? v4(),
-              name: ROOT_ELEMENT_NAME,
-              slug: createSlug(ROOT_ELEMENT_NAME, pageId),
+              name: createUniqueName(ROOT_ELEMENT_NAME, pageId),
             },
           },
         },

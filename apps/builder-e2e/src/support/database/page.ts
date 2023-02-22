@@ -2,7 +2,7 @@ import {
   DEFAULT_GET_SERVER_SIDE_PROPS,
   ROOT_ELEMENT_NAME,
 } from '@codelab/frontend/abstract/core'
-import { createSlug } from '@codelab/frontend/shared/utils'
+import { createUniqueName } from '@codelab/frontend/shared/utils'
 import type { PageCreateInput } from '@codelab/shared/abstract/codegen'
 import { IPageKind } from '@codelab/shared/abstract/core'
 import merge from 'lodash/merge'
@@ -14,19 +14,18 @@ export const createPageInput = (
 ): PageCreateInput => {
   const id = v4()
   const rootId = v4()
-  const name = 'Test Page'
+  const name = `Test Page ${v4()}`
 
   return merge(
     {
       id: id,
-      name,
+      name: createUniqueName(name, appId),
       getServerSideProps: DEFAULT_GET_SERVER_SIDE_PROPS,
       rootElement: {
         create: {
           node: {
             id: rootId,
-            name: ROOT_ELEMENT_NAME,
-            slug: createSlug(ROOT_ELEMENT_NAME, id),
+            name: createUniqueName(ROOT_ELEMENT_NAME, id),
           },
         },
       },
@@ -34,7 +33,6 @@ export const createPageInput = (
       app: {
         connect: { where: { node: { id: appId } } },
       },
-      slug: createSlug(name, appId),
       pageContainerElement: {
         connect: { where: { node: { id: rootId } } },
       },

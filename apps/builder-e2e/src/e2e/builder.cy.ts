@@ -4,62 +4,54 @@ import { IAtomType } from '@codelab/shared/abstract/core'
 import { createAtomsData } from '@codelab/shared/data/test'
 import { connectOwner } from '@codelab/shared/domain/mapper'
 import { v4 } from 'uuid'
-import slugify from 'voca/slugify'
 import { FIELD_TYPE } from '../support/antd/form'
 import { createAppInput } from '../support/database/app'
 
-const ELEMENT_CONTAINER = 'container'
-const ELEMENT_ROW = 'row'
-const ELEMENT_COL_A = 'col a'
-const ELEMENT_COL_B = 'col b'
-const ELEMENT_TEXT_1 = 'text 1'
-const ELEMENT_TEXT_2 = 'text 2'
-const ELEMENT_BUTTON = 'button'
+const ELEMENT_CONTAINER = 'Container'
+const ELEMENT_ROW = 'Row'
+const ELEMENT_COL_A = 'Col A'
+const ELEMENT_COL_B = 'Col B'
+const ELEMENT_TEXT_1 = 'Text 1'
+const ELEMENT_TEXT_2 = 'Text 2'
+const ELEMENT_BUTTON = 'Button'
 
 const elements = [
   {
     name: ELEMENT_CONTAINER,
     parentElement: ROOT_ELEMENT_NAME,
-    slug: slugify(ELEMENT_CONTAINER),
   },
   {
     name: ELEMENT_ROW,
     parentElement: ELEMENT_CONTAINER,
-    slug: slugify(ELEMENT_ROW),
   },
   {
     name: ELEMENT_COL_A,
     atom: IAtomType.AntDesignGridCol,
     parentElement: ELEMENT_ROW,
-    slug: slugify(ELEMENT_COL_A),
   },
   {
     name: ELEMENT_COL_B,
     atom: IAtomType.AntDesignGridCol,
     parentElement: ELEMENT_ROW,
-    slug: slugify(ELEMENT_COL_B),
   },
   {
     name: ELEMENT_TEXT_1,
     atom: IAtomType.AntDesignTypographyText,
     parentElement: ELEMENT_COL_A,
-    slug: slugify(ELEMENT_TEXT_1),
   },
   {
     name: ELEMENT_BUTTON,
     atom: IAtomType.AntDesignButton,
     parentElement: ELEMENT_COL_B,
-    slug: slugify(ELEMENT_BUTTON),
   },
   {
     name: ELEMENT_TEXT_2,
     atom: IAtomType.AntDesignTypographyText,
     parentElement: ELEMENT_BUTTON,
-    slug: slugify(`${ELEMENT_TEXT_2}`),
   },
 ]
 
-const updatedElementName = 'container updated'
+const updatedElementName = 'Container Updated'
 
 describe('Elements CRUD', () => {
   before(() => {
@@ -115,7 +107,6 @@ describe('Elements CRUD', () => {
         .click()
 
       cy.getModal().findByLabelText('Name').type(ELEMENT_TEXT_1)
-      cy.getModal().findByLabelText('Slug').type(`${ELEMENT_TEXT_1}_2`)
 
       cy.getModal().setFormFieldValue({
         label: 'Parent element',
@@ -145,7 +136,7 @@ describe('Elements CRUD', () => {
 
   describe(`update`, () => {
     it(`should be able to update element`, () => {
-      cy.findByText('container').click()
+      cy.findByText(ELEMENT_CONTAINER).click()
       cy.findByLabelText('Name').clear().type(updatedElementName)
       cy.findByText(updatedElementName).should('exist')
     })
@@ -153,7 +144,7 @@ describe('Elements CRUD', () => {
 
   describe(`delete`, () => {
     it(`should be able to delete element sub tree`, () => {
-      cy.findByText(/container/).rightclick()
+      cy.findByText(updatedElementName).rightclick()
       cy.contains(/Delete/).click({ force: true })
       cy.getSpinner().should('not.exist')
 
@@ -162,7 +153,7 @@ describe('Elements CRUD', () => {
         .click()
       cy.getModal().should('not.exist')
 
-      cy.findByText(/container/).should('not.exist')
+      cy.findByText(updatedElementName).should('not.exist')
     })
   })
 })

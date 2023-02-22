@@ -19,7 +19,10 @@ import {
 import { getAtomService } from '@codelab/frontend/domain/atom'
 import { getTypeService } from '@codelab/frontend/domain/type'
 import { getComponentService } from '@codelab/frontend/presenter/container'
-import { createSlug, runSequentially } from '@codelab/frontend/shared/utils'
+import {
+  createUniqueName,
+  runSequentially,
+} from '@codelab/frontend/shared/utils'
 import type {
   ElementCreateInput,
   ElementUpdateInput,
@@ -197,7 +200,7 @@ export class ElementService
         elementInput.parentElementId as string,
       )
 
-      const slug = createSlug(elementInput.slug, parentElement?.baseId)
+      const name = createUniqueName(elementInput.name, parentElement?.baseId)
       // When creating a new element, we need the interface type fields
       // and we use it to create a props with default values for the created element
       const typeApi = yield* _await(this.getElementInputTypeApi(elementInput))
@@ -205,7 +208,7 @@ export class ElementService
       input.push(
         makeCreateInput({
           ...elementInput,
-          slug,
+          name,
           propsData: makeDefaultProps(typeApi),
         }),
       )
@@ -298,7 +301,7 @@ export class ElementService
     element: IElement,
     input: IUpdateElementDTO,
   ) {
-    const slug = createSlug(input.slug, element.baseId)
+    const name = createUniqueName(input.name, element.baseId)
 
     const {
       atom: currentAtom,
@@ -345,7 +348,7 @@ export class ElementService
 
     const update = makeUpdateInput({
       ...input,
-      slug,
+      name,
       propsData,
     })
 
@@ -715,7 +718,6 @@ element is new parentElement's first child
             : ''
 
           const name = `${component.name}${componentInstanceCounter}`
-          const slug = `${component.name}${componentInstanceCounter}`
 
           const renderType: RenderType = {
             id: component.id,
@@ -723,7 +725,7 @@ element is new parentElement's first child
           }
 
           const parentElementId = targetElement.id
-          const data = { name, slug, renderType, parentElementId }
+          const data = { name, renderType, parentElementId }
 
           element = (yield* _await(this.create([data])))[0]
         } else {
@@ -818,21 +820,21 @@ element is new parentElement's first child
   )
 
   @computed
-  get elementSlugs() {
-    return [...this.elements.values()].map(({ slug }) => slug)
+  get elementNames() {
+    return [...this.elements.values()].map((element) => element.name)
   }
 
-  // handle slug creation where many duplicates for the same element exists
-  private createDuplicateSlug(element: IElement) {
-    const slugRoot = `${element.slug}_duplicate`
+  // handle name creation where many duplicates for the same element exists
+  private createDuplicateName(element: IElement) {
+    const nameRoot = `${element.name} duplicate`
 
-    if (!this.elementSlugs.includes(slugRoot)) {
-      return slugRoot
+    if (!this.elementNames.includes(nameRoot)) {
+      return nameRoot
     }
 
-    // find how many slug with following format `${slug_root}${index}`
-    const duplicates = this.elementSlugs.filter((slug) =>
-      slug.startsWith(slugRoot),
+    // find how many names with following format `${name_root} duplicate ${index}`
+    const duplicates = this.elementNames.filter((nane) =>
+      nane.startsWith(nameRoot),
     )
 
     /**
@@ -841,19 +843,19 @@ element is new parentElement's first child
      */
     const nextIndex = until(
       (predicateValue: number) =>
-        !duplicates.includes(`${slugRoot}${predicateValue}`),
+        !duplicates.includes(`${nameRoot} ${predicateValue}`),
       (callbackValue: number) => callbackValue + 1,
     )(duplicates.length)
 
-    return `${slugRoot}${nextIndex}`
+    return `${nameRoot} ${nextIndex}`
   }
 
   private async recursiveDuplicate(element: IElement, parent: IElement) {
-    const duplicateSlug = this.createDuplicateSlug(element)
+    const duplicate_name = this.createDuplicateName(element)
 
     const createInput: ElementCreateInput = makeDuplicateInput(
       element,
-      duplicateSlug,
+      duplicate_name,
     )
 
     const {
@@ -945,7 +947,6 @@ element is new parentElement's first child
         }
 
         const name = element.label
-        const slug = element.slug
         const elementId = element.id
         const parentElement = element.parentElement
         const prevSibling = element.prevSibling
@@ -976,7 +977,6 @@ element is new parentElement's first child
             this.create([
               {
                 name,
-                slug,
                 renderType: {
                   id: createdComponent.id,
                   model: RenderTypeEnum.Component,
@@ -1003,7 +1003,6 @@ element is new parentElement's first child
         return yield* _await(
           this.createElementAsNextSibling({
             name,
-            slug,
             renderType: {
               id: createdComponent.id,
               model: RenderTypeEnum.Component,
