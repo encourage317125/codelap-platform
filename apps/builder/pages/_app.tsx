@@ -1,5 +1,4 @@
 // import '../src/wdyr'
-import 'reflect-metadata'
 import '../src/styles/antd-theme.less'
 import 'react-quill/dist/quill.snow.css'
 // This stylesheet is used to override some of the default Quill editor's styles.
@@ -18,7 +17,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { ConfigProvider } from 'antd'
 import type { PropsWithChildren } from 'react'
 import React, { useMemo } from 'react'
-import { RecoilRoot } from 'recoil'
 import { GlobalStyles } from 'twin.macro'
 import { globalTailwindFix } from '../src/styles/GlobalTailwindFix'
 import { slickCssFix } from '../src/styles/slick/Slick'
@@ -31,32 +29,30 @@ const App = ({ pageProps, Component }: IAppProps<IPageProps>) => {
 
   return (
     <StoreProvider value={store}>
-      <RecoilRoot>
-        <UserProvider>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <ConfigProvider>
-              <GlobalStyles />
-              <Global
-                styles={[
-                  css({
-                    '#__next': {
-                      height: '100%',
-                    },
-                  }),
-                  slickCssFix,
-                  ...globalTailwindFix,
-                ]}
+      <UserProvider>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <ConfigProvider>
+            <GlobalStyles />
+            <Global
+              styles={[
+                css({
+                  '#__next': {
+                    height: '100%',
+                  },
+                }),
+                slickCssFix,
+                ...globalTailwindFix,
+              ]}
+            />
+            <Layout>
+              <Component
+                // eslint-disable-next-line react/jsx-props-no-spreading
+                {...pageProps}
               />
-              <Layout>
-                <Component
-                  // eslint-disable-next-line react/jsx-props-no-spreading
-                  {...pageProps}
-                />
-              </Layout>
-            </ConfigProvider>
-          </LocalizationProvider>
-        </UserProvider>
-      </RecoilRoot>
+            </Layout>
+          </ConfigProvider>
+        </LocalizationProvider>
+      </UserProvider>
     </StoreProvider>
   )
 }
