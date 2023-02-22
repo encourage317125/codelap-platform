@@ -17,7 +17,7 @@ import { getPageService } from '@codelab/frontend/domain/page'
 import { getActionService, storeRef } from '@codelab/frontend/domain/store'
 import { getTypeService } from '@codelab/frontend/domain/type'
 import { expressionTransformer } from '@codelab/frontend/shared/utils'
-import { ITypeKind } from '@codelab/shared/abstract/core'
+import { IPageKind, ITypeKind } from '@codelab/shared/abstract/core'
 import { Nullable } from '@codelab/shared/abstract/types'
 import { mapDeep, mergeProps } from '@codelab/shared/utils'
 import { computed } from 'mobx'
@@ -170,10 +170,12 @@ export class Renderer
 
     const rootElement = this.renderElement(root)
     const pageService = getPageService(this)
-    const { isProvider } = pageService.page(root.baseId) ?? {}
+    const { kind } = pageService.page(root.baseId) ?? {}
 
     // do not self-wrap with providers page if the current page is _app
-    return isProvider ? rootElement : this.renderWithProviders(rootElement)
+    return kind === IPageKind.Regular
+      ? this.renderWithProviders(rootElement)
+      : rootElement
   }
 
   /**
