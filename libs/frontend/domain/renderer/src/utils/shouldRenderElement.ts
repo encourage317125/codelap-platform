@@ -1,13 +1,16 @@
-import type { IElement, IStore } from '@codelab/frontend/abstract/core'
-import { hasStateExpression } from '@codelab/frontend/shared/utils'
+import type { IElement, IPropData } from '@codelab/frontend/abstract/core'
+import {
+  evaluateExpression,
+  hasStateExpression,
+} from '@codelab/frontend/shared/utils'
 
 export const shouldRenderElement = (
   { renderIfExpression }: IElement,
-  store: IStore,
+  props: IPropData = {},
 ) => {
   if (!renderIfExpression || !hasStateExpression(renderIfExpression)) {
     return true
   }
 
-  return store.evaluateExpression(renderIfExpression)
+  return evaluateExpression(renderIfExpression, props)
 }
