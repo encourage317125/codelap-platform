@@ -1,8 +1,5 @@
 import type { IUpdateAppDTO } from '@codelab/frontend/abstract/core'
-import {
-  nonEmptyString,
-  singlySpacedTitleCaseWithNumbersRegex,
-} from '@codelab/shared/utils'
+import { nonEmptyString, titleCaseValidation } from '@codelab/shared/utils'
 import type { JSONSchemaType } from 'ajv'
 
 export const updateAppSchema: JSONSchemaType<IUpdateAppDTO> = {
@@ -12,7 +9,7 @@ export const updateAppSchema: JSONSchemaType<IUpdateAppDTO> = {
     name: {
       autoFocus: true,
       ...nonEmptyString,
-      pattern: singlySpacedTitleCaseWithNumbersRegex.source,
+      ...titleCaseValidation,
     },
   },
   required: ['name'],

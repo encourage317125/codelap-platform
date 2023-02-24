@@ -4,7 +4,7 @@ import { CodeMirrorLanguage } from '@codelab/shared/abstract/codegen'
 import {
   hideField,
   nonEmptyString,
-  singlySpacedTitleCaseWithNumbersRegex,
+  titleCaseValidation,
 } from '@codelab/shared/utils'
 import type { JSONSchemaType } from 'ajv'
 
@@ -32,7 +32,7 @@ export const createPageSchema: JSONSchemaType<
     name: {
       autoFocus: true,
       ...nonEmptyString,
-      pattern: singlySpacedTitleCaseWithNumbersRegex.source,
+      ...titleCaseValidation,
     },
     appId: {
       type: 'string',

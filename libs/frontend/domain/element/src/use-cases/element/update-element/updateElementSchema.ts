@@ -1,6 +1,6 @@
 import type { IUpdateBaseElementDTO } from '@codelab/frontend/abstract/core'
 import { RenderTypeEnum } from '@codelab/frontend/abstract/core'
-import { singlySpacedTitleCaseWithNumbersRegex } from '@codelab/shared/utils'
+import { titleCaseValidation } from '@codelab/shared/utils'
 import type { JSONSchemaType } from 'ajv'
 
 export const updateElementSchema: JSONSchemaType<IUpdateBaseElementDTO> = {
@@ -10,7 +10,7 @@ export const updateElementSchema: JSONSchemaType<IUpdateBaseElementDTO> = {
     name: {
       type: 'string',
       autoFocus: true,
-      pattern: singlySpacedTitleCaseWithNumbersRegex.source,
+      ...titleCaseValidation,
     },
     renderIfExpression: {
       type: 'string',
