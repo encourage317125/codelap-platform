@@ -24,7 +24,7 @@ import type { MenuProps } from 'antd'
 import { Button, Dropdown, Menu, PageHeader, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useAsync } from 'react-use'
 
 const items: MenuProps['items'] = [
@@ -39,7 +39,7 @@ const items: MenuProps['items'] = [
 ]
 
 const AppsPageHeader = observer(() => {
-  const { userService, appService } = useStore()
+  const { appService } = useStore()
 
   const pageHeaderButtons = [
     <CreateAppButton appService={appService} key={0} />,
@@ -55,6 +55,13 @@ const AppsPage: CodelabPage<DashboardTemplateProps> = (props) => {
   const { userService, appService, domainService } = useStore()
   const { loading, error, value } = useAsync(() => appService.getAll(), [])
   const { value: domains } = useAsync(() => domainService.getAll(), [])
+
+  useEffect(() => {
+    // Only call this once on dev mode
+    if (process.env.NEXT_PUBLIC_BUILDER_HOST?.includes('127.0.0.1')) {
+      void fetch('/api/upsert-user')
+    }
+  }, [])
 
   return (
     <>

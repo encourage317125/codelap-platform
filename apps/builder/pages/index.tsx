@@ -1,3 +1,5 @@
+import { auth0Instance } from '@codelab/shared/adapter/auth0'
+
 const Home = () => null
 
 /**

@@ -1,10 +1,7 @@
 /**
  * This file is under `api` code so can import backend code
  */
-import type {
-  GraphQLRequestContext,
-  NextApiRequest,
-} from '@codelab/backend/abstract/types'
+import type { NextApiRequest } from '@codelab/backend/abstract/types'
 import { User, UserRepository } from '@codelab/backend/domain/user'
 import { resolvers } from '@codelab/backend/graphql'
 import { getDriver, getSchema } from '@codelab/backend/infra/adapter/neo4j'
@@ -15,10 +12,17 @@ import { logger } from '@codelab/shared/adapter/logging'
 import { EnvBuilder } from '@codelab/shared/env'
 import { mergeResolvers } from '@graphql-tools/merge'
 import { ApolloServer } from 'apollo-server-micro'
+import type {
+  ApolloServerPlugin,
+  GraphQLRequestListener,
+} from 'apollo-server-plugin-base'
+import type {
+  BaseContext,
+  GraphQLRequestContext,
+  GraphQLRequestContextWillSendResponse,
+} from 'apollo-server-types'
 import type { NextApiHandler } from 'next'
 import * as util from 'util'
-
-/*eslint-disable */
 
 const driver = getDriver()
 const neoSchema = getSchema(driver, mergeResolvers([resolvers, repoResolvers]))
@@ -26,10 +30,10 @@ const path = '/api/graphql'
 // https://community.apollographql.com/t/allow-cookies-to-be-sent-alongside-request/920/13
 let apolloServer: ApolloServer
 
-const BASIC_LOGGING = {
-  requestDidStart(requestContext: any) {
+const BASIC_LOGGING: ApolloServerPlugin = {
+  requestDidStart: (requestContext: GraphQLRequestContext<BaseContext>) => {
     if (!EnvBuilder().next.enableAPILogging) {
-      return {}
+      return Promise.resolve()
     }
 
     logger.info(
@@ -39,15 +43,19 @@ const BASIC_LOGGING = {
     // logger.info(JSON.stringify(requestContext.req.query || {}, null, 2))
     // logger.info(JSON.stringify(requestContext.req.variables || {}, null, 2))
 
-    return {
-      willSendResponse(context: any) {
+    const res: GraphQLRequestListener<BaseContext> = {
+      willSendResponse: (
+        context: GraphQLRequestContextWillSendResponse<BaseContext>,
+      ) => {
         logger.info(
           `Responding request ${JSON.stringify(context.response, null, 2)}`,
         )
 
-        return Promise.resolve({})
+        return Promise.resolve()
       },
     }
+
+    return Promise.resolve(res)
   },
 }
 
@@ -56,8 +64,8 @@ const startServer = neoSchema
   .then(async (schema) => {
     apolloServer = new ApolloServer({
       schema,
-      plugins: [BASIC_LOGGING as any],
-      context: ({ req }: { req: NextApiRequest }): GraphQLRequestContext => {
+      plugins: [BASIC_LOGGING],
+      context: ({ req }: { req: NextApiRequest }) => {
         const user = req.user
 
         return {
@@ -114,7 +122,8 @@ const handler: NextApiHandler = async (req, res) => {
 
     Object.assign(req, { user: session?.user })
 
-    const accessToken = (await auth0Instance.getAccessToken(req, res)).accessToken
+    const accessToken = (await auth0Instance.getAccessToken(req, res))
+      .accessToken
 
     /**
      * Instead of appending headers to the frontend GraphQL client, we could access session here in serverless then append at the middleware level
@@ -122,19 +131,8 @@ const handler: NextApiHandler = async (req, res) => {
     if (accessToken) {
       req.headers.authorization = `Bearer ${accessToken}`
     }
-
-    if (
-      session?.user &&
-      process.env['NEXT_PUBLIC_BUILDER_HOST']?.includes('127.0.0.1')
-    ) {
-      const userSession = session.user as Auth0SessionUser
-      const userRepository = new UserRepository()
-      const user = User.fromSession(userSession)
-
-      await userRepository.save(user, { auth0Id: user.auth0Id })
-    }
-  } catch (e) {
-    console.log('error when get access token', e)
+  } catch (error) {
+    console.log('error when get access token', error)
 
     // Apollo studio polls the graphql schema every second, and it pollutes the log
     if (
