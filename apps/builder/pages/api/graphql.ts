@@ -2,11 +2,9 @@
  * This file is under `api` code so can import backend code
  */
 import type { NextApiRequest } from '@codelab/backend/abstract/types'
-import { User, UserRepository } from '@codelab/backend/domain/user'
 import { resolvers } from '@codelab/backend/graphql'
 import { getDriver, getSchema } from '@codelab/backend/infra/adapter/neo4j'
 import { repoResolvers } from '@codelab/backend/repo-resolvers'
-import type { Auth0SessionUser } from '@codelab/shared/abstract/core'
 import { auth0Instance } from '@codelab/shared/adapter/auth0'
 import { logger } from '@codelab/shared/adapter/logging'
 import { EnvBuilder } from '@codelab/shared/env'
@@ -120,7 +118,9 @@ const handler: NextApiHandler = async (req, res) => {
      */
     const session = await auth0Instance.getSession(req, res)
 
-    Object.assign(req, { user: session?.user })
+    if (session?.user) {
+      Object.assign(req, { user: session.user })
+    }
 
     const accessToken = (await auth0Instance.getAccessToken(req, res))
       .accessToken
