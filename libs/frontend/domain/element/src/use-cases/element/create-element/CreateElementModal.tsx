@@ -4,7 +4,6 @@ import type {
   IComponentService,
   ICreateElementDTO,
   IElementService,
-  IElementTree,
   IRenderService,
   IUserService,
 } from '@codelab/frontend/abstract/core'
@@ -24,7 +23,6 @@ import { mapElementOption } from '../../../utils'
 import { createElementSchema } from './createElementSchema'
 
 interface CreateElementModalProps {
-  pageTree: IElementTree
   renderService: IRenderService
   actionService: IActionService
   builderService: IBuilderService
@@ -35,13 +33,13 @@ interface CreateElementModalProps {
 }
 
 export const CreateElementModal = observer<CreateElementModalProps>(
-  ({
-    elementService,
-    builderService,
-    userService,
-    pageTree,
-    renderService,
-  }) => {
+  ({ elementService, userService }) => {
+    const { parentElement, elementTree } = elementService.createModal
+
+    if (!parentElement || !elementTree) {
+      return null
+    }
+
     const onSubmit = async (data: ICreateElementDTO) => {
       const { prevSiblingId } = data
 
@@ -50,17 +48,7 @@ export const CreateElementModal = observer<CreateElementModalProps>(
         : elementService.createElementAsFirstChild(data))
 
       // Build tree for page
-      pageTree.addElements([element])
-
-      // Get the component tree for the current element, so we can update the component tree
-      const componentId = builderService.activeComponent?.id
-
-      if (componentId) {
-        const componentTree =
-          renderService.renderers.get(componentId)?.pageTree?.current
-
-        componentTree?.addElements([element])
-      }
+      elementTree.addElements([element])
 
       return Promise.resolve([element])
     }
@@ -69,11 +57,7 @@ export const CreateElementModal = observer<CreateElementModalProps>(
       title: 'Error while creating element',
     })
 
-    const parentElement = elementService.createModal.parentElement
-
-    if (!parentElement) {
-      return null
-    }
+    const closeModal = () => elementService.createModal.close()
 
     const model = {
       parentElementId: parentElement.id,
@@ -83,13 +67,11 @@ export const CreateElementModal = observer<CreateElementModalProps>(
       renderType: null,
     }
 
-    const closeModal = () => elementService.createModal.close()
-
     const selectParentElementOptions =
-      pageTree.elementsList.map(mapElementOption)
+      elementTree.elementsList.map(mapElementOption)
 
     const selectChildrenElementOptions =
-      pageTree.elementsList.map(mapElementOption)
+      elementTree.elementsList.map(mapElementOption)
 
     return (
       <ModalForm.Modal
@@ -126,6 +108,7 @@ export const CreateElementModal = observer<CreateElementModalProps>(
                 allElementOptions={selectParentElementOptions}
               />
             )}
+            help={`only elements from \`${elementTree.name}\` are visible in this list`}
             name="parentElementId"
           />
           <SelectLinkElement

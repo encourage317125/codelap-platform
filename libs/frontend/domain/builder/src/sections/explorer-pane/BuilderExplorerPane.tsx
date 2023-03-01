@@ -135,6 +135,7 @@ export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
               <BuilderExplorerPaneHeader
                 builderService={builderService}
                 elementService={elementService}
+                elementTree={pageTree}
                 root={root ?? null}
               />
             }
@@ -165,7 +166,10 @@ export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
               <>
                 <Divider />
                 <div css={tw`flex justify-end`}>
-                  <CreateComponentButton componentService={componentService} />
+                  <CreateComponentButton
+                    componentService={componentService}
+                    title="Component"
+                  />
                 </div>
               </>
             )}
@@ -255,18 +259,15 @@ export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
           renderTabBar={renderStickyTabBar}
           size="small"
         />
-        {pageTree && (
-          <CreateElementModal
-            actionService={actionService}
-            builderService={builderService}
-            componentService={componentService}
-            elementService={elementService}
-            pageTree={pageTree}
-            renderService={renderService}
-            storeId={storeId}
-            userService={userService}
-          />
-        )}
+        <CreateElementModal
+          actionService={actionService}
+          builderService={builderService}
+          componentService={componentService}
+          elementService={elementService}
+          renderService={renderService}
+          storeId={storeId}
+          userService={userService}
+        />
         <CreateComponentModal
           componentService={componentService}
           userService={userService}
