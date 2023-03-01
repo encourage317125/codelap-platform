@@ -11,7 +11,7 @@ import {
   Repository,
 } from '@codelab/backend/infra/adapter/neo4j'
 import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
-import { connectNodeId } from '@codelab/shared/domain/mapper'
+import { connectNodeId, connectOwner } from '@codelab/shared/domain/mapper'
 import { cLog } from '@codelab/shared/utils'
 import omit from 'lodash/omit'
 import { validate } from './validate'
@@ -72,13 +72,22 @@ export const createApp = async (app: IAppExport, userId: string) => {
       {
         id: app.id,
         name: app.name,
-        owner: connectNodeId(userId),
+        owner: connectOwner(userId),
         store: {
           create: {
             node: {
               id: app.store.id,
               name: app.store.name,
-              api: connectNodeId(app.store.api.id),
+              // api: connectNodeId(app.store.api.id),
+              api: {
+                create: {
+                  node: {
+                    id: app.store.api.id,
+                    name: `${app.store.name} API`,
+                    owner: connectOwner(userId),
+                  },
+                },
+              },
             },
           },
         },
@@ -87,9 +96,11 @@ export const createApp = async (app: IAppExport, userId: string) => {
             node: {
               id: page.id,
               name: page.name,
-              slug: page.slug,
               rootElement: connectNodeId(page.rootElement.id),
               kind: page.kind,
+              pageContainerElement: page.pageContainerElement?.id
+                ? connectNodeId(page.pageContainerElement.id)
+                : undefined,
             },
           })),
         },
@@ -119,18 +130,19 @@ export const getApp = async (app: OGM_TYPES.App): Promise<ExportAppData> => {
   const pagesData = await Promise.all(
     pages.map(async (page) => {
       const { elements, components } = await getPageData(page)
+      const { id, name, kind, rootElement, pageContainerElement } = page
 
       return {
-        id: page.id,
-        name: page.name,
-        slug: page.slug,
-        kind: page.kind,
+        id: id,
+        name: name,
+        kind: kind,
         rootElement: {
-          id: page.rootElement.id,
-          name: page.rootElement.name,
+          id: rootElement.id,
+          name: rootElement.name,
         },
         elements,
         components,
+        ...(pageContainerElement ? { pageContainerElement } : {}),
       }
     }),
   )

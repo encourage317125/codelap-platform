@@ -1,6 +1,7 @@
 import { EllipsisOutlined } from '@ant-design/icons'
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
 import {
+  AppImportContainer,
   BuildAppModal,
   CreateAppButton,
   CreateAppModal,
@@ -41,14 +42,15 @@ const items: MenuProps['items'] = [
 const AppsPageHeader = observer(() => {
   const { appService } = useStore()
 
-  const pageHeaderButtons = [
-    <CreateAppButton appService={appService} key={0} />,
-    <Dropdown key={1} overlay={<Menu items={items} />} trigger={['click']}>
+  const pageHeaderElements = [
+    <AppImportContainer appService={appService} key={0} />,
+    <CreateAppButton appService={appService} key={1} />,
+    <Dropdown key={2} overlay={<Menu items={items} />} trigger={['click']}>
       <Button icon={<EllipsisOutlined />} />
     </Dropdown>,
   ]
 
-  return <PageHeader extra={pageHeaderButtons} ghost={false} title="Apps" />
+  return <PageHeader extra={pageHeaderElements} ghost={false} title="Apps" />
 })
 
 const AppsPage: CodelabPage<DashboardTemplateProps> = (props) => {
