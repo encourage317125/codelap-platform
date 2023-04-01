@@ -1,15 +1,25 @@
-import type { UpdateElementsMutationVariables } from '@codelab/shared/abstract/codegen'
-import type { Maybe, Nullable, Nullish } from '@codelab/shared/abstract/types'
+import type {
+  ElementCreateInput,
+  ElementUpdateInput,
+} from '@codelab/shared/abstract/codegen'
+import type {
+  IEntity,
+  Maybe,
+  Nullable,
+  Nullish,
+} from '@codelab/shared/abstract/types'
 import type { Ref } from 'mobx-keystone'
-import type { ELEMENT_NODE_TYPE, INodeType } from '../../base/node.interface'
 import type { ICacheService } from '../../service'
 import type { IBuilderDataNode } from '../../ui'
-import type { IAtom } from '../atom'
 import type { IComponent } from '../component'
 import type { IHook } from '../hook'
+import type { IModel } from '../model.interface'
+import type { IPage } from '../page'
 import type { IProp, IPropData } from '../prop'
-import type { IAuth0Id } from '../user'
+import type { IStore } from '../store'
+import type { IAuth0Owner } from '../user'
 import type { IElementDTO } from './element.dto.interface'
+import type { IElementRenderType } from './render-type'
 
 /**
  * This is a non-element type node that contains the root element.
@@ -37,97 +47,85 @@ export interface RenderingMetadata {
 }
 
 export interface IElement
-  extends INodeType<ELEMENT_NODE_TYPE>,
+  extends Omit<
+      IModel<ElementCreateInput, ElementUpdateInput, void>,
+      'toDeleteInput'
+    >,
     ICacheService<IElementDTO, IElement> {
-  id: string
-  isRoot: boolean
-  owner: Nullable<IAuth0Id>
-  name: string
-  customCss: Nullable<string>
-  guiCss: Nullable<string>
-  props?: Nullable<IProp>
-  atom: Nullable<Ref<IAtom>>
-  hooks: Array<IHook>
-  parentId: Nullable<string>
-  parentElement: Maybe<IElement>
-  parentComponent: Nullable<Ref<IComponent>>
-  label: string
-  propTransformationJs: Nullable<string>
-  preRenderActionId: Nullish<string>
-  postRenderActionId: Nullish<string>
-  children: Array<IElement>
-  renderForEachPropKey: Nullable<string>
-  renderIfExpression: Nullable<string>
-  renderComponentType: Nullable<Ref<IComponent>>
-  renderingMetadata: Nullable<RenderingMetadata>
+  __metadataProps: IPropData
   ancestorError: Nullish<RenderingError>
   antdNode: IBuilderDataNode
-  leftHandDescendants: Array<IElement>
-  descendants: Array<IElement>
-  __metadataProps: IPropData
   atomName: string
-  slug: string
-  nextSibling: Maybe<IElement>
-  nextSiblingId: Nullable<string>
-  prevSibling: Maybe<IElement>
-  prevSiblingId: Nullable<string>
-  /**
-   * the tree's root element
-   */
-  rootElement: IElement
-  /**
-   * id of component or page's tree that element belong to
-   */
-  baseId: string
+  children: Array<IElement>
+  // the closest container node that element belongs to
+  closestContainerNode: IComponent | IPage
+  // the closest rootElement of node (page/component) that element belongs to
+  closestRootElement: IElement
+  customCss?: Nullable<string>
+  // This is a computed property, so we can use model instead of ref
+  descendantElements: Array<IElement>
+  firstChild?: Nullable<Ref<IElement>>
+  guiCss?: Nullable<string>
+  hooks: Array<IHook>
+  id: string
+  isRoot: boolean
+  label: string
+  name: string
+  nextSibling?: Nullable<Ref<IElement>>
+  owner: Nullable<IAuth0Owner>
+  // page that this element belongs to
+  page: Nullable<Ref<IPage>>
+  parent?: Nullable<Ref<IElement>>
+  // component that this element belongs to
+  parentComponent?: Nullable<Ref<IComponent>>
+  prevSibling?: Nullable<Ref<IElement>>
+  propTransformationJs: Nullable<string>
+  props: Ref<IProp>
+  renderForEachPropKey: Nullable<string>
+  renderIfExpression: Nullable<string>
+  renderType: IElementRenderType | null
+  // atom: Nullable<Ref<IAtom>>
+  // renderComponentType: Nullable<Ref<IComponent>>
+  renderingMetadata: Nullable<RenderingMetadata>
   /**
    * to render a component we create a duplicate for each element
    * keeps track of source element in case this is a duplicate
    */
-  sourceElementId: Nullable<string>
-
-  detachNextSibling(): () => void
-  detachPrevSibling(): () => void
-  detachParent(): () => void
-  attachPrevToNextSibling(): () => void
-  attachToParentAsFirstChild(parentElementId: string): () => void
-  attachToParent(parentElementId: string): () => void
-  appendSibling(siblingId: string): () => void
-  prependSibling(siblingId: string): () => void
-  clone(cloneIndex: number): IElement
-  updateCloneIds(elementMap: Map<string, string>): IElement
-  makeDetachNextSiblingInput(): UpdateElementsMutationVariables | null
-  makeDetachPrevSiblingInput(): UpdateElementsMutationVariables | null
-  makeDetachParentInput(): UpdateElementsMutationVariables | null
-  makeAttachToParentAsFirstChildInput(
-    parentElementId: string,
-  ): UpdateElementsMutationVariables
-  makeAppendSiblingInput(siblingId: string): UpdateElementsMutationVariables
-  makePrependSiblingInput(siblingId: string): UpdateElementsMutationVariables
-
-  firstChild: Maybe<IElement>
-  firstChildId: Nullable<string>
-  setOrderInParent(order: number | null): void
-  setName(name: string): void
-  setAtom(atom: Ref<IAtom>): void
-  setSourceElementId(id: string): void
-  setParentComponent(componentRef: Ref<IComponent>): void
-  setParentId(parentId: Nullable<string>): void
-  setNextSiblingId(nextSiblingId: Nullable<string>): void
-  setPrevSiblingId(prevSiblingId: Nullable<string>): void
-  setFirstChildId(firstChildId: Nullable<string>): void
-  setProps(props: Nullable<IProp>): void
-  setRenderComponentType(componentRef: Ref<IComponent>): void
-  /**
-   * Keeps the ref in place
-   */
-  executePropTransformJs(props: IPropData): IPropData
+  sourceElement: Nullable<IEntity>
+  // store attached to closestContainerNode
+  store: IStore
 
   appendToGuiCss(css: CssMap): void
+  attachAsNextSibling(sibling: IElement): void
+  attachAsPrevSibling(sibling: IElement): void
+  attachToParentAsFirstChild(parentElement: IElement): void
+  clone(cloneIndex: number): IElement
+  connectPrevToNextSibling(): void
   deleteFromGuiCss(propNames: Array<string>): void
-
-  setRenderingError(error: Nullish<RenderingError>): void
-  setRenderIfExpression(key: Nullish<string>): void
+  detachAsFirstChild(): void
+  detachFromParent(): void
+  executePropTransformJs(props: IPropData): IPropData
+  setFirstChild(firstChild: Ref<IElement>): void
+  setName(name: string): void
+  setNextSibling(nextSibling: Ref<IElement>): void
+  setOrderInParent(order: number | null): void
+  setPage(component: Ref<IPage>): void
+  setParent(parent: Ref<IElement>): void
+  setParentComponent(component: Ref<IComponent>): void
+  setPrevSibling(prevSibling: Ref<IElement>): void
+  setPropTransformationJs(props: string): void
+  setProps(props: Nullable<Ref<IProp>>): void
   setRenderForEachPropKey(key: string): void
+  setRenderIfExpression(key: Nullish<string>): void
+  setRenderType(renderType: IElementRenderType): void
+  setRenderingError(error: Nullish<RenderingError>): void
+  setSourceElement(element: Ref<IElement>): void
+  // setRenderComponentType(componentRef: Ref<IComponent>): void
+  // getDescendantRefs: Array<Ref<IElement>>
+  toUpdateNodesInput(): Pick<
+    ElementUpdateInput,
+    'firstChild' | 'nextSibling' | 'parent' | 'prevSibling'
+  >
 }
 
 export type IElementRef = string

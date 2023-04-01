@@ -8,34 +8,34 @@ import { SelectField } from 'uniforms-antd'
 import type { SelectFieldProps } from 'uniforms-antd/cjs/SelectField'
 
 export interface SelectElementOption {
+  childrenIds?: Array<string>
   label: string
   value: string
-  childrenIds?: Array<string>
 }
 
 export type SelectElementProps = UniformSelectFieldProps & {
-  kind: IElementTypeKind
   allElementOptions?: Array<SelectElementOption>
-  targetElementId?: string
   disableWhenOneOpt?: boolean
+  kind: IElementTypeKind
+  targetElementId?: string
 }
 
 export const SelectElement = ({
-  targetElementId,
   allElementOptions,
-  name,
-  kind,
   disableWhenOneOpt = false,
+  kind,
+  name,
+  targetElementId,
   ...props
 }: SelectElementProps) => {
   const { elementTree } = useFormContext()
   let elements: Array<SelectElementOption>
 
   allElementOptions ??=
-    elementTree?.elementsList.map(({ id, label, children }) => ({
-      value: id,
-      label: label,
+    elementTree?.elements.map(({ children, id, label }) => ({
       childrenIds: children.map((child) => child.id),
+      label: label,
+      value: id,
     })) ?? []
 
   const targetElement = allElementOptions.find(

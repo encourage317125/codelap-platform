@@ -1,7 +1,7 @@
 mutation CreateElements($input: [ElementCreateInput!]!) {
   createElements(input: $input) {
     elements {
-      ...Element
+      id
     }
   }
 }
@@ -15,16 +15,7 @@ mutation DeleteElements($where: ElementWhere!, $delete: ElementDeleteInput) {
 mutation UpdateElements($where: ElementWhere, $update: ElementUpdateInput) {
   updateElements(where: $where, update: $update) {
     elements {
-      ...Element
-    }
-  }
-}
-
-# different from updateElements in the way we process element graph cache
-mutation MoveElements($where: ElementWhere, $update: ElementUpdateInput) {
-  updateElements(where: $where, update: $update) {
-    elements {
-      ...Element
+      id
     }
   }
 }
@@ -32,14 +23,5 @@ mutation MoveElements($where: ElementWhere, $update: ElementUpdateInput) {
 query GetElements($options: ElementOptions, $where: ElementWhere) {
   elements(options: $options, where: $where) {
     ...Element
-  }
-}
-
-query GetElementTree($options: ElementOptions, $where: ElementWhere) {
-  elementTrees: elements(options: $options, where: $where) {
-    ...Element
-    descendantElements {
-      ...Element
-    }
   }
 }

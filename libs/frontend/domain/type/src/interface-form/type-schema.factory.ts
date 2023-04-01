@@ -1,6 +1,5 @@
 import type {
-  IAnyActionType,
-  IAnyType,
+  IActionType,
   IAppType,
   IArrayType,
   ICodeMirrorType,
@@ -13,6 +12,7 @@ import type {
   IPrimitiveType,
   IReactNodeType,
   IRenderPropsType,
+  IType,
   IUnionType,
 } from '@codelab/frontend/abstract/core'
 import { fieldDescription } from '@codelab/frontend/view/components'
@@ -24,14 +24,11 @@ import type { JSONSchema7 } from 'json-schema'
 import type { UiPropertiesContext } from './types'
 import { getUiProperties } from './ui-properties'
 
-export type JsonSchema = JSONSchema7 & { uniforms?: object; label?: string }
+export type JsonSchema = JSONSchema7 & { label?: string; uniforms?: object }
 
 export interface TransformTypeOptions {
   /** Use this to add data to the property definitions for specific types  */
-  extraProperties?: (
-    type: IAnyType,
-    context?: UiPropertiesContext,
-  ) => JsonSchema
+  extraProperties?(type: IType, context?: UiPropertiesContext): JsonSchema
 }
 
 // I'm not sure what the difference is, but I'm keeping it like it is for now
@@ -48,7 +45,7 @@ export const primitives = {
 export class TypeSchemaFactory {
   constructor(private readonly options?: TransformTypeOptions) {}
 
-  transform(type: IAnyType, context?: UiPropertiesContext) {
+  transform(type: IType, context?: UiPropertiesContext) {
     switch (type.kind) {
       case ITypeKind.AppType:
         return this.fromAppType(type)
@@ -84,8 +81,10 @@ export class TypeSchemaFactory {
 
     return {
       ...extra,
+      items: type.itemType?.isValid
+        ? this.transform(type.itemType.current)
+        : {},
       type: 'array',
-      items: this.transform(type.itemType.current),
     }
   }
 
@@ -94,8 +93,8 @@ export class TypeSchemaFactory {
       label: field.name || compoundCaseToTitleCase(field.key),
       ...(field.description ? fieldDescription(field.description) : {}),
       ...this.transform(field.type.current, {
-        validationRules: field.validationRules ?? undefined,
         fieldName: field.name,
+        validationRules: field.validationRules ?? undefined,
       }),
       ...field.validationRules?.general,
     })
@@ -114,7 +113,6 @@ export class TypeSchemaFactory {
 
     return {
       ...extra,
-      type: 'object',
       properties: type.fields.reduce(makeFieldProperties, {}),
       required: type.fields
         .map((field) =>
@@ -123,6 +121,7 @@ export class TypeSchemaFactory {
             : undefined,
         )
         .filter(Boolean) as Array<string>,
+      type: 'object',
     }
   }
 
@@ -145,11 +144,12 @@ export class TypeSchemaFactory {
         )
 
         return {
-          type: 'object',
           label: '',
+          properties,
+
+          type: 'object',
           // We use this as label of the select field item
           typeName: innerType.current.name,
-          properties,
         }
       }),
     }
@@ -159,10 +159,7 @@ export class TypeSchemaFactory {
     return this.simpleReferenceType(type)
   }
 
-  fromActionType(
-    type: IAnyActionType,
-    context?: UiPropertiesContext,
-  ): JsonSchema {
+  fromActionType(type: IActionType, context?: UiPropertiesContext): JsonSchema {
     return this.transformTypedValueType(type, context)
   }
 
@@ -200,11 +197,11 @@ export class TypeSchemaFactory {
 
     const properties = TypeSchemaFactory.schemaForTypedValue(
       type.id,
-      { type: 'string', label: '', ...extra },
+      { label: '', type: 'string', ...extra },
       '',
     )
 
-    return { type: 'object', properties, uniforms: nullUniforms }
+    return { properties, type: 'object', uniforms: nullUniforms }
   }
 
   fromPrimitiveType(
@@ -255,7 +252,7 @@ export class TypeSchemaFactory {
    * Produces a 'string' type
    */
   private simpleReferenceType(
-    type: IAnyType,
+    type: IType,
     context?: UiPropertiesContext,
   ): JsonSchema {
     const extra = this.getExtraProperties(type, context)
@@ -273,15 +270,18 @@ export class TypeSchemaFactory {
     typeLabel: Maybe<string>,
   ): { [key: string]: JsonSchema } {
     return {
-      value: valueSchema,
       type: {
-        type: 'string',
-        uniforms: blankUniforms,
-        label: typeLabel,
         default: typeId,
         // This ensures that only this exact type is considered valid. Allows union types to use oneOf
         enum: typeId ? [typeId] : undefined,
+
+        label: typeLabel,
+
+        type: 'string',
+
+        uniforms: blankUniforms,
       },
+      value: valueSchema,
     }
   }
 
@@ -290,7 +290,7 @@ export class TypeSchemaFactory {
    * Produces a {@link TypedValue} shaped schema
    */
   private transformTypedValueType(
-    type: IReactNodeType | IRenderPropsType | IAnyActionType,
+    type: IActionType | IReactNodeType | IRenderPropsType,
     context?: UiPropertiesContext,
   ): JsonSchema {
     const extra = this.getExtraProperties(type)
@@ -302,10 +302,10 @@ export class TypeSchemaFactory {
       '',
     )
 
-    return { type: 'object', properties, uniforms: nullUniforms, label: '' }
+    return { label: '', properties, type: 'object', uniforms: nullUniforms }
   }
 
-  private getExtraProperties(type: IAnyType, context?: UiPropertiesContext) {
+  private getExtraProperties(type: IType, context?: UiPropertiesContext) {
     return this.options?.extraProperties?.(type, context) || undefined
   }
 }

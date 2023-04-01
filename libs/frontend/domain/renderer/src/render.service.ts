@@ -19,40 +19,23 @@ import { Renderer } from './renderer.model'
 export class RenderService
   extends Model({
     /**
-     * These are renderers for the public
+     * These are renderers for the public, they are keyed by pageId
      */
     renderers: prop(() => objectMap<IRenderer>()),
   })
   implements IRenderService
 {
-  // @computed
-  // get elementService() {
-  //   return this._elementService.current
-  // }
-  //
-  // @computed
-  // get componentService() {
-  //   return this._componentService.current
-  // }
-
   @modelFlow
   @transaction
-  addRenderer = _async(function* (
-    this: RenderService,
-    props: RendererProps & { id: string },
-  ) {
-    const existing = this.renderers.get(props.id)
+  addRenderer = _async(function* (this: RenderService, props: RendererProps) {
+    let renderer = this.renderers.get(props.id)
 
-    if (!existing) {
-      const renderer = yield* _await(Renderer.init(props))
+    if (!renderer) {
+      renderer = yield* _await(Renderer.create(props))
 
       this.renderers.set(props.id, renderer)
-
-      return renderer
     }
 
-    existing.initForce(props.pageTree, props.appTree)
-
-    return existing
+    return renderer
   })
 }

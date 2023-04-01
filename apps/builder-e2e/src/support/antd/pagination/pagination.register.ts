@@ -7,27 +7,27 @@ import {
 } from './pagination.command'
 
 export interface AntPaginationCommands {
-  selectPageSize: typeof selectPageSize
-  selectPage: typeof selectPage
-  selectPrevPage: typeof selectPrevPage
   selectNextPage: typeof selectNextPage
+  selectPage: typeof selectPage
+  selectPageSize: typeof selectPageSize
+  selectPrevPage: typeof selectPrevPage
 }
 
 export const antPaginationCommands: Array<CypressCommand> = [
   {
-    name: 'selectPageSize',
     fn: selectPageSize,
+    name: 'selectPageSize',
   },
   {
-    name: 'selectPage',
     fn: selectPage,
+    name: 'selectPage',
   },
   {
-    name: 'selectPrevPage',
     fn: selectPrevPage,
+    name: 'selectPrevPage',
   },
   {
-    name: 'selectNextPage',
     fn: selectNextPage,
+    name: 'selectNextPage',
   },
 ]

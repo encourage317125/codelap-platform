@@ -28,134 +28,133 @@ import {
 } from './table.command'
 
 export interface AntTableCommands {
-  getTable: typeof getTable
-  getTableHeader: typeof getTableHeader
-  getTableRowSelectionHeader: typeof getTableRowSelectionHeader
-  getTableColumnHeaders: typeof getTableColumnHeaders
-  getTableColumnHeader: typeof getTableColumnHeader
-  getTableColumnSorter: typeof getTableColumnSorter
-  getTableFiltersDropdownToggle: typeof getTable
-  getTableScrollContainer: typeof getTableScrollContainer
-  getTableBody: typeof getTableBody
-  getTableRows: typeof getTableRows
-  getTableRow: typeof getTableRow
-  getTableRowSelectionCell: typeof getTableRowSelectionCell
-  getTableCell: typeof getTableCell
-  getTableLoadingIndicator: typeof getTableLoadingIndicator
-  waitForTableToLoad: typeof waitForTableToLoad
   expectTableColumnCount: typeof expectTableColumnCount
   expectTableColumnHeaders: typeof expectTableColumnHeaders
   expectTableRowCount: typeof expectTableRowCount
   expectTableRows: typeof expectTableRows
   expectTableSortedBy: typeof expectTableSortedBy
-  sortTableBy: typeof sortTableBy
   filterTableBy: typeof filterTableBy
-  toggleRowSelection: typeof toggleRowSelection
-  toggleBulkRowSelection: typeof toggleBulkRowSelection
-
+  getTable: typeof getTable
+  getTableBody: typeof getTableBody
+  getTableCell: typeof getTableCell
+  getTableColumnHeader: typeof getTableColumnHeader
+  getTableColumnHeaders: typeof getTableColumnHeaders
+  getTableColumnSorter: typeof getTableColumnSorter
+  getTableFiltersDropdownToggle: typeof getTable
+  getTableHeader: typeof getTableHeader
+  getTableLoadingIndicator: typeof getTableLoadingIndicator
+  getTableRow: typeof getTableRow
+  getTableRowSelectionCell: typeof getTableRowSelectionCell
+  getTableRowSelectionHeader: typeof getTableRowSelectionHeader
+  getTableRows: typeof getTableRows
+  getTableScrollContainer: typeof getTableScrollContainer
   // custom
   searchTableRow: typeof searchTableRow
+  sortTableBy: typeof sortTableBy
+  toggleBulkRowSelection: typeof toggleBulkRowSelection
+  toggleRowSelection: typeof toggleRowSelection
+  waitForTableToLoad: typeof waitForTableToLoad
 }
 
 export const antTableCommands: Array<CypressCommand> = [
   {
-    name: 'getTable',
     fn: getTable,
+    name: 'getTable',
   },
   {
-    name: 'getTableHeader',
     fn: getTableHeader,
+    name: 'getTableHeader',
   },
   {
-    name: 'getTableRowSelectionHeader',
     fn: getTableRowSelectionHeader,
+    name: 'getTableRowSelectionHeader',
   },
   {
-    name: 'getTableColumnHeaders',
     fn: getTableColumnHeaders,
+    name: 'getTableColumnHeaders',
   },
   {
-    name: 'getTableColumnHeader',
     fn: getTableColumnHeader,
+    name: 'getTableColumnHeader',
   },
   {
-    name: 'getTableColumnSorter',
     fn: getTableColumnSorter,
+    name: 'getTableColumnSorter',
   },
   {
-    name: 'getTableFiltersDropdownToggle',
     fn: getTableFiltersDropdownToggle,
+    name: 'getTableFiltersDropdownToggle',
   },
   {
-    name: 'getTableScrollContainer',
     fn: getTableScrollContainer,
+    name: 'getTableScrollContainer',
   },
   {
-    name: 'getTableBody',
     fn: getTableBody,
+    name: 'getTableBody',
   },
   {
-    name: 'getTableRows',
     fn: getTableRows,
+    name: 'getTableRows',
   },
   {
-    name: 'getTableRow',
     fn: getTableRow,
+    name: 'getTableRow',
   },
   {
-    name: 'getTableRowSelectionCell',
     fn: getTableRowSelectionCell,
+    name: 'getTableRowSelectionCell',
   },
   {
-    name: 'getTableCell',
     fn: getTableCell,
+    name: 'getTableCell',
   },
   {
-    name: 'getTableLoadingIndicator',
     fn: getTableLoadingIndicator,
+    name: 'getTableLoadingIndicator',
   },
   {
-    name: 'waitForTableToLoad',
     fn: waitForTableToLoad,
+    name: 'waitForTableToLoad',
   },
   {
-    name: 'expectTableColumnCount',
     fn: expectTableColumnCount,
+    name: 'expectTableColumnCount',
   },
   {
-    name: 'expectTableColumnHeaders',
     fn: expectTableColumnHeaders,
+    name: 'expectTableColumnHeaders',
   },
   {
-    name: 'expectTableRowCount',
     fn: expectTableRowCount,
+    name: 'expectTableRowCount',
   },
   {
-    name: 'expectTableRows',
     fn: expectTableRows,
+    name: 'expectTableRows',
   },
   {
-    name: 'expectTableSortedBy',
     fn: expectTableSortedBy,
+    name: 'expectTableSortedBy',
   },
   {
-    name: 'sortTableBy',
     fn: sortTableBy,
+    name: 'sortTableBy',
   },
   {
-    name: 'filterTableBy',
     fn: filterTableBy,
+    name: 'filterTableBy',
   },
   {
-    name: 'toggleRowSelection',
     fn: toggleRowSelection,
+    name: 'toggleRowSelection',
   },
   {
-    name: 'toggleBulkRowSelection',
     fn: toggleBulkRowSelection,
+    name: 'toggleBulkRowSelection',
   },
   {
-    name: 'searchTableRow',
     fn: searchTableRow,
+    name: 'searchTableRow',
   },
 ]

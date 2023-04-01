@@ -6,7 +6,7 @@ import type { UploadProgressEvent } from 'rc-upload/es/interface'
 import React, { useState } from 'react'
 
 export interface ImportUploadProps {
-  fetchFn: (data: unknown) => Promise<unknown>
+  fetchFn(data: unknown): Promise<unknown>
 }
 
 export const ImportUpload = ({ fetchFn }: ImportUploadProps) => {
@@ -23,7 +23,7 @@ export const ImportUpload = ({ fetchFn }: ImportUploadProps) => {
     customRequest: async (options) => {
       setIsLoading(true)
 
-      const { onSuccess, onError, file, onProgress } = options
+      const { file, onError, onProgress, onSuccess } = options
       const text = await (file as RcFile).text()
 
       await fetchFn(text)
@@ -37,6 +37,7 @@ export const ImportUpload = ({ fetchFn }: ImportUploadProps) => {
           setIsLoading(false)
         })
     },
+    defaultFileList: [],
     onChange: ({ file, fileList }) => {
       console.info(file.status)
 
@@ -44,7 +45,6 @@ export const ImportUpload = ({ fetchFn }: ImportUploadProps) => {
         console.info(file, fileList)
       }
     },
-    defaultFileList: [],
     showUploadList: false,
   }
 

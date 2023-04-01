@@ -1,23 +1,20 @@
-import type {
-  AntDesignField,
-  IAtom,
-  IType,
-  IUserRef,
-} from '@codelab/backend/abstract/core'
+import type { AntDesignField } from '@codelab/backend/abstract/core'
 import { IUseCase } from '@codelab/backend/abstract/types'
 import {
-  ActionType,
   EnumType,
   InterfaceType,
-  PrimitiveType,
-  ReactNodeType,
-  ReactNodeTypeRepository,
-  RenderPropsType,
-  RenderPropsTypeRepository,
   TypeFactory,
   UnionType,
   UnionTypeRepository,
 } from '@codelab/backend/domain/type'
+import type {
+  IAtomDTO,
+  IAuth0Owner,
+  IEnumTypeDTO,
+  IInterfaceTypeDTO,
+  ITypeDTO,
+  IUnionTypeDTO,
+} from '@codelab/frontend/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { v4 } from 'uuid'
 import { AntDesignTypeMapper } from '../../mapper'
@@ -31,77 +28,69 @@ import {
   isUnionType,
   parseSeparators,
 } from '../../parser'
+import { systemTypesData } from '../seed-system-type/system-types.data'
 
 interface Request {
-  field: Pick<AntDesignField, 'type' | 'property'>
-  atom: IAtom
-  owner: IUserRef
+  atom: IAtomDTO
+  field: Pick<AntDesignField, 'property' | 'type'>
+  owner: IAuth0Owner
 }
 
 export class TransformAntDesignTypesService extends IUseCase<
   Request,
-  IType | undefined
+  ITypeDTO | undefined
 > {
-  reactNodeTypeRepository = new ReactNodeTypeRepository()
-
-  renderPropsTypeRepository = new RenderPropsTypeRepository()
-
   unionTypeRepository = new UnionTypeRepository()
 
-  protected async _execute({ field, atom, owner }: Request) {
+  protected async _execute({ atom, field, owner }: Request) {
     if (isEnumType(field.type)) {
       const values = parseSeparators(field)
 
-      const enumType = EnumType.init({
+      const enumType: IEnumTypeDTO = {
         __typename: ITypeKind.EnumType,
-        name: EnumType.getCompositeName(atom, { key: field.property }),
-        owner,
         allowedValues: values.map((value) => ({
           id: v4(),
           key: value,
           value: value,
         })),
-      })
+        id: v4(),
+        kind: ITypeKind.EnumType,
+        name: EnumType.getCompositeName(atom, { key: field.property }),
+        owner,
+      }
 
       return enumType
     }
 
     if (isReactNodeType(field.type)) {
-      return ReactNodeType.init({
-        owner,
-      })
+      return systemTypesData(owner)[ITypeKind.ReactNodeType]
+    }
+
+    if (isRenderPropsType(field.type)) {
+      return systemTypesData(owner)[ITypeKind.RenderPropsType]
+    }
+
+    if (isActionType(field.type)) {
+      return systemTypesData(owner)[ITypeKind.ActionType]
     }
 
     if (isPrimitiveType(field.type)) {
       const primitiveKind = AntDesignTypeMapper.mapPrimitiveType(field.type)
 
-      return PrimitiveType.init({
-        owner,
-        primitiveKind,
-      })
-    }
-
-    if (isRenderPropsType(field.type)) {
-      return RenderPropsType.init({
-        owner,
-        __typename: ITypeKind.RenderPropsType,
-      })
-    }
-
-    if (isActionType(field.type)) {
-      return ActionType.init({
-        owner,
-        __typename: ITypeKind.ActionType,
-      })
+      return systemTypesData(owner)[primitiveKind]
     }
 
     if (isInterfaceType(field.type)) {
-      return InterfaceType.init({
-        name: InterfaceType.getApiName(atom, { key: field.property }),
-        owner,
+      const interfaceTypeDTO: IInterfaceTypeDTO = {
         __typename: ITypeKind.InterfaceType,
         fields: [],
-      })
+        id: v4(),
+        kind: ITypeKind.InterfaceType,
+        name: InterfaceType.getApiName(atom, { key: field.property }),
+        owner,
+      }
+
+      return interfaceTypeDTO
     }
 
     if (isUnionType(field.type)) {
@@ -112,30 +101,32 @@ export class TransformAntDesignTypesService extends IUseCase<
         await Promise.all(
           typesOfUnionType.map(async (typeOfUnionType) => {
             return await new TransformAntDesignTypesService().execute({
-              field: { ...field, type: typeOfUnionType },
               atom,
+              field: { ...field, type: typeOfUnionType },
               owner,
             })
           }),
         )
-      ).filter((typeOfUnionType): typeOfUnionType is IType =>
+      ).filter((typeOfUnionType): typeOfUnionType is ITypeDTO =>
         Boolean(typeOfUnionType),
       )
 
       // Create nested types
       await Promise.all(
         mappedTypesOfUnionType.map(async ({ ...typeOfUnionType }) => {
-          return await TypeFactory.create(typeOfUnionType, owner)
+          return await TypeFactory.create({ ...typeOfUnionType, owner })
         }),
       )
 
-      const unionType = UnionType.init({
-        owner,
+      const unionType: IUnionTypeDTO = {
         __typename: ITypeKind.UnionType,
+        id: v4(),
+        kind: ITypeKind.UnionType,
         name: UnionType.compositeName(atom, { key: field.property }),
+        owner,
         // These need to exist already
         typesOfUnionType: mappedTypesOfUnionType,
-      })
+      }
 
       return unionType
     }

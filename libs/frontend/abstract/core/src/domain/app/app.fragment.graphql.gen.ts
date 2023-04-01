@@ -1,50 +1,43 @@
 import * as Types from '@codelab/shared/abstract/codegen'
 
-import { PageFragment } from '../page/page.fragment.graphql.gen'
-import { ElementFragment } from '../element/element.fragment.graphql.gen'
-import { StoreFragment } from '../store/store.fragment.graphql.gen'
+import { OwnerFragment } from '../user/owner.fragment.graphql.gen'
+import {
+  PageFragment,
+  BuilderPageFragment,
+} from '../page/page.fragment.graphql.gen'
+import { DomainFragment } from '../domain/domain.fragment.graphql.gen'
 import { GraphQLClient } from 'graphql-request'
 import * as Dom from 'graphql-request/dist/types.dom'
 import { gql } from 'graphql-tag'
-import { PageFragmentDoc } from '../page/page.fragment.graphql.gen'
-import { ElementFragmentDoc } from '../element/element.fragment.graphql.gen'
-import { StoreFragmentDoc } from '../store/store.fragment.graphql.gen'
+import { OwnerFragmentDoc } from '../user/owner.fragment.graphql.gen'
+import {
+  PageFragmentDoc,
+  BuilderPageFragmentDoc,
+} from '../page/page.fragment.graphql.gen'
+import { DomainFragmentDoc } from '../domain/domain.fragment.graphql.gen'
 export type AppPreviewFragment = {
   id: string
   name: string
   slug: string
-  owner: { id: string }
-  pages: Array<PageFragment>
-  store: { id: string }
+  owner: OwnerFragment
+  pages: Array<{ id: string }>
 }
 
 export type AppFragment = {
   id: string
   name: string
   slug: string
-  owner: { id: string }
+  owner: OwnerFragment
   pages: Array<PageFragment>
-  store: { id: string }
-}
-
-export type BuilderPageFragment = {
-  id: string
-  name: string
-  slug: string
-  getServerSideProps?: string | null
-  kind: Types.PageKind
-  rootElement: { descendantElements: Array<ElementFragment> } & ElementFragment
-  app: { id: string }
-  pageContainerElement?: { id: string } | null
+  domains: Array<DomainFragment>
 }
 
 export type PageBuilderAppFragment = {
   id: string
   name: string
   slug: string
-  owner: { id: string }
+  owner: OwnerFragment
   pages: Array<BuilderPageFragment>
-  store: StoreFragment
 }
 
 export const AppPreviewFragmentDoc = gql`
@@ -53,16 +46,13 @@ export const AppPreviewFragmentDoc = gql`
     name
     slug
     owner {
-      id
+      ...Owner
     }
     pages {
-      ...Page
-    }
-    store {
       id
     }
   }
-  ${PageFragmentDoc}
+  ${OwnerFragmentDoc}
 `
 export const AppFragmentDoc = gql`
   fragment App on App {
@@ -70,38 +60,18 @@ export const AppFragmentDoc = gql`
     name
     slug
     owner {
-      id
+      ...Owner
     }
     pages {
       ...Page
     }
-    store {
-      id
+    domains {
+      ...Domain
     }
   }
+  ${OwnerFragmentDoc}
   ${PageFragmentDoc}
-`
-export const BuilderPageFragmentDoc = gql`
-  fragment BuilderPage on Page {
-    id
-    name
-    slug
-    getServerSideProps
-    rootElement {
-      ...Element
-      descendantElements {
-        ...Element
-      }
-    }
-    app {
-      id
-    }
-    pageContainerElement {
-      id
-    }
-    kind
-  }
-  ${ElementFragmentDoc}
+  ${DomainFragmentDoc}
 `
 export const PageBuilderAppFragmentDoc = gql`
   fragment PageBuilderApp on App {
@@ -109,7 +79,7 @@ export const PageBuilderAppFragmentDoc = gql`
     name
     slug
     owner {
-      id
+      ...Owner
     }
     pages(
       where: {
@@ -123,12 +93,9 @@ export const PageBuilderAppFragmentDoc = gql`
     ) {
       ...BuilderPage
     }
-    store {
-      ...Store
-    }
   }
+  ${OwnerFragmentDoc}
   ${BuilderPageFragmentDoc}
-  ${StoreFragmentDoc}
 `
 
 export type SdkFunctionWrapper = <T>(

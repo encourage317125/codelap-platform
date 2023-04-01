@@ -15,13 +15,14 @@ import type {
 import debounce from 'lodash/debounce'
 import isEqual from 'lodash/isEqual'
 import { arraySet } from 'mobx-keystone'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { ActionColumn, LibraryColumn, PropsColumn, TagsColumn } from './columns'
-import { AllowedChildrenColumn } from './columns/AllowedChildrenColumn'
+import { RequiredParentsColumn } from './columns/RequiredParentsColumn'
+import { SuggestedChildrenColumn } from './columns/SuggestedChildrenColumn'
 import type { AtomRecord } from './columns/types'
 
 const onLibraryFilter = (
-  value: string | number | boolean,
+  value: boolean | number | string,
   atom: AtomRecord,
 ): boolean => {
   const list = [atom.name, atom.type].map((item) => item.toLowerCase())
@@ -32,18 +33,18 @@ const onLibraryFilter = (
 
 export const useAtomTable = ({
   atomService,
-  typeService,
   fieldService,
+  typeService,
 }: {
   atomService: IAtomService
-  typeService: ITypeService
   fieldService: IFieldService
+  typeService: ITypeService
 }) => {
   const [atomWhere, setAtomWhere] = useState<Maybe<AtomWhere>>(undefined)
 
   const [atomOptions, setAtomOptions] = useState<AtomOptions>({
-    offset: 0,
     limit: 25,
+    offset: 0,
   })
 
   const debouncedSetAtomWhere = useCallback(
@@ -76,41 +77,48 @@ export const useAtomTable = ({
 
   const columns: Array<ColumnType<AtomRecord>> = [
     {
-      title: 'Name',
       dataIndex: 'name',
       key: 'name',
       onHeaderCell: headerCellProps,
+      title: 'Name',
       ...nameColumnSearchProps,
     },
     {
-      title: 'Library',
       dataIndex: 'library',
       key: 'library',
-      onHeaderCell: headerCellProps,
       onFilter: onLibraryFilter,
+      onHeaderCell: headerCellProps,
       render: (library) => <LibraryColumn library={library} />,
+      title: 'Library',
     },
     {
-      title: 'Tags',
       dataIndex: 'tags',
       key: 'tags',
       onHeaderCell: headerCellProps,
       render: (tags) => <TagsColumn tags={tags} />,
+      title: 'Tags',
     },
     {
-      title: 'Allowed',
-      dataIndex: 'allowedChildren',
-      key: 'allowedChildren',
+      dataIndex: 'suggestedChildren',
+      key: 'suggestedChildren',
       onHeaderCell: headerCellProps,
-      render: (allowedChildren) => {
-        return <AllowedChildrenColumn allowedChildren={allowedChildren} />
+      render: (suggestedChildren) => {
+        return <SuggestedChildrenColumn suggestedChildren={suggestedChildren} />
       },
+      title: 'Suggested',
     },
     {
-      title: 'Props API',
+      dataIndex: 'requiredParents',
+      key: 'requiredParents',
+      onHeaderCell: headerCellProps,
+      render: (requiredParents) => {
+        return <RequiredParentsColumn requiredParents={requiredParents} />
+      },
+      title: 'Required',
+    },
+    {
       dataIndex: 'props',
       key: 'props',
-      width: 300,
       onHeaderCell: headerCellProps,
       render: (_, atom) => (
         <PropsColumn
@@ -119,43 +127,48 @@ export const useAtomTable = ({
           typeService={typeService}
         />
       ),
+      title: 'Props API',
+      width: 300,
     },
     {
-      title: 'Action',
       key: 'action',
       onHeaderCell: headerCellProps,
-      width: 100,
       render: (text, atom) => (
         <ActionColumn atom={atom} atomService={atomService} />
       ),
+      title: 'Action',
+      width: 100,
     },
   ]
 
   const rowSelection: TableRowSelection<AtomRecord> = {
-    type: 'checkbox',
     onChange: (_: Array<React.Key>, selectedRows: Array<AtomRecord>) => {
       atomService.setSelectedIds(arraySet(selectedRows.map(({ id }) => id)))
     },
+    type: 'checkbox',
   }
 
-  const pagination: TablePaginationConfig = {
-    position: ['bottomCenter'],
-    defaultPageSize: 25,
-    total: atomService.count,
-    onChange: async (page: number, pageSize: number) => {
-      const options = {
-        offset: (page - 1) * pageSize,
-        limit: pageSize,
-      }
-
-      if (!isEqual(options, atomOptions)) {
-        debouncedSetAtomOptions({
-          offset: (page - 1) * pageSize,
+  const pagination: TablePaginationConfig = useMemo(
+    () => ({
+      defaultPageSize: 25,
+      onChange: async (page: number, pageSize: number) => {
+        const options = {
           limit: pageSize,
-        })
-      }
-    },
-  }
+          offset: (page - 1) * pageSize,
+        }
 
-  return { columns, rowSelection, pagination, atomWhere, atomOptions }
+        if (!isEqual(options, atomOptions)) {
+          debouncedSetAtomOptions({
+            limit: pageSize,
+            offset: (page - 1) * pageSize,
+          })
+        }
+      },
+      position: ['bottomCenter'],
+      total: atomService.count,
+    }),
+    [],
+  )
+
+  return { atomOptions, atomWhere, columns, pagination, rowSelection }
 }

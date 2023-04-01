@@ -1,16 +1,16 @@
-import type { Nullable } from '@codelab/shared/abstract/types'
-import type { ICreateElementDTO } from '../element'
+import type { IEntity } from '@codelab/shared/abstract/types'
+import type { ICreateElementData } from '../element'
 
 export interface MoveData {
-  parentElementId: Nullable<string>
-  prevSiblingId: Nullable<string>
+  parentElement: IEntity
+  prevSibling: IEntity
 }
 
 export interface BuilderDragData {
-  type: BuilderDndType
-  createElementInput?: ICreateElementDTO
-  name?: string
+  createElementInput?: ICreateElementData
   icon?: string
+  name?: string
+  type: BuilderDndType
 }
 
 export interface BuilderDropData {
@@ -18,16 +18,16 @@ export interface BuilderDropData {
 }
 
 export interface BuilderWidth {
-  min: number
-  max: number
   default: number
+  max: number
+  min: number
 }
 
 export const enum BuilderWidthBreakPoints {
+  Desktop = 'desktop',
   Mobile = 'mobile',
   MobileVertical = 'mobile-vertical',
   TabletHorizontal = 'tablet-horizontal',
-  Desktop = 'desktop',
 }
 
 export enum BuilderDndType {
@@ -36,8 +36,8 @@ export enum BuilderDndType {
 }
 
 export enum DragPosition {
-  Before = 'Before',
   After = 'After',
+  Before = 'Before',
   Inside = 'Inside',
 }
 
@@ -45,19 +45,19 @@ export const defaultBuilderWidthBreakPoints: Record<
   BuilderWidthBreakPoints,
   BuilderWidth
 > = {
-  [BuilderWidthBreakPoints.Mobile]: { min: 240, max: 479, default: 320 },
+  [BuilderWidthBreakPoints.Mobile]: { default: 320, max: 479, min: 240 },
   [BuilderWidthBreakPoints.MobileVertical]: {
-    min: 480,
-    max: 767,
     default: 568,
+    max: 767,
+    min: 480,
   },
   [BuilderWidthBreakPoints.TabletHorizontal]: {
-    min: 768,
-    max: 991,
     default: 768,
+    max: 991,
+    min: 768,
   },
   // -1 means automatically set the value for this field to the max available space
-  [BuilderWidthBreakPoints.Desktop]: { min: 992, max: -1, default: -1 },
+  [BuilderWidthBreakPoints.Desktop]: { default: -1, max: -1, min: 992 },
 }
 
 /**

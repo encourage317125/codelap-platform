@@ -10,7 +10,6 @@ import { css, Global } from '@emotion/react'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import { ConfigProvider } from 'antd'
-import type { PropsWithChildren } from 'react'
 import React from 'react'
 import { RecoilRoot } from 'recoil'
 import { GlobalStyles } from 'twin.macro'
@@ -23,8 +22,8 @@ import { useHotjar } from '../hooks/useHotjar'
  * Pass { snapshot: getSnapshot(store) } as props from any getServerSideProps to pre-populate the store
  */
 
-const App = ({ pageProps, Component }: IAppProps) => {
-  const { Layout = ({ children }: PropsWithChildren) => <>{children}</> } =
+const App = ({ Component, pageProps }: IAppProps) => {
+  const { Layout = ({ children }) => <>{children}</> } =
     Component as CodelabPage
 
   useHotjar()
@@ -60,10 +59,12 @@ const App = ({ pageProps, Component }: IAppProps) => {
                 ]}
               />
               <Layout>
-                <Component
-                  // eslint-disable-next-line react/jsx-props-no-spreading
-                  {...pageProps}
-                />
+                {() => (
+                  <Component
+                    // eslint-disable-next-line react/jsx-props-no-spreading
+                    {...pageProps}
+                  />
+                )}
               </Layout>
             </ConfigProvider>
           </LocalizationProvider>

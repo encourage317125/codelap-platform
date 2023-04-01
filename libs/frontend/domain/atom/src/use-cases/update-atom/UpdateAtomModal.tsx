@@ -1,29 +1,20 @@
-import type {
-  IAtomService,
-  ITagService,
-  IUpdateAtomDTO,
-} from '@codelab/frontend/abstract/core'
+import type { IUpdateAtomData } from '@codelab/frontend/abstract/core'
 import { SelectAtom } from '@codelab/frontend/domain/type'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { ModalForm } from '@codelab/frontend/view/components'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 import { AutoFields, SelectField } from 'uniforms-antd'
-import { updateAtomSchema } from './updateAtomSchema'
+import { updateAtomSchema } from './update-atom.schema'
 
-export const UpdateAtomModal = observer<{
-  atomService: IAtomService
-  tagService: ITagService
-}>(({ atomService, tagService }) => {
+export const UpdateAtomModal = observer(() => {
+  const { atomService, tagService } = useStore()
   const atom = atomService.updateModal.atom
   const closeModal = () => atomService.updateModal.close()
 
-  const onSubmit = (data: IUpdateAtomDTO) => {
-    if (!atom) {
-      throw new Error('Updated atom is not set')
-    }
-
-    return atomService.update(atom, data)
+  const onSubmit = (atomDTO: IUpdateAtomData) => {
+    return atomService.update(atomDTO)
   }
 
   const onSubmitError = createNotificationHandler({
@@ -31,12 +22,14 @@ export const UpdateAtomModal = observer<{
   })
 
   const model = {
+    id: atom?.id,
     name: atom?.name,
-    type: atom?.type,
-    tags: atom?.tags.map((tag) => tag.id),
-    allowedChildren: atom?.allowedChildren.map(
-      (allowedChild) => allowedChild.id,
+    requiredParents: atom?.requiredParents.map((child) => child.id),
+    suggestedChildren: atom?.suggestedChildren.map(
+      (suggestedChild) => suggestedChild.id,
     ),
+    tags: atom?.tags,
+    type: atom?.type,
   }
 
   const tagListOption = tagService.tagsSelectOptions
@@ -47,14 +40,16 @@ export const UpdateAtomModal = observer<{
       onCancel={closeModal}
       open={atomService.updateModal.isOpen}
     >
-      <ModalForm.Form<IUpdateAtomDTO>
+      <ModalForm.Form<IUpdateAtomData>
         model={model}
         onSubmit={onSubmit}
         onSubmitError={onSubmitError}
         onSubmitSuccess={closeModal}
         schema={updateAtomSchema}
       >
-        <AutoFields omitFields={['tags', 'allowedChildren']} />
+        <AutoFields
+          omitFields={['tags', 'suggestedChildren', 'requiredParents']}
+        />
         <SelectField
           label="Connect Tag"
           mode="multiple"
@@ -63,15 +58,8 @@ export const UpdateAtomModal = observer<{
           options={tagListOption}
           showSearch={true}
         />
-        <SelectAtom label="Allowed Children" name="allowedChildren" />
-        {/* <SelectField */}
-        {/*  label="Allowed Children" */}
-        {/*  mode="multiple" */}
-        {/*  name="allowedChildren" */}
-        {/*  optionFilterProp="label" */}
-        {/*  options={tagListOption} */}
-        {/*  showSearch={true} */}
-        {/*/ > */}
+        <SelectAtom label="Suggested Children" name="suggestedChildren" />
+        <SelectAtom label="Required Parents" name="requiredParents" />
       </ModalForm.Form>
     </ModalForm.Modal>
   )

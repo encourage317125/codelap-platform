@@ -18,12 +18,11 @@ const UsersPage: CodelabPage<DashboardTemplateProps> = () => {
 
   const columns: ColumnsType<object> = [
     {
-      title: 'Id',
       dataIndex: 'id',
       key: 'id',
+      title: 'Id',
     },
     {
-      title: 'Action',
       dataIndex: 'action',
       key: 'action',
       render: (text, record) => {
@@ -35,6 +34,7 @@ const UsersPage: CodelabPage<DashboardTemplateProps> = () => {
           </Space>
         )
       },
+      title: 'Action',
     },
   ]
 
@@ -50,4 +50,6 @@ export default UsersPage
 
 export const getServerSideProps = auth0Instance.withPageAuthRequired()
 
-UsersPage.Layout = DashboardTemplate
+UsersPage.Layout = ({ children }) => {
+  return <DashboardTemplate>{children()}</DashboardTemplate>
+}

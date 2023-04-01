@@ -1,68 +1,63 @@
-import type { IPage, IPropData } from '@codelab/frontend/abstract/core'
-import { IPageDTO } from '@codelab/frontend/abstract/core'
-import { ElementTreeService } from '@codelab/frontend/domain/element'
-import { extractName } from '@codelab/frontend/shared/utils'
+import type {
+  IElement,
+  IPage,
+  IPageDTO,
+  IStore,
+} from '@codelab/frontend/abstract/core'
+import { elementRef, ElementTree } from '@codelab/frontend/abstract/core'
+import { storeRef } from '@codelab/frontend/domain/store'
+import type {
+  PageCreateInput,
+  PageDeleteInput,
+  PageUpdateInput,
+} from '@codelab/shared/abstract/codegen'
 import type { IPageKind } from '@codelab/shared/abstract/core'
-import type { IEntity, Nullish } from '@codelab/shared/abstract/types'
+import type { IEntity, Maybe } from '@codelab/shared/abstract/types'
+import { connectNodeId, reconnectNodeId } from '@codelab/shared/domain/mapper'
+import { createUniqueName } from '@codelab/shared/utils'
 import { computed } from 'mobx'
-import { ExtendedModel, idProp, model, modelAction, prop } from 'mobx-keystone'
-import { pageApi } from './page.api'
+import type { Ref } from 'mobx-keystone'
+import { ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
+import slugify from 'voca/slugify'
 
-const getServerSideProps = async (context: IPropData) => {
-  const id = context.params?.pageId as string
-
-  const {
-    pages: [page],
-  } = await pageApi.GetPages({ where: { id } })
-
-  if (!page || !page.getServerSideProps) {
-    return { props: {} }
-  }
-
-  const {
-    props = {},
-    notFound = false,
-    redirect = undefined,
-  } = await eval(`(${page.getServerSideProps})`)(context)
-
-  return {
-    props: {
-      getServerSidePropsData: props,
-    },
-    notFound,
-    redirect,
-  }
-}
-
-const hydrate = (page: IPageDTO) => {
+const create = ({
+  app,
+  id,
+  kind,
+  name,
+  pageContentContainer,
+  rootElement,
+  store,
+}: IPageDTO) => {
   return new Page({
-    id: page.id,
-    name: extractName(page.name),
-    slug: page.slug,
-    rootElement: { id: page.rootElement.id },
-    getServerSideProps: page.getServerSideProps,
-    app: { id: page.app.id },
-    pageContainerElement: page.pageContainerElement
-      ? { id: page.pageContainerElement.id }
-      : null,
-    kind: page.kind,
+    app: { id: app.id },
+    id,
+    kind,
+    name,
+    pageContentContainer: pageContentContainer?.id
+      ? elementRef(pageContentContainer.id)
+      : undefined,
+    rootElement: elementRef(rootElement.id),
+    store: storeRef(store.id),
   })
 }
 
 @model('@codelab/Page')
 export class Page
-  extends ExtendedModel(ElementTreeService, {
-    id: idProp,
+  extends ExtendedModel(ElementTree, {
     app: prop<IEntity>(),
-    name: prop<string>().withSetter(),
-    slug: prop<string>(),
-    rootElement: prop<IEntity>(),
-    getServerSideProps: prop<Nullish<string>>(),
-    pageContainerElement: prop<Nullish<IEntity>>(),
     kind: prop<IPageKind>(),
+    name: prop<string>().withSetter(),
+    pageContentContainer: prop<Maybe<Ref<IElement>>>(),
+    store: prop<Ref<IStore>>(),
   })
   implements IPage
 {
+  @computed
+  get slug() {
+    return slugify(this.name)
+  }
+
   @computed
   get toJson() {
     return {
@@ -75,20 +70,67 @@ export class Page
     }
   }
 
+  toCreateInput(): PageCreateInput {
+    return {
+      _compoundName: createUniqueName(this.name, this.app.id),
+      app: connectNodeId(this.app.id),
+      id: this.id,
+      kind: this.kind,
+      pageContentContainer: connectNodeId(
+        this.pageContentContainer?.current.id,
+      ),
+      rootElement: {
+        create: {
+          node: this.rootElement.current.toCreateInput(),
+        },
+      },
+      store: {
+        create: {
+          node: this.store.current.toCreateInput(),
+        },
+      },
+    }
+  }
+
+  toUpdateInput(): PageUpdateInput {
+    return {
+      _compoundName: createUniqueName(this.name, this.app.id),
+      app: connectNodeId(this.app.id),
+      pageContentContainer: reconnectNodeId(
+        this.pageContentContainer?.current.id,
+      ),
+    }
+  }
+
+  toDeleteInput(): PageDeleteInput {
+    return {
+      pageContentContainer: { delete: {}, where: {} },
+      rootElement: {},
+    }
+  }
+
   @modelAction
-  writeCache(page: IPageDTO) {
-    this.setName(extractName(page.name))
-    this.rootElement = page.rootElement
-    this.app = page.app
-    this.slug = page.slug
-    this.getServerSideProps = page.getServerSideProps
-    this.pageContainerElement = page.pageContainerElement
-    this.kind = page.kind
+  writeCache({
+    app,
+    kind,
+    name,
+    pageContentContainer,
+    rootElement,
+    store,
+  }: Partial<IPageDTO>) {
+    this.name = name ?? this.name
+    this.rootElement = rootElement
+      ? elementRef(rootElement.id)
+      : this.rootElement
+    this.app = app ? app : this.app
+    this.pageContentContainer = pageContentContainer
+      ? elementRef(pageContentContainer.id)
+      : this.pageContentContainer
+    this.kind = kind ? kind : this.kind
+    this.store = store ? storeRef(store.id) : this.store
 
     return this
   }
 
-  static hydrate = hydrate
-
-  static getServerSideProps = getServerSideProps
+  static create = create
 }

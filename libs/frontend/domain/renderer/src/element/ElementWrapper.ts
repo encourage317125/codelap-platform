@@ -4,8 +4,9 @@ import type {
   IRenderer,
 } from '@codelab/frontend/abstract/core'
 import { RendererType } from '@codelab/frontend/abstract/core'
+import { isAtomInstance } from '@codelab/frontend/domain/atom'
 import { IAtomType } from '@codelab/shared/abstract/core'
-import type { Nullable, Nullish } from '@codelab/shared/abstract/types'
+import type { Nullable } from '@codelab/shared/abstract/types'
 import { mergeProps } from '@codelab/shared/utils'
 import { jsx } from '@emotion/react'
 import { observer } from 'mobx-react-lite'
@@ -13,20 +14,15 @@ import React, { useCallback, useEffect } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { shouldRenderElement } from '../utils'
 import { mapOutput } from '../utils/renderOutputUtils'
-import {
-  extractValidProps,
-  getReactComponent,
-  makeDraggableElement,
-} from './wrapper.utils'
+import { extractValidProps, getReactComponent } from './wrapper.utils'
 
 export interface ElementWrapperProps {
-  renderService: IRenderer
   element: IElement
   /**
    * Props passed in from outside the component
    */
   extraProps?: IPropData
-  postAction?: Nullish<() => unknown>
+  renderService: IRenderer
 }
 
 /**
@@ -35,21 +31,16 @@ export interface ElementWrapperProps {
  * It is in this wrapper that the children are rendered
  */
 export const ElementWrapper = observer<ElementWrapperProps>(
-  ({ renderService, element, extraProps = {}, postAction, ...rest }) => {
-    // const globalPropsContext = useContext(GlobalPropsContext)
-    // const globalProps = globalPropsContext[element.id]    const state = renderService.appStore.current.state
-    const store = renderService.appStore.current
-
+  ({ element, extraProps = {}, renderService, ...rest }) => {
     const onRefChange = useCallback((node: Nullable<HTMLElement>) => {
       if (node !== null) {
-        store.state.setSilently(element.id, node)
-        store.state.setSilently(element.slug, node)
+        // FIXME:
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
-      postAction?.()
+      // FIXME:
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -61,23 +52,28 @@ export const ElementWrapper = observer<ElementWrapperProps>(
 
     renderService.logRendered(element, renderOutputs)
 
-    // Use mapOutput because the output may be array or a single item
-    /**
-     * Generates an ArrayOrSingle of functions that accepts additional props
-     * and will return the React Elements with the attached additional props
-     */
-    const renderOutputWithProps = mapOutput(renderOutputs, (renderOutput) => {
+    // TODO: re-work on implementation for the draggable elements and allowable children on the droppable elements.
+    // Render the elements normally for now since the DnD is currently not properly working and
+    // causing unnecessary re-renders when hovering over the builder screen section
+    const renderedElement = mapOutput(renderOutputs, (renderOutput) => {
+      // FIXME:
       const children = shouldRenderElement(
         element,
-        mergeProps(renderOutput.props, store.state.values),
+        mergeProps(renderOutput.props, {}),
       )
-        ? renderService.renderChildren({ parentOutput: renderOutput })
+        ? renderService.renderChildren({
+            extraProps,
+            parentOutput: renderOutput,
+          })
         : undefined
 
       if (renderOutput.props) {
         renderOutput.props['forwardedRef'] = onRefChange
 
-        if (element.atom?.current.type === IAtomType.GridLayout) {
+        if (
+          isAtomInstance(element.renderType) &&
+          element.renderType.current.type === IAtomType.GridLayout
+        ) {
           renderOutput.props['static'] =
             renderService.rendererType === RendererType.Preview
         }
@@ -86,39 +82,8 @@ export const ElementWrapper = observer<ElementWrapperProps>(
       const ReactComponent = getReactComponent(renderOutput)
       const extractedProps = extractValidProps(ReactComponent, renderOutput)
 
-      // const withMaybeProviders = withMaybeGlobalPropsProvider(
-      //  renderOutput,
-      //  globalPropsContext,
-      // )
-
-      return (props?: IPropData) =>
-        /**
-         * rest makes ElementWrapper pass-through
-         */
-        jsx(ReactComponent, mergeProps(extractedProps, rest, props), children)
+      return jsx(ReactComponent, mergeProps(extractedProps, rest), children)
     })
-
-    // to be used for dnd to be able to add necessary props later
-    const makeRenderedElements = (moreProps?: IPropData) => {
-      if (Array.isArray(renderOutputWithProps)) {
-        return renderOutputWithProps.map((fn) => fn(moreProps))
-      }
-
-      return renderOutputWithProps(moreProps)
-    }
-
-    const isInsideAComponent = Boolean(element.rootElement.parentComponent)
-    const isComponentRootElement = element.parentComponent && isInsideAComponent
-
-    // we only apply dnd to the root element of a component or elements not inside a component
-    const isDraggable =
-      renderService.rendererType === RendererType.PageBuilder &&
-      (isComponentRootElement || !isInsideAComponent)
-
-    // we need to include additional props from dnd so we need to render the element there
-    const WrappedElement = isDraggable
-      ? makeDraggableElement({ element, makeRenderedElements })
-      : makeRenderedElements()
 
     return React.createElement(
       ErrorBoundary,
@@ -127,12 +92,12 @@ export const ElementWrapper = observer<ElementWrapperProps>(
         onError: ({ message, stack }) => {
           element.setRenderingError({ message, stack })
         },
-        resetKeys: [renderOutputs],
         onResetKeysChange: () => {
           element.setRenderingError(null)
         },
+        resetKeys: [renderOutputs],
       },
-      WrappedElement,
+      renderedElement,
     )
   },
 )

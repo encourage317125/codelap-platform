@@ -18,24 +18,22 @@ import { WrappedListField } from './WrappedListField'
 
 type InnerProps = Omit<AutoCompleteProps, 'onChange' | 'onSelect'>
 
-type Value = string | number | boolean | undefined | Array<unknown>
+type Value = Array<unknown> | boolean | number | string | undefined
 
 interface CodeMirrorFieldProps {
-  onToggle?: (
+  getBaseControl?(fieldProps: CodeMirrorConnectFieldProps): EmotionJSX.Element
+  onToggle?(
     value: boolean,
     props: CodeMirrorConnectFieldProps,
     lastValue?: Value,
-  ) => void
-  getBaseControl?: (
-    fieldProps: CodeMirrorConnectFieldProps,
-  ) => EmotionJSX.Element
+  ): void
 }
 
 type CodeMirrorConnectFieldProps = FieldProps<Value, InnerProps>
 
 interface ToggleExpressionFieldProps {
-  mainProps: CodeMirrorFieldProps
   fieldProps: CodeMirrorConnectFieldProps
+  mainProps: CodeMirrorFieldProps
 }
 
 const getBaseControl = (fieldProps: CodeMirrorConnectFieldProps) => {
@@ -50,7 +48,7 @@ const getBaseControl = (fieldProps: CodeMirrorConnectFieldProps) => {
     ? fullFieldName.substring(fullFieldName.lastIndexOf('.') + 1)
     : null
 
-  const props = { ...fieldProps, name, label: null }
+  const props = { ...fieldProps, label: null, name }
 
   switch (fieldProps.field.type) {
     case 'boolean':
@@ -73,10 +71,10 @@ const getBaseControl = (fieldProps: CodeMirrorConnectFieldProps) => {
 }
 
 const ToggleExpression = ({
-  mainProps,
   fieldProps,
+  mainProps,
 }: ToggleExpressionFieldProps) => {
-  const { allowExpressions, appStore } = useFormContext()
+  const { allowExpressions } = useFormContext()
 
   // Will show blank if undefined instead of "undefined" string
   const value = !isNil(fieldProps.value ?? fieldProps.field?.default)
@@ -121,12 +119,9 @@ const ToggleExpression = ({
       </Space>
 
       <div>
-        {showExpressionEditor && appStore ? (
+        {showExpressionEditor ? (
           <CodeMirrorEditor
-            customOptions={createAutoCompleteOptions(
-              appStore.state.values,
-              'this',
-            )}
+            customOptions={createAutoCompleteOptions({}, 'this')}
             language={ICodeMirrorLanguage.Javascript}
             overrideStyles={css`
               display: block;

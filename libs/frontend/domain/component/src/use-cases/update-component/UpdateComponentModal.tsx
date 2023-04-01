@@ -1,6 +1,6 @@
 import type {
   IComponentService,
-  IUpdateComponentDTO,
+  IUpdateComponentData,
 } from '@codelab/frontend/abstract/core'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { ModalForm } from '@codelab/frontend/view/components'
@@ -8,22 +8,18 @@ import { observer } from 'mobx-react-lite'
 import React from 'react'
 import tw from 'twin.macro'
 import { AutoFields } from 'uniforms-antd'
-import { updateComponentSchema } from './updateComponentSchema'
+import { updateComponentSchema } from './update-component.schema'
 
 export const UpdateComponentModal = observer<{
   componentService: IComponentService
 }>(({ componentService }) => {
   const updatedComponent = componentService.updateModal.component
 
-  if (!updatedComponent) {
-    return null
+  const handleSubmit = (componentDTO: IUpdateComponentData) => {
+    return componentService.update(componentDTO)
   }
 
-  const handleSubmit = (input: IUpdateComponentDTO) => {
-    return componentService.update(updatedComponent, input)
-  }
-
-  const model = { name: updatedComponent.name }
+  const model = { name: updatedComponent?.name }
   const closeModal = () => componentService.updateModal.close()
 
   return (
@@ -33,7 +29,7 @@ export const UpdateComponentModal = observer<{
       open={componentService.updateModal.isOpen}
       title={<span css={tw`font-semibold`}>Update component</span>}
     >
-      <ModalForm.Form<IUpdateComponentDTO>
+      <ModalForm.Form<IUpdateComponentData>
         model={model}
         onSubmit={handleSubmit}
         onSubmitError={createNotificationHandler({

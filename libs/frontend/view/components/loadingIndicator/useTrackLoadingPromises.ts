@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
 
 export interface LoadingData {
-  isLoading: boolean
   error: unknown
+  isLoading: boolean
 }
 
 export interface UseTrackLoadingPromises extends LoadingData {
-  trackPromise: (promise: Promise<unknown>) => void
+  trackPromise(promise: Promise<unknown>): void
 }
 
 /**
  * Use this to track the loading state of multiple promises
  */
 export const useTrackLoadingPromises = (): UseTrackLoadingPromises => {
-  const [{ isLoading, error }, setState] = useState<LoadingData>({
-    isLoading: false,
+  const [{ error, isLoading }, setState] = useState<LoadingData>({
     error: undefined,
+    isLoading: false,
   })
 
   const [promises, setPromises] = useState<Array<Promise<unknown>>>([])
@@ -51,8 +51,8 @@ export const useTrackLoadingPromises = (): UseTrackLoadingPromises => {
   )
 
   return {
-    isLoading,
     error,
+    isLoading,
     trackPromise,
   }
 }

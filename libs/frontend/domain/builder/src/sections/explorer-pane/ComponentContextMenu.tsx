@@ -2,7 +2,7 @@ import type {
   IComponent,
   IComponentService,
 } from '@codelab/frontend/abstract/core'
-import { componentRef } from '@codelab/frontend/presenter/container'
+import { componentRef } from '@codelab/frontend/abstract/core'
 import { Key } from '@codelab/frontend/view/components'
 import type { MenuProps } from 'antd'
 import { Menu } from 'antd'
@@ -17,13 +17,15 @@ export type ComponentContextMenuProps = ContextMenuProps &
   }
 
 export const ComponentContextMenu = observer<ComponentContextMenuProps>(
-  ({ deleteModal, onBlur, onClick, component }) => {
+  ({ component, deleteModal, onBlur, onClick }) => {
     const onDelete = () => {
       return deleteModal.open(componentRef(component.id))
     }
 
     const menuItems: MenuProps['items'] = [
       {
+        danger: true,
+        key: 'delete',
         label: (
           <>
             <span>Delete `{component.name}` </span>{' '}
@@ -32,8 +34,6 @@ export const ComponentContextMenu = observer<ComponentContextMenuProps>(
             </span>
           </>
         ),
-        danger: true,
-        key: 'delete',
         onClick: onDelete,
       },
     ]

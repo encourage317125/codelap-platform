@@ -12,8 +12,8 @@ import React, { useEffect, useRef } from 'react'
 import { AutoField, AutoFields } from 'uniforms-antd'
 import { SelectLinkElement } from '../../../components/SelectLinkElement'
 import { mapElementOption } from '../../../utils'
+import { moveElementSchema } from './move-element.schema'
 import { MoveElementAutoForm } from './MoveElementAutoForm'
-import { moveElementSchema } from './moveElementSchema'
 import {
   shouldMoveElementAsFirstChild,
   shouldMoveElementAsNextSibling,
@@ -21,61 +21,59 @@ import {
 
 export interface MoveElementFormProps {
   element: IElement
-  trackPromises?: UseTrackLoadingPromises
   elementService: IElementService
   /**
    * The element tree is specific to which view we're looking at (i.e. Page, Component)
    */
   elementTree: IElementTree
+  trackPromises?: UseTrackLoadingPromises
 }
 
 /** Not intended to be used in a modal */
 export const MoveElementForm = observer<MoveElementFormProps>(
-  ({ element, elementService, trackPromises, elementTree }) => {
+  ({ element, elementService, elementTree, trackPromises }) => {
     // Cache it only once, don't pass it with every change to the form, because that will cause lag when auto-saving
     const { current: model } = useRef({
-      parentElementId: element.parentId,
-      prevSiblingId: element.prevSiblingId,
+      parentElement: { id: element.parent?.id },
+      prevSibling: { id: element.prevSibling?.current.id },
     })
 
     useEffect(() => {
-      model.prevSiblingId = element.prevSiblingId
-      model.parentElementId = element.parentId
-    }, [element.parentId, element.prevSiblingId])
+      model.prevSibling.id = element.prevSibling?.current.id
+      model.parentElement.id = element.parent?.id
+    }, [element.parent, element.prevSibling])
 
-    const onSubmit = (data: MoveData) => {
+    const onSubmit = ({ parentElement, prevSibling }: MoveData) => {
       const {
-        prevSiblingId: currentPrevSiblingId,
-        parentElementId: currentParentElementId,
+        parentElement: currentParentElement,
+        prevSibling: currentPrevSibling,
       } = model
-
-      const { parentElementId, prevSiblingId } = data
 
       if (
         shouldMoveElementAsFirstChild(
-          currentParentElementId,
-          parentElementId,
-          currentPrevSiblingId,
-          prevSiblingId,
+          currentParentElement,
+          parentElement,
+          currentPrevSibling,
+          prevSibling,
         )
       ) {
         return elementService.moveElementAsFirstChild({
-          elementId: element.id,
-          parentElementId: String(parentElementId),
+          element,
+          parentElement,
         })
       }
 
-      if (shouldMoveElementAsNextSibling(currentPrevSiblingId, prevSiblingId)) {
+      if (shouldMoveElementAsNextSibling(currentPrevSibling, prevSibling)) {
         return elementService.moveElementAsNextSibling({
-          elementId: element.id,
-          targetElementId: String(prevSiblingId),
+          element,
+          targetElement: prevSibling,
         })
       }
 
       return Promise.resolve()
     }
 
-    const elementOptions = elementTree.elementsList.map(mapElementOption)
+    const elementOptions = elementTree.elements.map(mapElementOption)
 
     return (
       <MoveElementAutoForm<MoveData>
@@ -93,7 +91,7 @@ export const MoveElementForm = observer<MoveElementFormProps>(
         })}
         schema={moveElementSchema}
       >
-        <AutoFields omitFields={['parentElementId', 'prevSiblingId']} />
+        <AutoFields omitFields={['parentElement', 'prevSibling']} />
         <AutoField
           component={observer((props) => {
             return (
@@ -106,11 +104,11 @@ export const MoveElementForm = observer<MoveElementFormProps>(
               />
             )
           })}
-          name="parentElementId"
+          name="parentElement.id"
         />
         <SelectLinkElement
           allElementOptions={elementOptions}
-          name="prevSiblingId"
+          name="prevSibling.id"
         />
       </MoveElementAutoForm>
     )

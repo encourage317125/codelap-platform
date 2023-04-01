@@ -1,13 +1,7 @@
-import type {
-  IActionService,
-  IBuilderService,
-  IComponentService,
-  ICreateElementDTO,
-  IElementService,
-  IRenderService,
-  IUserService,
-} from '@codelab/frontend/abstract/core'
+import type { ICreateElementData } from '@codelab/frontend/abstract/core'
+import { isAtomInstance } from '@codelab/frontend/domain/atom'
 import { SelectAction, SelectAnyElement } from '@codelab/frontend/domain/type'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { ModalForm } from '@codelab/frontend/view/components'
 import type { UniformSelectFieldProps } from '@codelab/shared/abstract/types'
@@ -16,117 +10,128 @@ import { observer } from 'mobx-react-lite'
 import React from 'react'
 import tw from 'twin.macro'
 import { AutoField, AutoFields } from 'uniforms-antd'
+import { v4 } from 'uuid'
 import { AutoComputedElementNameField } from '../../../components/auto-computed-element-name'
 import RenderTypeCompositeField from '../../../components/RenderTypeCompositeField'
 import { SelectLinkElement } from '../../../components/SelectLinkElement'
-import { mapElementOption } from '../../../utils'
-import { createElementSchema } from './createElementSchema'
+import { useRequiredParentValidator } from '../../../utils'
+import { createElementSchema } from './create-element.schema'
 
-interface CreateElementModalProps {
-  renderService: IRenderService
-  actionService: IActionService
-  builderService: IBuilderService
-  elementService: IElementService
-  userService: IUserService
-  componentService: IComponentService
-  storeId: string
-}
+export const CreateElementModal = observer(() => {
+  const { elementService, userService } = useStore()
+  const { metadata, parentElement } = elementService.createModal
+  const elementOptions = metadata?.elementOptions
+  const { validateParentForCreate } = useRequiredParentValidator()
 
-export const CreateElementModal = observer<CreateElementModalProps>(
-  ({ elementService, userService }) => {
-    const { parentElement, elementTree } = elementService.createModal
+  if (!parentElement) {
+    return null
+  }
 
-    if (!parentElement || !elementTree) {
-      return null
-    }
+  const onSubmit = async (data: ICreateElementData) => {
+    const { prevSibling } = data
 
-    const onSubmit = async (data: ICreateElementDTO) => {
-      const { prevSiblingId } = data
-
-      const element = await (prevSiblingId
-        ? elementService.createElementAsNextSibling(data)
-        : elementService.createElementAsFirstChild(data))
-
-      // Build tree for page
-      elementTree.addElements([element])
-
-      return Promise.resolve([element])
-    }
-
-    const onSubmitError = createNotificationHandler({
-      title: 'Error while creating element',
-    })
-
-    const closeModal = () => elementService.createModal.close()
-
-    const model = {
-      parentElementId: parentElement.id,
-      owner: userService.user?.auth0Id,
-      // Needs to be null initially so that required sub-fields
-      // are not validated when nothing is selected yet
-      renderType: null,
-    }
-
-    const selectParentElementOptions =
-      elementTree.elementsList.map(mapElementOption)
-
-    const selectChildrenElementOptions =
-      elementTree.elementsList.map(mapElementOption)
-
-    return (
-      <ModalForm.Modal
-        okText="Create"
-        onCancel={closeModal}
-        open={elementService.createModal.isOpen}
-        title={<span css={tw`font-semibold`}>Create element</span>}
-      >
-        <ModalForm.Form<ICreateElementDTO>
-          model={model}
-          onSubmit={onSubmit}
-          onSubmitError={onSubmitError}
-          onSubmitSuccess={closeModal}
-          schema={createElementSchema}
-        >
-          <AutoFields
-            omitFields={[
-              'parentElementId',
-              'customCss',
-              'guiCss',
-              'propsData',
-              'prevSiblingId',
-              'preRenderActionId',
-              'postRenderActionId',
-              'renderType',
-              'name',
-            ]}
-          />
-          <AutoField
-            component={(props: UniformSelectFieldProps) => (
-              <SelectAnyElement
-                // eslint-disable-next-line react/jsx-props-no-spreading
-                {...props}
-                allElementOptions={selectParentElementOptions}
-              />
-            )}
-            help={`only elements from \`${elementTree.name}\` are visible in this list`}
-            name="parentElementId"
-          />
-          <SelectLinkElement
-            allElementOptions={selectChildrenElementOptions}
-            name="prevSiblingId"
-          />
-          <RenderTypeCompositeField
-            name="renderType"
-            parent={parentElement.atom?.maybeCurrent}
-          />
-          <AutoField component={SelectAction} name="preRenderActionId" />
-          <AutoField component={SelectAction} name="postRenderActionId" />
-          <Divider />
-          <AutoComputedElementNameField label="Name" name="name" />
-        </ModalForm.Form>
-      </ModalForm.Modal>
+    const isValidParent = validateParentForCreate(
+      data.renderType?.id,
+      data.parentElement?.id,
     )
-  },
-)
+
+    if (!isValidParent) {
+      return Promise.reject()
+    }
+
+    const element = await (prevSibling
+      ? elementService.createElementAsNextSibling(data)
+      : elementService.createElementAsFirstChild(data))
+
+    return Promise.resolve([element])
+  }
+
+  const onSubmitError = createNotificationHandler({
+    title: 'Error while creating element',
+  })
+
+  const closeModal = () => elementService.createModal.close()
+
+  const model = {
+    id: v4(),
+    owner: userService.user?.auth0Id,
+    parentElement: {
+      id: parentElement.id,
+    },
+    // Needs to be null initially so that required sub-fields
+    // are not validated when nothing is selected yet
+    renderType: null,
+  }
+
+  const parentAtom = isAtomInstance(parentElement.renderType)
+    ? parentElement.renderType.current
+    : undefined
+
+  const parentComponent = parentElement.parentComponent?.current
+
+  return (
+    <ModalForm.Modal
+      okText="Create"
+      onCancel={closeModal}
+      open={elementService.createModal.isOpen}
+      title={<span css={tw`font-semibold`}>Create element</span>}
+    >
+      <ModalForm.Form<ICreateElementData>
+        model={model}
+        onSubmit={onSubmit}
+        onSubmitError={onSubmitError}
+        onSubmitSuccess={closeModal}
+        schema={createElementSchema}
+      >
+        <AutoFields
+          omitFields={[
+            'parentElement',
+            'customCss',
+            'guiCss',
+            'propsData',
+            'prevSibling',
+            'preRenderAction',
+            'postRenderAction',
+            'renderType',
+            'name',
+          ]}
+        />
+        <AutoField
+          component={(props: UniformSelectFieldProps) => (
+            <SelectAnyElement
+              // eslint-disable-next-line react/jsx-props-no-spreading
+              {...props}
+              allElementOptions={elementOptions}
+            />
+          )}
+          help={`only elements from \`${parentElement.closestContainerNode.name}\` are visible in this list`}
+          name="parentElement.id"
+        />
+        <SelectLinkElement
+          allElementOptions={elementOptions}
+          name="prevSibling.id"
+          required={false}
+        />
+        <RenderTypeCompositeField
+          name="renderType"
+          parentAtom={parentAtom}
+          parentComponent={parentComponent}
+        />
+        <AutoField
+          component={SelectAction}
+          name="preRenderAction.id"
+          required={false}
+        />
+        <AutoField
+          component={SelectAction}
+          name="postRenderAction.id"
+          required={false}
+        />
+        <Divider />
+        <AutoComputedElementNameField label="Name" name="name" />
+      </ModalForm.Form>
+    </ModalForm.Modal>
+  )
+})
 
 CreateElementModal.displayName = 'CreateElementModal'

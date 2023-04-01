@@ -1,5 +1,6 @@
+import type { IAppDTO } from '@codelab/frontend/abstract/core'
 import { ROOT_ELEMENT_NAME } from '@codelab/frontend/abstract/core'
-import { createAppInput } from '../support/database/app'
+import { IPageKindName } from '@codelab/shared/abstract/core'
 import { loginSession } from '../support/nextjs-auth0/commands/login'
 import { pageName, updatedPageName } from './apps/app.data'
 
@@ -7,15 +8,19 @@ describe('Pages CRUD', () => {
   before(() => {
     cy.resetDatabase()
     loginSession()
-    cy.getCurrentUserId()
-      .then((userId) => {
-        return cy.createApp(createAppInput(userId))
-      })
-      .then((apps) => {
-        const app = apps[0]
 
-        cy.visit(`/apps/${app?.id}/pages`)
+    cy.getCurrentOwner()
+      .then((owner) => {
+        return cy.request<IAppDTO>('/api/cypress/app')
+      })
+      .then((res) => {
+        const app = res.body
+
+        cy.visit(`/apps/${app.id}/pages`)
         cy.getSpinner().should('not.exist')
+        cy.findAllByText(IPageKindName.Provider).should('exist')
+        cy.findAllByText(IPageKindName.NotFound).should('exist')
+        cy.findAllByText(IPageKindName.InternalServerError).should('exist')
       })
   })
 
@@ -36,7 +41,7 @@ describe('Pages CRUD', () => {
     it('should have accessible page link on sidebar', () => {
       cy.findByText(pageName).click()
       cy.getSpinner().should('not.exist')
-      cy.findByText(ROOT_ELEMENT_NAME, { timeout: 30000 }).should('be.visible')
+      cy.findByText(ROOT_ELEMENT_NAME).should('be.visible')
       cy.go('back')
     })
   })

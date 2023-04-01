@@ -1,20 +1,15 @@
 import type {
   IBuilderDataNode,
-  IElementTree,
-  INode,
+  IElement,
+  IPageNode,
 } from '@codelab/frontend/abstract/core'
-import {
-  COMPONENT_NODE_TYPE,
-  ELEMENT_NODE_TYPE,
-} from '@codelab/frontend/abstract/core'
-import { elementRef } from '@codelab/frontend/domain/element'
-import { componentRef, useStore } from '@codelab/frontend/presenter/container'
-import type { Nullable } from '@codelab/shared/abstract/types'
+import { elementRef } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presenter/container'
+import type { Maybe, Nullable } from '@codelab/shared/abstract/types'
 import { Tree as AntdTree } from 'antd'
-import type { EventDataNode } from 'antd/lib/tree'
 import has from 'lodash/has'
+import isNil from 'lodash/isNil'
 import { observer } from 'mobx-react-lite'
-import type { Ref } from 'react'
 import React, { useMemo } from 'react'
 import { useElementTreeDrop } from '../../../hooks'
 import { antdTreeStyle } from './antdTree.styles'
@@ -26,13 +21,16 @@ import {
 } from './disableNodeHoverEffects'
 
 interface BuilderTreeProps {
-  treeData: IBuilderDataNode | undefined
   className?: string
-  elementTree: IElementTree | null
-  setActiveTree: () => void
-  setExpandedNodeIds: (ids: Array<string>) => void
-  selectTreeNode(node: Nullable<Ref<INode>>): void
   expandedNodeIds: Array<string>
+  treeData: IBuilderDataNode | undefined
+
+  selectTreeNode(node: Nullable<IPageNode>): void
+  /**
+   * Page/Component builder tab
+   */
+  setActiveTab(): void
+  setExpandedNodeIds(ids: Array<string>): void
 }
 
 /**
@@ -41,32 +39,15 @@ interface BuilderTreeProps {
 export const BuilderTree = observer<BuilderTreeProps>(
   ({
     className,
-    treeData,
-    elementTree,
-    setActiveTree,
-    setExpandedNodeIds,
     expandedNodeIds,
     selectTreeNode,
+    setActiveTab,
+    setExpandedNodeIds,
+    treeData,
   }) => {
-    const { elementService, builderService, componentService } = useStore()
+    const { builderService, componentService, elementService } = useStore()
     const selectedNode = builderService.selectedNode
-    const { isMoving, handleDrop } = useElementTreeDrop(elementService)
-
-    const selectComponentNode = (node: EventDataNode<IBuilderDataNode>) => {
-      const component = componentService.components.get(node.key.toString())
-
-      if (component) {
-        selectTreeNode(componentRef(component))
-      }
-    }
-
-    const selectElementNode = (node: EventDataNode<IBuilderDataNode>) => {
-      const element = elementService.element(node.key.toString())
-
-      if (element) {
-        selectTreeNode(elementRef(element))
-      }
-    }
+    const { handleDrop, isMoving } = useElementTreeDrop(elementService)
 
     const componentContextMenuProps = useMemo(
       () => ({
@@ -77,14 +58,13 @@ export const BuilderTree = observer<BuilderTreeProps>(
 
     const elementContextMenuProps = useMemo(
       () => ({
-        createModal: elementService.createModal,
-        deleteModal: elementService.deleteModal,
         cloneElement: elementService.cloneElement.bind(elementService),
         convertElementToComponent:
           elementService.convertElementToComponent.bind(elementService),
-        elementTree,
+        createModal: elementService.createModal,
+        deleteModal: elementService.deleteModal,
       }),
-      [elementTree, elementService],
+      [elementService],
     )
 
     return (
@@ -107,7 +87,7 @@ export const BuilderTree = observer<BuilderTreeProps>(
         onExpand={(expandedKeys) => {
           return setExpandedNodeIds(expandedKeys as Array<string>)
         }}
-        onMouseEnter={({ node, event }) => {
+        onMouseEnter={({ event, node }) => {
           // Selectable by default, unless it's not
           if (has(node, 'selectable') && !node.selectable) {
             const target = event.target as Element
@@ -116,48 +96,48 @@ export const BuilderTree = observer<BuilderTreeProps>(
             treeNodeWrapper?.classList.add(DISABLE_HOVER_CLASSNAME)
           }
 
-          builderService.set_hoveredNode(elementRef(node.key.toString()))
+          builderService.setHoveredNode(elementRef(node.key.toString()))
         }}
-        onMouseLeave={() => builderService.set_hoveredNode(null)}
+        onMouseLeave={() => builderService.setHoveredNode(null)}
         onSelect={([id], { nativeEvent, node }) => {
           nativeEvent.stopPropagation()
 
-          setActiveTree()
+          setActiveTab()
 
           if (!id) {
             return
           }
 
-          if (node.type === COMPONENT_NODE_TYPE) {
-            selectComponentNode(node)
-          }
-
-          if (node.type === ELEMENT_NODE_TYPE) {
-            selectElementNode(node)
-          }
+          selectTreeNode(node.node)
         }}
         selectedKeys={selectedNode ? [selectedNode.id] : []}
         titleRender={(data) => {
-          let node
+          // It seems when a treeData is updated after deleting an element, this function
+          // will still run with the deleted element even if that element does not exist
+          // anymore on the treeData prop
 
-          if (data.type === COMPONENT_NODE_TYPE) {
-            node = componentService.component(data.key.toString())
-          }
+          // root node in the treeData is the "Body" or the "Components"
+          const rootNode = treeData?.node as Maybe<IElement>
+          const descendantElements = rootNode?.descendantElements ?? []
 
-          if (data.type === ELEMENT_NODE_TYPE) {
-            node = elementService.element(data.key.toString())
-          }
-
-          return (
-            <BuilderTreeItemTitle
-              builderService={builderService}
-              componentContextMenuProps={componentContextMenuProps}
-              data={data}
-              elementContextMenuProps={elementContextMenuProps}
-              elementService={elementService}
-              node={node}
-            />
+          const nodeExists = descendantElements.some(
+            ({ id }) => id === data.key,
           )
+
+          const isRoot = rootNode?.id === data.key || isNil(rootNode)
+
+          if (nodeExists || isRoot) {
+            return (
+              <BuilderTreeItemTitle
+                componentContextMenuProps={componentContextMenuProps}
+                data={data}
+                elementContextMenuProps={elementContextMenuProps}
+                node={data.node}
+              />
+            )
+          }
+
+          return
         }}
         treeData={treeData ? [treeData] : []}
       />

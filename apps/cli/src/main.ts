@@ -30,8 +30,9 @@ void yargs(hideBin(process.argv))
   /**
    * These scripts could act on different deployment environment, so we group under `data`
    */
-  .command('data', 'Import / export / seed / reset', (argv) =>
+  .command('data', 'Import / export / reset', (argv) =>
     argv
+      // Deprecate seed as we rely on import now
       .command(seedCommand)
       .command(resetCommand)
       .command(importCommand)

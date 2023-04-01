@@ -1,6 +1,6 @@
 import type {
-  IAnyType,
   IEntityModalService,
+  IType,
 } from '@codelab/frontend/abstract/core'
 import { ModalService } from '@codelab/frontend/shared/utils'
 import type { Maybe } from '@codelab/shared/abstract/types'
@@ -10,11 +10,8 @@ import { ExtendedModel, model, modelClass } from 'mobx-keystone'
 
 @model('@codelab/TypeModalService')
 export class TypeModalService
-  extends ExtendedModel(
-    modelClass<ModalService<Ref<IAnyType>>>(ModalService),
-    {},
-  )
-  implements IEntityModalService<Ref<IAnyType>, { type: Maybe<IAnyType> }>
+  extends ExtendedModel(modelClass<ModalService<Ref<IType>>>(ModalService), {})
+  implements IEntityModalService<Ref<IType>, { type: Maybe<IType> }>
 {
   @computed
   get type() {

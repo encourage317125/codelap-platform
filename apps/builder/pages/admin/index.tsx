@@ -1,8 +1,11 @@
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
 import {
+  ExportAdminDataButton,
+  ImportDataButton,
+} from '@codelab/frontend/domain/admin'
+import {
   useCurrentAppId,
   useCurrentPageId,
-  useStore,
 } from '@codelab/frontend/presenter/container'
 import { ContentSection } from '@codelab/frontend/view/sections'
 import type { DashboardTemplateProps } from '@codelab/frontend/view/templates'
@@ -18,15 +21,16 @@ import React from 'react'
 import tw from 'twin.macro'
 
 const AdminPage: CodelabPage<DashboardTemplateProps> = observer(() => {
-  const { adminService } = useStore()
-
   return (
     <>
       <Head>
         <title>Apps | Codelab</title>
       </Head>
       <ContentSection css={tw`p-4 bg-white`}>
-        <Space></Space>
+        <Space>
+          <ExportAdminDataButton />
+          <ImportDataButton />
+        </Space>
       </ContentSection>
     </>
   )
@@ -36,7 +40,7 @@ export default AdminPage
 
 export const getServerSideProps = auth0Instance.withPageAuthRequired()
 
-AdminPage.Layout = (page) => {
+AdminPage.Layout = ({ children }) => {
   const AdminHeader = () => <PageHeader ghost={false} title="Admin" />
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
@@ -46,7 +50,7 @@ AdminPage.Layout = (page) => {
       Header={AdminHeader}
       sidebarNavigation={sidebarNavigation({ appId, pageId })}
     >
-      {page.children}
+      {children()}
     </DashboardTemplate>
   )
 }

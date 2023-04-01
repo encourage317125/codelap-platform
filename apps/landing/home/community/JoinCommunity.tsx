@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import tw from 'twin.macro'
 import { EmailModal } from './EmailModal'
 
-type NotificationType = 'success' | 'error'
+type NotificationType = 'error' | 'success'
 
 export const JoinCommunity = () => {
   const [showEmailModal, setShowEmailModal] = useState(false)
@@ -15,8 +15,8 @@ export const JoinCommunity = () => {
       type === 'success' ? 'Thanks for joining!' : 'Something went wrong'
 
     api[type]({
-      message: message,
       duration: 3,
+      message: message,
     })
   }
 

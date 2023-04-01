@@ -1,18 +1,18 @@
 import { absoluteRoot } from '@hon2a/cypress-without'
 
-type MessageType = 'notice' | 'warning' | 'success' | 'error' | 'loading'
+type MessageType = 'error' | 'loading' | 'notice' | 'success' | 'warning'
 
 export const MESSAGE_TYPE = {
-  INFO: 'notice',
-  WARNING: 'warning',
-  SUCCESS: 'success',
   ERROR: 'error',
+  INFO: 'notice',
   LOADING: 'loading',
+  SUCCESS: 'success',
+  WARNING: 'warning',
 }
 
-type GetMessageOptions = { type?: MessageType } & Partial<
-  Cypress.Loggable & Cypress.Timeoutable
->
+type GetMessageOptions = Partial<Cypress.Loggable & Cypress.Timeoutable> & {
+  type?: MessageType
+}
 
 export const getMessage = ({ type, ...options }: GetMessageOptions = {}) =>
   absoluteRoot(options).find(

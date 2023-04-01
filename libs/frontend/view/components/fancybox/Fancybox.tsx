@@ -3,15 +3,15 @@ import { Fancybox as NativeFancybox } from '@fancyapps/ui/dist/fancybox.umd.js'
 import React, { useEffect } from 'react'
 
 interface FancyboxProps {
-  options?: Record<string, unknown>
-  delegate?: string
   children: unknown
+  delegate?: string
+  options?: Record<string, unknown>
 }
 
 export const Fancybox = ({
+  children,
   delegate = '[data-fancybox]',
   options = {},
-  children,
 }: FancyboxProps) => {
   useEffect(() => {
     NativeFancybox.bind(delegate, {

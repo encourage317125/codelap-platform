@@ -1,7 +1,7 @@
 import type {
-  IAnyType,
   IInterfaceType,
   IPropData,
+  IType,
   IValidationRules,
 } from '@codelab/frontend/abstract/core'
 import type { FormProps, SubmitRef } from '@codelab/frontend/abstract/types'
@@ -10,15 +10,15 @@ import type { Assign } from 'utility-types'
 
 export type InterfaceFormProps<TData, TResponse> = Assign<
   Omit<FormProps<TData, TResponse>, 'schema'>,
-  {
-    interfaceType: IInterfaceType
-    initialSchema?: object
-    setIsLoading?: SetIsLoading
+  SubmitRef & {
     context?: UiPropertiesContext
-  } & SubmitRef
+    initialSchema?: object
+    interfaceType: IInterfaceType
+    setIsLoading?: SetIsLoading
+  }
 >
 
-export type UiPropertiesFn<TType extends IAnyType = IAnyType> = (
+export type UiPropertiesFn<TType extends IType = IType> = (
   type: TType,
   context?: UiPropertiesContext,
 ) => Record<string, unknown>
@@ -32,6 +32,6 @@ export interface UiPropertiesContext {
    * for code mirror
    */
   autocomplete?: IPropData
-  validationRules?: IValidationRules
   fieldName?: string | null
+  validationRules?: IValidationRules
 }

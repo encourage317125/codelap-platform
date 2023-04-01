@@ -1,91 +1,101 @@
-import type {
-  IAnyType,
-  IFieldService,
-  ITypeService,
-} from '@codelab/frontend/abstract/core'
+import type { IType } from '@codelab/frontend/abstract/core'
+import { PageType } from '@codelab/frontend/abstract/types'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { useColumnSearchProps } from '@codelab/frontend/view/components'
 import { headerCellProps } from '@codelab/frontend/view/style'
-import type {
-  BaseTypeOptions,
-  BaseTypeWhere,
-} from '@codelab/shared/abstract/codegen'
-import type { Maybe } from '@codelab/shared/abstract/types'
+import { useAsync } from '@react-hookz/web'
 import { Skeleton } from 'antd'
 import type { ColumnsType } from 'antd/lib/table'
-import type {
-  TablePaginationConfig,
-  TableRowSelection,
-} from 'antd/lib/table/interface'
-import debounce from 'lodash/debounce'
-import isEqual from 'lodash/isEqual'
+import type { TableRowSelection } from 'antd/lib/table/interface'
+import isEmpty from 'lodash/isEmpty'
+import throttle from 'lodash/throttle'
 import { arraySet } from 'mobx-keystone'
-import React, { useCallback, useState } from 'react'
+import { useRouter } from 'next/router'
+import React, { useEffect } from 'react'
 import { ActionColumn } from './columns'
 
-interface UseTypesTableParams {
-  typeService: ITypeService
-  fieldService: IFieldService
-  isLoadingTypeDependencies: boolean
+interface UseTypesTableProps {
+  page?: number
+  pageSize?: number
+  searchName?: string
 }
 
 export const useTypesTable = ({
-  typeService,
-  isLoadingTypeDependencies,
-  fieldService,
-}: UseTypesTableParams) => {
-  const [baseTypeWhere, setBaseTypeWhere] =
-    useState<Maybe<BaseTypeWhere>>(undefined)
+  page,
+  pageSize,
+  searchName,
+}: UseTypesTableProps) => {
+  const router = useRouter()
+  const { fieldService, typeService } = useStore()
 
-  const [baseTypeOptions, setBaseTypeOptions] = useState<BaseTypeOptions>({
-    offset: 0,
-    limit: 25,
+  const [{ result, status }, getPaginatedTypes] = useAsync(() => {
+    return typeService.pagination.getPaginatedTypes()
   })
 
-  const debouncedSetBaseTypeWhere = useCallback(
-    debounce((value: Maybe<BaseTypeWhere>) => setBaseTypeWhere(value), 1000),
-    [],
-  )
+  const isLoadingTypes = status === 'loading'
 
-  const debouncedSetBaseTypeOptions = useCallback(
-    debounce((value: BaseTypeOptions) => setBaseTypeOptions(value), 1000),
-    [],
-  )
+  useEffect(() => {
+    if (pageSize) {
+      typeService.pagination.setPageSize(pageSize)
+    }
 
-  const nameColumnSearchProps = useColumnSearchProps<IAnyType>({
+    if (page) {
+      typeService.pagination.setCurrentPage(page)
+    }
+
+    if (searchName && !isEmpty(searchName)) {
+      typeService.pagination.setSearch({ name: searchName })
+    }
+
+    void throttle(() => getPaginatedTypes.execute(), 500)()
+  }, [pageSize, page, searchName])
+
+  const handlePageChange = (newPage: number, newPageSize: number) => {
+    void router.push({
+      pathname: PageType.Type,
+      query: {
+        page: newPage,
+        pageSize: newPageSize,
+        searchName: typeService.pagination.search.name,
+      },
+    })
+  }
+
+  const nameColumnSearchProps = useColumnSearchProps<IType>({
     dataIndex: 'name',
     onSearch: (value) => {
-      const where = {
-        name: value,
-      }
-
-      if (!isEqual(where, baseTypeWhere)) {
-        debouncedSetBaseTypeWhere(where)
-      }
+      void router.push({
+        pathname: PageType.Type,
+        query: {
+          page: typeService.pagination.currentPage,
+          pageSize: typeService.pagination.pageSize,
+          searchName: value,
+        },
+      })
     },
+    text: typeService.pagination.search.name,
   })
 
-  const columns: ColumnsType<IAnyType> = [
+  const columns: ColumnsType<IType> = [
     {
-      title: 'Name',
       dataIndex: 'name',
       key: 'name',
       onHeaderCell: headerCellProps,
+      title: 'Name',
       ...nameColumnSearchProps,
     },
     {
-      title: 'Kind',
       dataIndex: 'kind',
       key: 'kind',
       onHeaderCell: headerCellProps,
-      ...useColumnSearchProps({ dataIndex: 'kind' }),
+      title: 'Kind',
+      // ...useColumnSearchProps({ dataIndex: 'kind' }),
     },
     {
-      title: 'Action',
       key: 'action',
       onHeaderCell: headerCellProps,
-      width: 100,
       render: (record) => {
-        if (isLoadingTypeDependencies) {
+        if (isLoadingTypes) {
           return <Skeleton paragraph={false} />
         }
 
@@ -97,40 +107,22 @@ export const useTypesTable = ({
           />
         )
       },
+      title: 'Action',
+      width: 100,
     },
   ]
 
-  const rowSelection: TableRowSelection<IAnyType> = {
-    type: 'checkbox',
-    onChange: (_: Array<React.Key>, selectedRows: Array<IAnyType>) => {
+  const rowSelection: TableRowSelection<IType> = {
+    onChange: (_: Array<React.Key>, selectedRows: Array<IType>) => {
       typeService.setSelectedIds(arraySet(selectedRows.map(({ id }) => id)))
     },
-  }
-
-  const pagination: TablePaginationConfig = {
-    position: ['bottomCenter'],
-    defaultPageSize: 25,
-    total: typeService.count,
-    onChange: async (page: number, pageSize: number) => {
-      const options = {
-        offset: (page - 1) * pageSize,
-        limit: pageSize,
-      }
-
-      if (!isEqual(options, baseTypeOptions)) {
-        debouncedSetBaseTypeOptions({
-          offset: (page - 1) * pageSize,
-          limit: pageSize,
-        })
-      }
-    },
+    type: 'checkbox',
   }
 
   return {
-    rowSelection,
     columns,
-    pagination,
-    baseTypeWhere,
-    baseTypeOptions,
+    handlePageChange,
+    isLoadingTypes,
+    rowSelection,
   }
 }

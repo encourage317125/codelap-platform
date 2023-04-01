@@ -1,24 +1,16 @@
 import type {
-  ICreateElementDTO,
+  IAtomService,
+  IComponentService,
   IElement,
   IFieldDefaultValue,
   IInterfaceType,
-  IUpdateElementDTO,
+  RenderType,
 } from '@codelab/frontend/abstract/core'
-import { RenderTypeEnum } from '@codelab/frontend/abstract/core'
-import { createUniqueName } from '@codelab/frontend/shared/utils'
-import type {
-  ElementCreateInput,
-  ElementUpdateInput,
-} from '@codelab/shared/abstract/codegen'
+import { IRenderTypeKind } from '@codelab/frontend/abstract/core'
+import type { ElementUpdateInput } from '@codelab/shared/abstract/codegen'
 import type { Maybe } from '@codelab/shared/abstract/types'
-import {
-  connectNodeId,
-  disconnectNodeId,
-  reconnectNodeId,
-} from '@codelab/shared/domain/mapper'
+import type { Ref } from 'mobx-keystone'
 import { isNil } from 'ramda'
-import { v4 } from 'uuid'
 
 //
 // Utilities for transforming the form inputs to api inputs
@@ -28,118 +20,39 @@ export const makeUpdateElementInput = (
   element: Pick<IElement, 'id'>,
   input: ElementUpdateInput,
 ) => ({
-  where: { id: element.id },
   update: input,
+  where: { id: element.id },
 })
 
-export const makeCreateInput = (
-  input: ICreateElementDTO,
-): ElementCreateInput => {
-  const {
-    id = v4(),
-    renderType,
-    name,
-    postRenderActionId,
-    preRenderActionId,
-    propsData,
-  } = input
+type GetRenderTypeApi = (props: {
+  atomService: IAtomService
+  componentService: IComponentService
+  renderType: RenderType | null
+}) => Ref<IInterfaceType> | undefined
 
-  /**
-   * Here we'll want to set default value based on the interface
-   */
-  const props: ElementCreateInput['props'] = {
-    create: { node: { data: propsData ?? JSON.stringify({}) } },
+/**
+ * We can't access model using id with Ref (since ref is not attached to root tree), so need service to access it
+ */
+export const getRenderTypeApi: GetRenderTypeApi = ({
+  atomService,
+  componentService,
+  renderType,
+}) => {
+  // When creating a new element, we need the interface type fields
+  // and we use it to create a props with default values for the created element
+  let renderTypeApi: Ref<IInterfaceType> | undefined = undefined
+
+  if (renderType?.kind === IRenderTypeKind.Atom) {
+    const renderTypeRef = atomService.atoms.get(renderType.id)
+    renderTypeApi = renderTypeRef?.api
   }
 
-  const renderAtomType =
-    renderType?.model === RenderTypeEnum.Atom
-      ? connectNodeId(renderType.id)
-      : undefined
-
-  const renderComponentType =
-    renderType?.model === RenderTypeEnum.Component
-      ? connectNodeId(renderType.id)
-      : undefined
-
-  return {
-    renderComponentType,
-    renderAtomType,
-    props,
-    postRenderActionId,
-    preRenderActionId,
-    name,
-    id,
-  }
-}
-
-export const makeDuplicateInput = (
-  element: IElement,
-  duplicate_name: string,
-): ElementCreateInput => {
-  const props: ElementCreateInput['props'] = element.props
-    ? { create: { node: { data: element.props.jsonString } } }
-    : undefined
-
-  return {
-    id: v4(),
-    renderComponentType: connectNodeId(element.renderComponentType?.id),
-    renderAtomType: connectNodeId(element.atom?.id),
-    props,
-    name: createUniqueName(duplicate_name, element.baseId),
-    propTransformationJs: element.propTransformationJs,
-    renderIfExpression: element.renderIfExpression,
-    renderForEachPropKey: element.renderForEachPropKey,
-    customCss: element.customCss,
-    guiCss: element.guiCss,
-  }
-}
-
-export const makeUpdateInput = (
-  input: IUpdateElementDTO,
-): ElementUpdateInput => {
-  const {
-    renderType,
-    name,
-    postRenderActionId,
-    preRenderActionId,
-    props,
-    customCss,
-    guiCss,
-    renderForEachPropKey,
-    renderIfExpression,
-    propsData,
-  } = input
-
-  // If render type changes, we replace the existing `props` connected to the
-  // element with the new `props` from the default values of the new interface type
-  const updateProps: ElementUpdateInput['props'] = {
-    update: { node: { data: propsData ?? JSON.stringify(props) } },
+  if (renderType?.kind === IRenderTypeKind.Component) {
+    const renderTypeRef = componentService.components.get(renderType.id)
+    renderTypeApi = renderTypeRef?.api
   }
 
-  // We need to disconnect the atom if render type changed to component or empty
-  const renderAtomType =
-    renderType?.model === RenderTypeEnum.Atom
-      ? reconnectNodeId(renderType.id)
-      : disconnectNodeId(undefined)
-
-  // We need to disconnect the component if render type changed to atom or empty
-  const renderComponentType =
-    renderType?.model === RenderTypeEnum.Component
-      ? reconnectNodeId(renderType.id)
-      : disconnectNodeId(undefined)
-
-  return {
-    name: name,
-    renderAtomType,
-    renderComponentType,
-    props: updateProps,
-    customCss: customCss,
-    postRenderActionId: postRenderActionId || null,
-    preRenderActionId: preRenderActionId || null,
-    guiCss: guiCss,
-    renderForEachPropKey: renderForEachPropKey,
-    renderIfExpression: renderIfExpression,
-  }
+  return renderTypeApi
 }
 
 /**
@@ -161,4 +74,5 @@ export const makeDefaultProps = (typeApi: Maybe<IInterfaceType>) => {
   )
 
   return JSON.stringify(defaultProps)
+  // return defaultProps
 }

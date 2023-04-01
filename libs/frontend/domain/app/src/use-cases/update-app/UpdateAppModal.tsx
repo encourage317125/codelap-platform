@@ -1,37 +1,23 @@
-import type {
-  IAppService,
-  IUpdateAppDTO,
-  IUserService,
-} from '@codelab/frontend/abstract/core'
+import type { IUpdateAppData } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { ModalForm } from '@codelab/frontend/view/components'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 import { AutoFields } from 'uniforms-antd'
-import { updateAppSchema } from './updateAppSchema'
+import { updateAppSchema } from './update-app.schema'
 
-export const UpdateAppModal = observer<{
-  appService: IAppService
-  userService: IUserService
-}>(({ appService, userService }) => {
+export const UpdateAppModal = observer(() => {
+  const { appService } = useStore()
   const app = appService.updateModal.app
 
-  if (!app) {
-    return null
-  }
-
   const model = {
-    name: app.name,
-    ownerId: userService.user?.auth0Id,
-    storeId: app.store.id,
+    id: app?.id,
+    name: app?.name,
   }
 
-  const onSubmit = (input: IUpdateAppDTO) => appService.update(app, input)
+  const onSubmit = (appDTO: IUpdateAppData) => appService.update(appDTO)
   const closeModal = () => appService.updateModal.close()
-
-  if (!userService.user) {
-    throw new Error('Missing user for update app')
-  }
 
   return (
     <ModalForm.Modal
@@ -39,7 +25,7 @@ export const UpdateAppModal = observer<{
       onCancel={closeModal}
       open={appService.updateModal.isOpen}
     >
-      <ModalForm.Form<IUpdateAppDTO>
+      <ModalForm.Form<IUpdateAppData>
         model={model}
         onSubmit={onSubmit}
         onSubmitError={createNotificationHandler({

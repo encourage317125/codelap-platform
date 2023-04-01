@@ -1,6 +1,8 @@
 import type { IBuilderComponent } from '@codelab/frontend/abstract/core'
-import { BuilderDndType, RenderTypeEnum } from '@codelab/frontend/abstract/core'
-import { createUniqueName } from '@codelab/frontend/shared/utils'
+import {
+  BuilderDndType,
+  IRenderTypeKind,
+} from '@codelab/frontend/abstract/core'
 import { antDesignIconPrefix } from '@codelab/shared/data/seed'
 import { compoundCaseToTitleCase } from '@codelab/shared/utils'
 import { Card } from 'antd'
@@ -17,18 +19,18 @@ export const DraggableGetComponentItem = ({
 }: DraggableGetComponentItemProps) => {
   const createElementInput = useMemo(() => {
     return {
-      name: createUniqueName(compoundCaseToTitleCase(component.name)),
+      name: compoundCaseToTitleCase(component.name),
       renderType: {
         id: component.id,
-        model: RenderTypeEnum.Atom,
+        kind: IRenderTypeKind.Atom,
       },
     }
   }, [component])
 
   const { attributes, listeners, setNodeRef } = useCreateElementDraggable({
-    id: component.id,
-    createElementInput,
     component,
+    createElementInput,
+    id: component.id,
     overlayRenderer: () => (
       <GetComponentItem component={component} tw="opacity-40" />
     ),
@@ -50,13 +52,13 @@ export const DraggableGetComponentItem = ({
 }
 
 interface GetComponentItemProps {
-  component: Pick<IBuilderComponent, 'icon' | 'name'>
   className?: string
+  component: Pick<IBuilderComponent, 'icon' | 'name'>
 }
 
 export const GetComponentItem = ({
-  component,
   className = '',
+  component,
 }: GetComponentItemProps) => (
   <Card
     className={className}

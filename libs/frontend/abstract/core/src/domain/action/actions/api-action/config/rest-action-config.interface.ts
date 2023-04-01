@@ -1,3 +1,5 @@
+import type { Nullable } from '@codelab/shared/abstract/types'
+
 export enum HttpMethod {
   DELETE = 'DELETE',
   GET = 'GET',
@@ -13,15 +15,15 @@ export enum HttpResponseType {
   Blob = 'blob',
   Document = 'document',
   Json = 'json',
-  Text = 'text',
   Stream = 'stream',
+  Text = 'text',
 }
 
 export interface IRestActionConfig {
-  body: string
+  body?: Nullable<string>
+  headers?: Nullable<string>
   method: HttpMethod
-  queryParams: string
-  headers: string
-  urlSegment: string
+  queryParams?: Nullable<string>
   responseType: HttpResponseType
+  urlSegment: string
 }

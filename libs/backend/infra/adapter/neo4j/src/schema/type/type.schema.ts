@@ -72,11 +72,11 @@ export const typeSchema = gql`
     ): GetBaseTypesReturn!
   }
 
-    interface IBaseType
-  {
+  interface IBaseType {
     id: ID! @id(autogenerate: false)
     kind: TypeKind! @readonly
     name: String!
+    # fields: [Field!]! @relationship(type: "FIELD_TYPE", direction: OUT)
     # we don't need an @auth here, because the User's @auth already declares rules for connect/disconnect
     owner: User!
       @relationship(
@@ -85,33 +85,33 @@ export const typeSchema = gql`
       )
   }
 
- # for defining returning data only
- type BaseType implements IBaseType @exclude(operations: [CREATE, READ, UPDATE, DELETE]) {
-   id: ID!
-   kind: TypeKind!
-   name: String! @unique
-   owner: User!
- }
+  # for defining returning data only
+  type BaseType implements IBaseType @exclude(operations: [CREATE, READ, UPDATE, DELETE]) {
+    id: ID!
+    kind: TypeKind!
+    name: String! @unique
+    owner: User!
+  }
 
   # https://github.com/neo4j/graphql/issues/1105
- extend interface IBaseType
- @auth(
-   rules: [
-     {
-       operations: [UPDATE, CREATE, DELETE]
-       roles: ["User"]
-       where: { owner: { auth0Id: "$jwt.sub" } }
-       bind: { owner: { auth0Id: "$jwt.sub" } }
-     }
-     {
+  extend interface IBaseType
+  @auth(
+    rules: [
+      {
         operations: [UPDATE, CREATE, DELETE]
-        roles: ["Admin"]
-        # Admin can access all types, so no need for where
-        # where: { owner: { auth0Id: "$jwt.sub" } }
+        roles: ["User"]
+        where: { owner: { auth0Id: "$jwt.sub" } }
         bind: { owner: { auth0Id: "$jwt.sub" } }
-     }
-   ]
- )
+      }
+      {
+          operations: [UPDATE, CREATE, DELETE]
+          roles: ["Admin"]
+          # Admin can access all types, so no need for where
+          # where: { owner: { auth0Id: "$jwt.sub" } }
+          bind: { owner: { auth0Id: "$jwt.sub" } }
+      }
+    ]
+  )
 
   interface WithDescendants {
     descendantTypesIds: [ID!]!
@@ -147,7 +147,7 @@ export const typeSchema = gql`
     name: String!
     owner: User!
     descendantTypesIds: [ID!]!
-    itemType: AnyType!
+    itemType: IBaseType!
       @relationship(
         type: "ARRAY_ITEM_TYPE",
         direction: OUT,
@@ -186,6 +186,7 @@ export const typeSchema = gql`
     kind: TypeKind! @default(value: InterfaceType)
     name: String!
     owner: User!
+    field: Field @relationship(type: "FIELD_TYPE", direction: IN)
     descendantTypesIds: [ID!]!
     # List of atoms that have this interface as their api type
     apiOfAtoms: [Atom!]!
@@ -270,6 +271,8 @@ export const typeSchema = gql`
     kind: TypeKind! @default(value: EnumType)
     name: String!
     owner: User!
+    # Allows reverse lookup and get all api's enums
+    field: Field @relationship(type: "FIELD_TYPE", direction: IN)
     allowedValues: [EnumTypeValue!]!
       @relationship(
         type: "ALLOWED_VALUE",

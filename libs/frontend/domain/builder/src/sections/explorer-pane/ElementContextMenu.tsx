@@ -1,12 +1,13 @@
 import { useUser } from '@auth0/nextjs-auth0'
-import type {
-  IElement,
-  IElementService,
-  IElementTree,
+import type { IElement, IElementService } from '@codelab/frontend/abstract/core'
+import {
+  elementRef,
+  elementTreeRef,
+  isComponentInstance,
+  RendererTab,
 } from '@codelab/frontend/abstract/core'
-import { RendererTab } from '@codelab/frontend/abstract/core'
-import { elementRef, elementTreeRef } from '@codelab/frontend/domain/element'
-import { componentRef, useStore } from '@codelab/frontend/presenter/container'
+import { mapElementOption } from '@codelab/frontend/domain/element'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { Key } from '@codelab/frontend/view/components'
 import { Menu } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -14,45 +15,40 @@ import React from 'react'
 import tw from 'twin.macro'
 
 export interface ContextMenuProps {
-  onClick?: () => unknown
-  onBlur?: () => unknown
+  onBlur?(): unknown
+  onClick?(): unknown
 }
 
-export type ElementContextMenuProps = {
-  element: IElement
-  elementTree: IElementTree | null
-} & ContextMenuProps &
+export type ElementContextMenuProps = ContextMenuProps &
   Pick<
     IElementService,
-    'createModal' | 'deleteModal' | 'cloneElement' | 'convertElementToComponent'
-  >
+    'cloneElement' | 'convertElementToComponent' | 'createModal' | 'deleteModal'
+  > & {
+    element: IElement
+  }
 
 /**
  * The right-click menu in the element tree
  */
 export const ElementContextMenu = observer<ElementContextMenuProps>(
   ({
-    element,
-    onClick,
-    onBlur,
+    convertElementToComponent,
     createModal,
     deleteModal,
-    cloneElement,
-    convertElementToComponent,
-    elementTree,
+    element,
+    onBlur,
+    onClick,
   }) => {
     const { builderService, componentService } = useStore()
     const { user } = useUser()
-    const isComponentInstance = Boolean(element.renderComponentType)
+    const componentInstance = isComponentInstance(element.renderType)
+    const elementTree = element.closestContainerNode
 
     const onAddChild = () => {
-      if (!elementTree) {
-        return
-      }
-
       return createModal.open({
-        selectedElement: elementRef(element.id),
+        elementOptions: elementTree.elements.map(mapElementOption),
         elementTree: elementTreeRef(elementTree.id),
+        selectedElement: elementRef(element.id),
       })
     }
 
@@ -61,13 +57,9 @@ export const ElementContextMenu = observer<ElementContextMenuProps>(
     }
 
     const onDuplicate = async () => {
-      if (!user?.sub || !element.parentElement) {
+      if (!user?.sub || !element.parent) {
         return
       }
-
-      elementTree?.addElements(
-        await cloneElement(element, element.parentElement),
-      )
     }
 
     const onConvert = async () => {
@@ -75,58 +67,52 @@ export const ElementContextMenu = observer<ElementContextMenuProps>(
         return
       }
 
-      const createdElement = await convertElementToComponent(element, user.sub)
-
-      if (createdElement) {
-        elementTree?.addElements([createdElement])
-      }
+      await convertElementToComponent(element, {
+        auth0Id: user.sub,
+      })
     }
 
     const onEditComponent = () => {
-      if (!element.renderComponentType) {
+      if (!isComponentInstance(element.renderType)) {
         return
       }
 
-      builderService.setActiveTree(RendererTab.Component)
+      builderService.setActiveTab(RendererTab.Component)
 
-      const component = componentService.components.get(
-        element.renderComponentType.id.toString(),
-      )
+      const component = componentService.components.get(element.renderType.id)
 
-      component &&
-        builderService.selectComponentTreeNode(componentRef(component))
+      component && builderService.selectComponentNode(component)
     }
 
     const menuItems = [
       {
         key: 'add-child',
-        onClick: onAddChild,
         label: 'Add child',
+        onClick: onAddChild,
       },
       {
-        key: 'duplicate',
-        onClick: onDuplicate,
-        label: 'Duplicate',
         hide: element.isRoot,
+        key: 'duplicate',
+        label: 'Duplicate',
+        onClick: onDuplicate,
       },
       {
+        hide: !componentInstance,
         key: 'edit-component',
-        onClick: onEditComponent,
         label: 'Edit Component',
-        hide: !isComponentInstance,
+        onClick: onEditComponent,
       },
       {
         disabled: element.isRoot,
+        hide: componentInstance || element.isRoot,
         key: 'convert-component',
-        onClick: onConvert,
         label: 'Convert To Component',
-        hide: isComponentInstance || element.isRoot,
+        onClick: onConvert,
       },
       {
         danger: true,
         hide: element.isRoot,
         key: 'delete',
-        onClick: onDelete,
         label: (
           <>
             <span>Delete `{element.name}` </span>{' '}
@@ -135,6 +121,7 @@ export const ElementContextMenu = observer<ElementContextMenuProps>(
             </span>
           </>
         ),
+        onClick: onDelete,
       },
     ]
 

@@ -4,13 +4,13 @@ import { Button } from 'antd'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 
-export type CreateComponentButtonProps = {
+export type CreateComponentButtonProps = React.ComponentProps<typeof Button> & {
   className?: string
   componentService: IComponentService
-} & React.ComponentProps<typeof Button>
+}
 
 export const CreateComponentButton = observer<CreateComponentButtonProps>(
-  ({ componentService, className, title }) => {
+  ({ className, componentService, title }) => {
     return (
       <Button
         className={className}

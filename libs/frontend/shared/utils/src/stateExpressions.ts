@@ -39,8 +39,8 @@ export const evaluateExpression = (
 export const replaceStateInProps = (
   props: IPropData,
   context: IPropData = {},
-) => {
-  props = mapDeep(
+) =>
+  mapDeep(
     props,
     // value mapper
     (value, key) => (isString(value) ? getByExpression(value, context) : value),
@@ -48,9 +48,6 @@ export const replaceStateInProps = (
     (value, key) =>
       (isString(key) ? getByExpression(key, context) : key) as string,
   )
-
-  return props
-}
 
 export const getByExpression = (key: string, context: IPropData) => {
   if (!hasStateExpression(key)) {
@@ -75,16 +72,15 @@ export const getByExpression = (key: string, context: IPropData) => {
 interface ExpressionTransformer {
   initialized: boolean
   transform: Nullable<(code: string) => { code: string | null }>
-  init: () => Promise<void>
-  transpileAndEvaluateExpression: (
+
+  init(): Promise<void>
+  transpileAndEvaluateExpression(
     expression: string,
     evaluationContext: IPropData,
-  ) => unknown
+  ): unknown
 }
 
 export const expressionTransformer: ExpressionTransformer = {
-  transform: null,
-  initialized: false,
   init: async function () {
     if (this.initialized) {
       return
@@ -95,6 +91,8 @@ export const expressionTransformer: ExpressionTransformer = {
     this.transform = transform
     this.initialized = true
   },
+  initialized: false,
+  transform: null,
   transpileAndEvaluateExpression: function (
     expression: string,
     evaluationContext: IPropData,
@@ -108,7 +106,7 @@ export const expressionTransformer: ExpressionTransformer = {
     try {
       const wrappedExpression = `(function getResult() {
             const { React } = this
-      
+
             return ${stripStateExpression(expression)}
           }).call(this)`
 

@@ -1,30 +1,29 @@
-import type {
-  ICreateDomainDTO,
-  IDomainService,
-  IUserService,
-} from '@codelab/frontend/abstract/core'
-import { useCurrentAppId } from '@codelab/frontend/presenter/container'
+import type { ICreateDomainData } from '@codelab/frontend/abstract/core'
+import {
+  useCurrentAppId,
+  useStore,
+} from '@codelab/frontend/presenter/container'
 import { useNotify } from '@codelab/frontend/shared/utils'
 import { ModalForm } from '@codelab/frontend/view/components'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 import { AutoFields } from 'uniforms-antd'
+import { v4 } from 'uuid'
 import { handleDomainExistError } from '../../errors'
-import { createDomainSchema } from './createDomainSchema'
+import { createDomainSchema } from './createDomain.schema'
 
-export const CreateDomainModal = observer<{
-  domainService: IDomainService
-  userService: IUserService
-}>(({ domainService, userService }) => {
+export const CreateDomainModal = observer(() => {
+  const { domainService, userService } = useStore()
   const currentAppId = useCurrentAppId()
 
   const model = {
+    app: { id: currentAppId },
     auth0Id: userService.user?.auth0Id,
-    appId: currentAppId,
+    id: v4(),
   }
 
-  const onSubmit = (data: ICreateDomainDTO) => {
-    return domainService.create([data])
+  const onSubmit = (data: ICreateDomainData) => {
+    return domainService.create(data)
   }
 
   const closeModal = () => domainService.createModal.close()

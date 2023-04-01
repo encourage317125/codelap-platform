@@ -11,7 +11,7 @@ import type { FormContextValue } from '../providers'
 
 export const connectUniformSubmitRef =
   (submitRef: Maybe<MutableRefObject<Maybe<SubmitController>>>) =>
-  (ref: Nullish<{ submit: () => unknown }>) => {
+  (ref: Nullish<{ submit(): unknown }>) => {
     if (submitRef && ref) {
       // eslint-disable-next-line no-param-reassign
       submitRef.current = {
@@ -20,7 +20,8 @@ export const connectUniformSubmitRef =
     }
   }
 
-const ajv = new Ajv({ allErrors: true, useDefaults: true, strict: false })
+const ajv = new Ajv({ allErrors: true, strict: false, useDefaults: true })
+
 addFormats(ajv)
 addKeywords(ajv, ['typeof', 'transform'])
 // we can add custom type definitions here that may be too complex to do in the actual schema
@@ -31,27 +32,27 @@ ajv.addSchema({
     fieldDefaultValues: {
       oneOf: [
         {
-          type: 'string',
           nullable: true,
+          type: 'string',
         },
         {
           type: 'boolean',
         },
         {
+          nullable: true,
           type: ['number', 'integer'],
-          nullable: true,
         },
         {
-          type: 'array',
-          nullable: true,
           items: { $ref: '#/definitions/fieldDefaultValues' },
+          nullable: true,
+          type: 'array',
         },
         {
-          type: 'object',
           nullable: true,
           patternProperties: {
             '^.*$': { $ref: '#/definitions/fieldDefaultValues' },
           },
+          type: 'object',
         },
       ],
     },
@@ -62,8 +63,9 @@ export const createValidator = (schema: Schema, context?: FormContextValue) => {
   const validator = ajv.compile(schema)
 
   return (model: Record<string, unknown>) => {
+    // FIXME:
     const modelToValidate = context?.allowExpressions
-      ? replaceStateInProps(model, context.appStore?.state.values)
+      ? replaceStateInProps(model, {})
       : model
 
     validator(modelToValidate)

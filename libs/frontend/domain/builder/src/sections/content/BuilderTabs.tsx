@@ -1,13 +1,6 @@
-import type {
-  IBuilderService,
-  IComponentService,
-  IElementService,
-  IElementTree,
-  IRenderer,
-  IRenderService,
-  IStore,
-} from '@codelab/frontend/abstract/core'
+import type { IApp, IPage, IRenderer } from '@codelab/frontend/abstract/core'
 import { RendererTab } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { extractErrorMessage } from '@codelab/frontend/shared/utils'
 import type { Maybe, Nullish } from '@codelab/shared/abstract/types'
 import { Alert, Layout, Spin, Tabs } from 'antd'
@@ -18,63 +11,52 @@ import { BaseBuilder } from './BaseBuilder'
 import { BuilderComponent } from './Builder-Component'
 
 export interface BuilderTabsProps {
+  app: Maybe<IApp>
   error: Nullish<string>
   isLoading: boolean
+  page: Maybe<IPage>
   renderer: Maybe<IRenderer>
-  builderService: IBuilderService
-  elementService: IElementService
-  elementTree: Maybe<IElementTree>
-  componentService: IComponentService
-  appStore: Maybe<IStore>
-  builderRenderService: IRenderService
 }
 
 export const BuilderTabs = observer<BuilderTabsProps>(
-  ({
-    error,
-    isLoading,
-    builderService,
-    elementTree,
-    elementService,
-    renderer,
-    appStore,
-    componentService,
-    builderRenderService,
-  }) => {
+  ({ app, error, isLoading, page, renderer }) => {
+    const { builderService } = useStore()
+    const store = page?.store.current
+
+    const tabItems = [
+      {
+        key: RendererTab.Page,
+        label: 'Page',
+      },
+      {
+        key: RendererTab.Component,
+        label: 'Component',
+      },
+    ]
+
     return (
       <Layout style={{ height: '100%' }}>
         {error && <Alert message={extractErrorMessage(error)} type="error" />}
         <Header style={{ background: 'rgba(0,0,0,0)', marginBottom: '5px' }}>
           <Tabs
-            activeKey={builderService.activeTree}
+            activeKey={builderService.activeTab}
             defaultActiveKey={RendererTab.Page}
+            items={tabItems}
             onChange={(key) => console.log(key)}
             type="card"
-          >
-            <Tabs.TabPane key={RendererTab.Page} tab="Page" />
-            <Tabs.TabPane key={RendererTab.Component} tab="Component" />
-          </Tabs>
+          />
         </Header>
         {isLoading && <Spin />}
         <Content>
-          {builderService.activeTree === RendererTab.Page ? (
-            elementTree && renderer ? (
-              <BaseBuilder
-                builderService={builderService}
-                elementService={elementService}
-                elementTree={elementTree}
-                renderer={renderer}
-              />
+          {builderService.activeTab === RendererTab.Page ? (
+            page && renderer ? (
+              <BaseBuilder elementTree={page} renderer={renderer} />
             ) : null
-          ) : builderService.activeComponent && appStore ? (
+          ) : builderService.activeComponent && store ? (
             <BuilderComponent
               BaseBuilder={BaseBuilder}
-              appStore={appStore}
-              builderService={builderService}
+              appStore={store}
               componentId={builderService.activeComponent.id}
-              componentService={componentService}
-              elementService={elementService}
-              renderService={builderRenderService}
             />
           ) : null}
         </Content>

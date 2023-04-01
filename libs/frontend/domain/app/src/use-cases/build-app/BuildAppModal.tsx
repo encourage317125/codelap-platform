@@ -1,24 +1,19 @@
-import type {
-  IAppService,
-  IDomainService,
-} from '@codelab/frontend/abstract/core'
 import { regeneratePages } from '@codelab/frontend/domain/domain'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { emptyJsonSchema, ModalForm } from '@codelab/frontend/view/components'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 import { AutoFields } from 'uniforms-antd'
 
-export const BuildAppModal = observer<{
-  appService: IAppService
-  domainService: IDomainService
-}>(({ appService, domainService }) => {
+export const BuildAppModal = observer(() => {
+  const { appService, domainService } = useStore()
   const app = appService.buildModal.app
 
   const onSubmit = async () => {
     if (app) {
       const domain = domainService.domainsList.find(
-        (_domain) => _domain.appId === app.id,
+        (_domain) => _domain.app.id === app.id,
       )
 
       const pages = app.pages.map((page) => page.current.name)

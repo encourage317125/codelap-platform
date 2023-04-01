@@ -1,10 +1,10 @@
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
 import type { AtomLibrary } from '@codelab/frontend/domain/atom'
 import {
+  AtomsTable,
   CreateAtomButton,
   CreateAtomModal,
   DeleteAtomsModal,
-  GetAtomsTable,
   UpdateAtomModal,
 } from '@codelab/frontend/domain/atom'
 import {
@@ -43,7 +43,6 @@ import React, { useCallback, useMemo } from 'react'
 import tw from 'twin.macro'
 
 const AtomsPage: CodelabPage<DashboardTemplateProps> = observer(() => {
-  const store = useStore()
   const htmlAtomsKeys = useMemo(() => Object.keys(htmlAtoms), [])
   const muiAtomsKeys = useMemo(() => Object.keys(muiAtoms), [])
   const antdAtomsKeys = useMemo(() => Object.keys(antdAtoms), [])
@@ -57,16 +56,16 @@ const AtomsPage: CodelabPage<DashboardTemplateProps> = observer(() => {
   const getAtomLibrary = useCallback(
     (atomType: string): AtomLibrary => {
       return htmlAtomsKeys.includes(atomType)
-        ? { name: 'HTML', color: 'orange' }
+        ? { color: 'orange', name: 'HTML' }
         : antdAtomsKeys.includes(atomType)
-        ? { name: 'Ant Design', color: 'geekblue' }
+        ? { color: 'geekblue', name: 'Ant Design' }
         : muiAtomsKeys.includes(atomType)
-        ? { name: 'Material UI', color: 'purple' }
+        ? { color: 'purple', name: 'Material UI' }
         : clAtomsKeys.includes(atomType)
-        ? { name: 'Codelab', color: 'yellow' }
+        ? { color: 'yellow', name: 'Codelab' }
         : reactAtomsKeys.includes(atomType)
-        ? { name: 'React', color: 'green' }
-        : { name: 'Unknown', color: 'black' }
+        ? { color: 'green', name: 'React' }
+        : { color: 'black', name: 'Unknown' }
     },
     [htmlAtomsKeys, antdAtomsKeys, muiAtomsKeys, clAtomsKeys, reactAtomsKeys],
   )
@@ -77,33 +76,17 @@ const AtomsPage: CodelabPage<DashboardTemplateProps> = observer(() => {
         <title>Atoms | Codelab</title>
       </Head>
 
-      <CreateAtomModal
-        atomService={store.atomService}
-        tagService={store.tagService}
-        userService={store.userService}
-      />
-      <UpdateAtomModal
-        atomService={store.atomService}
-        tagService={store.tagService}
-      />
-      <DeleteAtomsModal atomService={store.atomService} />
-      <CreateFieldModal
-        fieldService={store.fieldService}
-        typeService={store.typeService}
-      />
-      <UpdateFieldModal
-        fieldService={store.fieldService}
-        typeService={store.typeService}
-      />
-      <DeleteFieldModal fieldService={store.fieldService} />
+      <CreateAtomModal />
+      <UpdateAtomModal />
+      <DeleteAtomsModal />
+      <CreateFieldModal />
+      <UpdateFieldModal />
+      <DeleteFieldModal />
       <ContentSection>
-        <GetAtomsTable
-          atomService={store.atomService}
-          fieldService={store.fieldService}
+        <AtomsTable
           getAtomLibrary={getAtomLibrary}
           page={page ? parseInt(page as string) : undefined}
           pageSize={pageSize ? parseInt(pageSize as string) : undefined}
-          typeService={store.typeService}
         />
       </ContentSection>
     </>
@@ -118,7 +101,7 @@ const Header = () => {
       css={tw`flex flex-row items-center justify-center gap-2`}
       key="export_import"
     >
-      <CreateAtomButton atomService={store.atomService} key="create" />
+      <CreateAtomButton key="create" />
     </div>,
   ]
 
@@ -129,7 +112,7 @@ export default AtomsPage
 
 export const getServerSideProps = auth0Instance.withPageAuthRequired()
 
-AtomsPage.Layout = (page) => {
+AtomsPage.Layout = ({ children }) => {
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
 
@@ -146,7 +129,7 @@ AtomsPage.Layout = (page) => {
         secondaryItems: adminMenuItems,
       }}
     >
-      {page.children}
+      {children()}
     </DashboardTemplate>
   )
 }

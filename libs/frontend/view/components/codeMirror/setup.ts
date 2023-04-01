@@ -77,24 +77,24 @@ export const basicSetup = async (singleLine?: boolean): Promise<Extension> => {
 }
 
 interface Options {
-  singleLine?: boolean
-  languageSource?: CompletionSource
-  languageOptions?: Array<Completion>
   customOptions?: Array<Completion>
+  languageOptions?: Array<Completion>
+  languageSource?: CompletionSource
+  singleLine?: boolean
 }
 
 export const getDefaultExtensions = async ({
-  singleLine,
-  languageSource,
-  languageOptions,
   customOptions,
+  languageOptions,
+  languageSource,
+  singleLine,
 }: Options) => [
   await basicSetup(singleLine),
   autocompletion({
-    defaultKeymap: false,
     activateOnTyping: true,
+    defaultKeymap: false,
     override: [
-      completionSource({ languageSource, languageOptions, customOptions }),
+      completionSource({ customOptions, languageOptions, languageSource }),
     ],
   }),
 ]

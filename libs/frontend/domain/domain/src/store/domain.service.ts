@@ -1,16 +1,12 @@
 import type {
-  ICreateDomainDTO,
+  ICreateDomainData,
+  IDomain,
   IDomainDTO,
   IDomainService,
-  IUpdateDomainDTO,
+  IUpdateDomainData,
 } from '@codelab/frontend/abstract/core'
 import { ModalService } from '@codelab/frontend/shared/utils'
-import type {
-  DomainCreateInput,
-  DomainWhere,
-} from '@codelab/shared/abstract/codegen'
-import type { IEntity } from '@codelab/shared/abstract/types'
-import { connectNodeId } from '@codelab/shared/domain/mapper'
+import type { DomainWhere } from '@codelab/shared/abstract/codegen'
 import { computed } from 'mobx'
 import {
   _async,
@@ -23,18 +19,18 @@ import {
   prop,
   transaction,
 } from 'mobx-keystone'
-import { v4 } from 'uuid'
-import { domainApis } from './domain.api'
+import { DomainRepository } from '../services'
 import { Domain } from './domain.model'
 import { DomainModalService } from './domain-modal.service'
 
 @model('@codelab/DomainService')
 export class DomainService
   extends Model({
-    domains: prop(() => objectMap<Domain>()),
     createModal: prop(() => new ModalService({})),
-    updateModal: prop(() => new DomainModalService({})),
     deleteModal: prop(() => new DomainModalService({})),
+    domainRepository: prop(() => new DomainRepository({})),
+    domains: prop(() => objectMap<Domain>()),
+    updateModal: prop(() => new DomainModalService({})),
   })
   implements IDomainService
 {
@@ -45,28 +41,28 @@ export class DomainService
     where?: DomainWhere,
     clearDomain?: boolean,
   ) {
-    const { domains } = yield* _await(domainApis.GetDomains({ where }))
+    const domainFragments = yield* _await(
+      this.domainRepository.find(where || {}),
+    )
 
     if (clearDomain) {
       this.domains.clear()
     }
 
-    return domains.map((domain) => {
-      const domainModel = Domain.hydrate(domain)
+    return domainFragments.map((domainFragment) => {
+      const domain = this.add(domainFragment)
 
-      this.domains.set(domain.id, domainModel)
-
-      return domainModel
+      return domain
     })
   })
 
   @modelAction
-  writeCache = (domain: IDomainDTO) => {
+  add = (domain: IDomainDTO) => {
     let domainModel = this.domains.get(domain.id)
 
     domainModel = domainModel
       ? domainModel.writeCache(domain)
-      : Domain.hydrate(domain)
+      : Domain.create(domain)
 
     this.domains.set(domain.id, domainModel)
 
@@ -82,53 +78,47 @@ export class DomainService
   @transaction
   create = _async(function* (
     this: DomainService,
-    data: Array<ICreateDomainDTO>,
+    domainData: ICreateDomainData,
   ) {
-    const input: Array<DomainCreateInput> = data.map((domain) => ({
-      id: domain.id ?? v4(),
-      app: connectNodeId(domain.appId),
-      name: domain.name,
-    }))
+    const domain = this.add({
+      ...domainData,
+      domainConfig: undefined,
+      projectDomain: undefined,
+    })
 
-    const {
-      createDomains: { domains },
-    } = yield* _await(domainApis.CreateDomains({ input }))
+    yield* _await(this.domainRepository.add(domain))
 
-    return domains.map((domain) => this.writeCache(domain))
+    // Fetching again to get the backend-generated
+    // domainConfig and projectDomain
+    return (yield* _await(this.getAll({ id: domain.id })))[0] || domain
   })
 
   @modelFlow
   @transaction
-  delete = _async(function* (this: DomainService, ids: Array<string>) {
-    ids.forEach((id) => this.domains.delete(id))
+  delete = _async(function* (this: DomainService, domain: IDomain) {
+    const { id } = domain
 
-    const {
-      deleteDomains: { nodesDeleted },
-    } = yield* _await(domainApis.DeleteDomains({ where: { id_IN: ids } }))
+    this.domains.delete(id)
 
-    return nodesDeleted
+    yield* _await(this.domainRepository.delete([domain]))
+
+    return domain
   })
 
   @modelFlow
   @transaction
   update = _async(function* (
     this: DomainService,
-    entity: IEntity,
-    input: IUpdateDomainDTO,
+    { id, name }: IUpdateDomainData,
   ) {
-    const {
-      updateDomains: { domains },
-    } = yield* _await(
-      domainApis.UpdateDomains({
-        where: {
-          id: entity.id,
-        },
-        update: {
-          name: input.name,
-        },
-      }),
-    )
+    const domain = this.domains.get(id)!
 
-    return domains.map((domain) => this.writeCache(domain))
+    domain.writeCache({ name })
+
+    yield* _await(this.domainRepository.update(domain))
+
+    // Fetching again to get the backend-generated
+    // domainConfig and projectDomain
+    return (yield* _await(this.getAll({ id: domain.id })))[0] || domain
   })
 }

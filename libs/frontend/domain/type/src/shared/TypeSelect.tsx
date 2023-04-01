@@ -1,7 +1,7 @@
 import type { UnboxArray } from '@codelab/shared/abstract/types'
+import { useAsync, useMountEffect } from '@react-hookz/web'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
-import { useAsync } from 'react-use'
 import { SelectField } from 'uniforms-antd'
 import type { GetTypesQuery } from '../graphql/get-type.endpoints.graphql.gen'
 import { getAllTypes } from '../store'
@@ -15,27 +15,29 @@ export type CreateTypeOptions = (
 ) => Array<Option>
 
 export interface TypeSelectProps {
-  name: string
-  label: string
   createTypeOptions?: CreateTypeOptions
+  label: string
+  name: string
 }
 
 const defaultCreateTypeOptions: CreateTypeOptions = (types) =>
-  types?.map(({ name, id }) => ({ label: name, value: id })) ?? []
+  types?.map(({ id, name }) => ({ label: name, value: id })) ?? []
 
 export const TypeSelect = observer<TypeSelectProps>(
-  ({ name, label, createTypeOptions }) => {
-    const { value, error, loading } = useAsync(() => getAllTypes(), [])
+  ({ createTypeOptions, label, name }) => {
+    const [{ error, result, status }, getTypes] = useAsync(() => getAllTypes())
 
     const typeOptions = createTypeOptions
-      ? createTypeOptions(value)
-      : defaultCreateTypeOptions(value)
+      ? createTypeOptions(result)
+      : defaultCreateTypeOptions(result)
+
+    useMountEffect(getTypes.execute)
 
     return (
       <SelectField
         error={error}
         label={label}
-        loading={loading}
+        loading={status === 'loading'}
         name={name}
         optionFilterProp="label"
         options={typeOptions}

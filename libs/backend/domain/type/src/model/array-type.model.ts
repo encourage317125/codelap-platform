@@ -1,13 +1,12 @@
 import type {
-  IArrayType,
-  ICreateArrayType,
-  IUserRef,
-} from '@codelab/backend/abstract/core'
+  IArrayTypeDTO,
+  IAuth0Owner,
+} from '@codelab/frontend/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
-import { v4 } from 'uuid'
+import type { IEntity } from '@codelab/shared/abstract/types'
 import { BaseType } from './base-type.model'
 
-export class ArrayType extends BaseType implements IArrayType {
+export class ArrayType extends BaseType implements IArrayTypeDTO {
   declare id: string
 
   declare name: string
@@ -16,18 +15,13 @@ export class ArrayType extends BaseType implements IArrayType {
 
   declare __typename: `${ITypeKind.ArrayType}`
 
-  declare owner: IUserRef
+  declare owner: IAuth0Owner
 
-  private constructor({ id, name, kind, owner }: IArrayType) {
-    super({ id, name, kind, owner, __typename: ITypeKind.ArrayType })
-  }
+  declare itemType?: IEntity
 
-  static init({ owner, name }: ICreateArrayType) {
-    return new ArrayType({
-      id: v4(),
-      name,
-      kind: ITypeKind.ArrayType,
-      owner,
-    })
+  constructor({ id, itemType, name, owner }: IArrayTypeDTO) {
+    super({ id, kind: ITypeKind.ArrayType, name, owner })
+
+    this.itemType = itemType
   }
 }

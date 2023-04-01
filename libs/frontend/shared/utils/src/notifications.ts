@@ -4,15 +4,15 @@ import isFunction from 'lodash/isFunction'
 import isString from 'lodash/isString'
 import { extractErrorMessage } from './extractErrorMessage'
 
-type NotificationType = 'success' | 'info' | 'warning' | 'error'
+type NotificationType = 'error' | 'info' | 'success' | 'warning'
 
 export interface NotificationOptions<TEvent = unknown> {
-  /** The type of notification. Default is error */
-  type?: NotificationType
-  /** Enter a custom title of the notification. If you don't, it will be "info" */
-  title?: string | ((e: Maybe<TEvent>) => string)
   /** Enter a custom content of the notification. If you don't, it will be inferred from the error message, if found */
   content?: string | ((e: Maybe<TEvent>) => string)
+  /** Enter a custom title of the notification. If you don't, it will be "info" */
+  title?: string | ((e: Maybe<TEvent>) => string)
+  /** The type of notification. Default is error */
+  type?: NotificationType
 }
 
 const defaultOptions: NotificationOptions = {
@@ -23,7 +23,7 @@ export const notify = <TEvent>(
   options: NotificationOptions<TEvent>,
   event: Maybe<TEvent> = undefined,
 ) => {
-  const { content, type, title } = { ...defaultOptions, ...options }
+  const { content, title, type } = { ...defaultOptions, ...options }
   let titleString = ''
   let contentString = ''
 
@@ -44,8 +44,8 @@ export const notify = <TEvent>(
   }
 
   notification[type || 'info']({
-    message: titleString,
     description: contentString,
+    message: titleString,
     placement: 'topRight',
   })
 
@@ -59,8 +59,8 @@ export const notify = <TEvent>(
 }
 
 export interface UseNotifyReturnType {
-  onSuccess: () => void
-  onError: (e: unknown) => void
+  onError(e: unknown): void
+  onSuccess(): void
 }
 
 export const useNotify = (
@@ -73,12 +73,12 @@ export const useNotify = (
     console.error(_error)
     notify({
       ...error,
-      type: 'error',
       content: error.content || extractErrorMessage(_error),
+      type: 'error',
     })
   }
 
-  return { onSuccess, onError }
+  return { onError, onSuccess }
 }
 
 /**

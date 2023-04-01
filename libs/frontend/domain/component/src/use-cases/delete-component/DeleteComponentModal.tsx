@@ -1,21 +1,22 @@
-import type { IComponentService } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { emptyJsonSchema, ModalForm } from '@codelab/frontend/view/components'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 import { AutoFields } from 'uniforms-antd'
 
-export const DeleteComponentModal = observer<{
-  componentService: IComponentService
-}>(({ componentService }) => {
+export const DeleteComponentModal = observer(() => {
+  const { componentService } = useStore()
   const closeModal = () => componentService.deleteModal.close()
   const component = componentService.deleteModal.component
 
-  if (!component) {
-    return null
-  }
+  const onSubmit = () => {
+    if (!component) {
+      return Promise.reject()
+    }
 
-  const onSubmit = () => componentService.delete([component.id])
+    return componentService.delete(component)
+  }
 
   return (
     <ModalForm.Modal
@@ -24,7 +25,7 @@ export const DeleteComponentModal = observer<{
       open={componentService.deleteModal.isOpen}
     >
       <ModalForm.Form
-        model={{ id: component.id }}
+        model={{}}
         onSubmit={onSubmit}
         onSubmitError={createNotificationHandler({
           title: 'Error while deleting component',
@@ -32,7 +33,7 @@ export const DeleteComponentModal = observer<{
         onSubmitSuccess={closeModal}
         schema={emptyJsonSchema}
       >
-        <h4>Are you sure you want to delete component "{component.name}"?</h4>
+        <h4>Are you sure you want to delete component "{component?.name}"?</h4>
         <AutoFields omitFields={['id']} />
       </ModalForm.Form>
     </ModalForm.Modal>

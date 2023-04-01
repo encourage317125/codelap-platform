@@ -3,10 +3,10 @@ import {
   IPrimitiveTypeKind,
   ITypeKind,
 } from '@codelab/shared/abstract/core'
-import { connectOwner } from '@codelab/shared/domain/mapper'
+import { connectAuth0Owner } from '@codelab/shared/domain/mapper'
 import { v4 } from 'uuid'
 import { FIELD_TYPE } from '../support/antd/form'
-import { createAppInput } from '../support/database/app'
+import { loginSession } from '../support/nextjs-auth0/commands/login'
 import {
   actionBody,
   actionName,
@@ -19,30 +19,28 @@ describe('Store', () => {
   before(() => {
     cy.resetDatabase()
     loginSession()
-    cy.getCurrentUserId()
-      .then((userId) => {
-        cy.createType(
-          {
-            PrimitiveType: {
-              id: v4(),
-              name: IPrimitiveTypeKind.Integer,
-              primitiveKind: IPrimitiveTypeKind.Integer,
-              kind: ITypeKind.PrimitiveType,
-              owner: connectOwner(userId),
-            },
-          },
-          ITypeKind.PrimitiveType,
-        )
-
-        return cy.createApp(createAppInput(userId))
+    cy.getCurrentOwner()
+      .then((owner) => {
+        // cy.createType(
+        //   {
+        //     PrimitiveType: {
+        //       id: v4(),
+        //       kind: ITypeKind.PrimitiveType,
+        //       name: IPrimitiveTypeKind.Integer,
+        //       owner: connectAuth0Owner(owner),
+        //       primitiveKind: IPrimitiveTypeKind.Integer,
+        //     },
+        //   },
+        //   ITypeKind.PrimitiveType,
+        // )
+        // return cy.createApp(createAppInput({ auth0Id }))
       })
       .then((apps) => {
-        const app = apps[0]
-
-        cy.visit(`/apps/${app.id}/pages`)
-        cy.getSpinner().should('not.exist')
-        cy.findByText('Store').click()
-        cy.url({ timeout: 10000 }).should('include', 'store')
+        // const app = apps[0]
+        // cy.visit(`/apps/${app.id}/pages`)
+        // cy.getSpinner().should('not.exist')
+        // cy.findByText('Store').click()
+        // cy.url({ timeout: 10000 }).should('include', 'store')
       })
   })
 
@@ -54,8 +52,8 @@ describe('Store', () => {
         cy.getModal().setFormFieldValue({ label: 'Name', value: stateVarName })
         cy.getModal().setFormFieldValue({
           label: 'Type',
-          value: IPrimitiveTypeKind.Integer,
           type: FIELD_TYPE.SELECT,
+          value: IPrimitiveTypeKind.Integer,
         })
         cy.getModal()
           .getModalAction(/Create/)
@@ -113,14 +111,14 @@ describe('Store', () => {
 
         cy.getModal().setFormFieldValue({
           label: 'Type',
-          value: IActionKind.CodeAction,
           type: FIELD_TYPE.SELECT,
+          value: IActionKind.CodeAction,
         })
 
         cy.getModal().setFormFieldValue({
           label: 'Action code',
-          value: actionBody,
           type: FIELD_TYPE.CODE_MIRROR,
+          value: actionBody,
         })
 
         cy.getModal()

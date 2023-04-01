@@ -11,9 +11,9 @@ import type {
 } from '@codemirror/autocomplete'
 
 type CompletionExtension = (input: {
-  languageSource?: CompletionSource
-  languageOptions?: Array<Completion>
   customOptions?: Array<Completion>
+  languageOptions?: Array<Completion>
+  languageSource?: CompletionSource
 }) => CompletionSource
 
 // returns true if STATE_PATH_TEMPLATE_START_OPEN_REGEX finds something in the text on the left of the cursor
@@ -28,7 +28,7 @@ const checkLeftBracket = (context: CompletionContext): boolean => {
 }
 
 export const completionSource: CompletionExtension = (input) => {
-  const { languageOptions = [], languageSource, customOptions = [] } = input
+  const { customOptions = [], languageOptions = [], languageSource } = input
 
   return (context) => {
     const word = context.matchBefore(WORD_BEFORE_DOT_REGEX)

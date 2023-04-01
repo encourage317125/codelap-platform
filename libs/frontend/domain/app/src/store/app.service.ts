@@ -1,23 +1,33 @@
 import type {
   IApp,
-  IAppDTO,
   IAppService,
-  ICreateAppDTO,
+  ICreateAppData,
   IPageBuilderAppProps,
-  IUpdateAppDTO,
+  IUpdateAppData,
 } from '@codelab/frontend/abstract/core'
-import { getPageService } from '@codelab/frontend/domain/page'
 import {
-  deleteStoreInput,
+  getComponentService,
+  getElementService,
+  IAppDTO,
+} from '@codelab/frontend/abstract/core'
+import { getAtomService } from '@codelab/frontend/domain/atom'
+import { getPageService, pageApi, pageRef } from '@codelab/frontend/domain/page'
+import { getPropService } from '@codelab/frontend/domain/prop'
+import { getResourceService } from '@codelab/frontend/domain/resource'
+import {
+  getActionService,
   getStoreService,
 } from '@codelab/frontend/domain/store'
-import { getElementService } from '@codelab/frontend/presenter/container'
-import { createUniqueName, ModalService } from '@codelab/frontend/shared/utils'
-import type { AppCreateInput, AppWhere } from '@codelab/shared/abstract/codegen'
-import { ITypeKind } from '@codelab/shared/abstract/core'
-import type { IEntity } from '@codelab/shared/abstract/types'
-import { connectOwner } from '@codelab/shared/domain/mapper'
+import { getTagService } from '@codelab/frontend/domain/tag'
+import { getTypeService } from '@codelab/frontend/domain/type'
+import { ModalService } from '@codelab/frontend/shared/utils'
+import type {
+  AppWhere,
+  GetRenderedPageAndCommonAppDataQuery,
+} from '@codelab/shared/abstract/codegen'
+import flatMap from 'lodash/flatMap'
 import merge from 'lodash/merge'
+import sortBy from 'lodash/sortBy'
 import { computed } from 'mobx'
 import {
   _async,
@@ -30,26 +40,45 @@ import {
   prop,
   transaction,
 } from 'mobx-keystone'
-import { v4 } from 'uuid'
-import { makeBasicPagesInput } from './api.utils'
-import { appApi } from './app.api'
+import { AppRepository } from '../services/app.repo'
 import { App } from './app.model'
 import { AppModalService } from './app-modal.service'
 
 @model('@codelab/AppService')
 export class AppService
   extends Model({
+    appRepository: prop(() => new AppRepository({})),
     apps: prop(() => objectMap<IApp>()),
-    createModal: prop(() => new ModalService({})),
-    updateModal: prop(() => new AppModalService({})),
-    deleteModal: prop(() => new AppModalService({})),
     buildModal: prop(() => new AppModalService({})),
+    createModal: prop(() => new ModalService({})),
+    deleteModal: prop(() => new AppModalService({})),
+    updateModal: prop(() => new AppModalService({})),
   })
   implements IAppService
 {
   @computed
   private get elementService() {
     return getElementService(this)
+  }
+
+  @computed
+  private get componentService() {
+    return getComponentService(this)
+  }
+
+  @computed
+  private get atomService() {
+    return getAtomService(this)
+  }
+
+  @computed
+  private get resourceService() {
+    return getResourceService(this)
+  }
+
+  @computed
+  private get actionService() {
+    return getActionService(this)
   }
 
   @computed
@@ -63,56 +92,117 @@ export class AppService
   }
 
   @computed
+  private get tagService() {
+    return getTagService(this)
+  }
+
+  @computed
+  private get typeService() {
+    return getTypeService(this)
+  }
+
+  @computed
+  private get propService() {
+    return getPropService(this)
+  }
+
+  @computed
   get appsJson() {
     return this.appsList.map((app) => app.toJson).reduce(merge, {})
   }
 
   /**
    * Aggregate root method to setup all data invariants
+   *
+   * - Hydrate app
+   * - Hydrate page
+   * - Hydrate element
    */
   @modelAction
-  load = ({ app, pageId }: IPageBuilderAppProps) => {
-    console.debug('AppService.load', app, pageId)
+  loadPages = ({ appData, components, pageId }: IPageBuilderAppProps) => {
+    const app = this.add(appData)
 
-    /**
-     * Need to create nested model
-     */
-    const appModel = this.writeCache(app)
+    components.forEach((componentData) => {
+      this.propService.add(componentData.props)
+    })
 
-    /**
-     * Build the pageElementTree for page
-     */
-    const pageModels = app.pages.map((page) =>
-      this.pageService.writeCache(page),
-    )
+    // Sorting the components here so that they will be sorted when referenced in the
+    // explorer builder tree, or in other areas
+    // Would be nice if this can be sorted in the backend instead
+    const allElements = [
+      ...flatMap(sortBy(components, 'name'), ({ rootElement }) => rootElement),
+      ...flatMap(
+        components,
+        ({ rootElement }) => rootElement.descendantElements,
+      ),
+      ...flatMap(appData.pages, ({ rootElement }) => [
+        rootElement,
+        ...rootElement.descendantElements,
+      ]),
+    ]
 
-    const pageModel = pageModels.find((page) => page.id === pageId)
-    const page = app.pages.find((appPage) => appPage.id === pageId)
+    allElements.forEach((elementData) => {
+      this.propService.add(elementData.props)
 
-    if (!page || !pageModel) {
-      throw new Error('Missing page')
-    }
+      /**
+       * Element comes with `component` or `atom` data that we need to load as well
+       */
+      if (elementData.renderAtomType?.id) {
+        this.typeService.addInterface(elementData.renderAtomType.api)
 
-    const elements = [page.rootElement, ...page.rootElement.descendantElements]
+        elementData.renderAtomType.tags.forEach((tag) =>
+          this.tagService.add(tag),
+        )
 
-    const pageElements = elements.map((element) =>
-      this.elementService.writeCache(element),
-    )
+        this.atomService.add(elementData.renderAtomType)
+      }
 
-    const rootElement = this.elementService.element(page.rootElement.id)
+      if (elementData.renderComponentType || elementData.parentComponent) {
+        const component = (elementData.renderComponentType ??
+          elementData.parentComponent)!
 
-    if (!rootElement) {
-      throw new Error('No root element found')
-    }
+        this.typeService.addInterface(component.api)
 
-    const pageElementTree = pageModel.initTree(rootElement, pageElements)
+        this.componentService.add(component)
+      }
+
+      this.elementService.add(elementData)
+    })
+
+    appData.pages.forEach((pageData) => {
+      this.storeService.add(pageData.store)
+      this.pageService.add(pageData)
+    })
+
+    const page = app.page(pageId)
 
     return {
-      pageElementTree,
-      app: appModel,
-      page: pageModel,
+      app,
+      page,
     }
   }
+
+  /**
+   * For nested properties, only show the preview
+   */
+  @modelFlow
+  loadAppsWithNestedPreviews = _async(function* (
+    this: AppService,
+    where: AppWhere,
+  ) {
+    const appsData = yield* _await(this.appRepository.find(where))
+
+    const apps = appsData.map((appData) => {
+      appData.pages.forEach((pageData) => {
+        this.elementService.add(pageData.rootElement)
+        this.pageService.add(pageData)
+      })
+
+      return this.add(appData)
+    })
+
+    return apps
+  })
 
   @computed
   get appsList() {
@@ -123,155 +213,146 @@ export class AppService
     return this.apps.get(id)
   }
 
-  @modelAction
-  private updatePagesCache(apps: Array<IAppDTO>) {
-    // Add all non-existing atoms to the AtomStore, so we can safely reference them in Element
-    const pages = apps.flatMap((app) => app.pages)
-
-    pages.map((page) => this.pageService.writeCache(page))
-  }
-
   @modelFlow
   @transaction
-  getAll = _async(function* (this: AppService, where?: AppWhere) {
-    const { apps } = yield* _await(appApi.GetApps({ where }))
+  getAll = _async(function* (this: AppService, where: AppWhere) {
+    const apps = yield* _await(this.appRepository.find(where))
 
-    this.updatePagesCache(apps)
-
-    return apps.map((app) => this.writeCache(app))
+    return apps.map((app) => this.add(app))
   })
 
   @modelFlow
   @transaction
-  update = _async(function* (
-    this: AppService,
-    entity: IEntity,
-    { name }: IUpdateAppDTO,
-  ) {
-    const {
-      updateApps: { apps },
-    } = yield* _await(
-      appApi.UpdateApps({
-        update: { name: createUniqueName(name) },
-        where: { id: entity.id },
-      }),
-    )
+  update = _async(function* (this: AppService, { id, name }: IUpdateAppData) {
+    const app = this.apps.get(id)!
 
-    return apps.map((app) => this.writeCache(app))
+    app.writeCache({ name })
+
+    yield* _await(this.appRepository.update(app))
+
+    return app
   })
 
   @modelFlow
   @transaction
   getOne = _async(function* (this: AppService, id: string) {
-    if (this.apps.has(id)) {
-      return this.apps.get(id)
-    }
+    const [app] = yield* _await(this.getAll({ id }))
 
-    const all = yield* _await(this.getAll({ id }))
-
-    return all[0]
-  })
-
-  @modelFlow
-  @transaction
-  create = _async(function* (this: AppService, data: Array<ICreateAppDTO>) {
-    const input: Array<AppCreateInput> = data.map((app) => {
-      const appId = app.id ?? v4()
-
-      return {
-        id: appId,
-        name: createUniqueName(app.name),
-        owner: connectOwner(app.auth0Id),
-        store: {
-          create: {
-            node: {
-              id: v4(),
-              name: `${app.name} Store`,
-              api: {
-                create: {
-                  node: {
-                    id: v4(),
-                    name: `${app.name} Store API`,
-                    kind: ITypeKind.InterfaceType,
-                    owner: connectOwner(app.auth0Id),
-                  },
-                },
-              },
-            },
-          },
-        },
-        pages: makeBasicPagesInput(appId),
-      }
-    })
-
-    const {
-      createApps: { apps },
-    } = yield* _await(
-      appApi.CreateApps({
-        input,
-      }),
-    )
-
-    return apps.map((app) => this.writeCache(app))
+    return app
   })
 
   @modelAction
-  writeCache = (app: IAppDTO) => {
-    let appModel = this.app(app.id)
+  add({ id, name, owner, pages }: IAppDTO) {
+    const app = App.create({
+      id,
+      name,
+      owner,
+      pages: pages?.map((page) => pageRef(page.id)),
+    })
 
-    if (appModel) {
-      appModel.writeCache(app)
-    } else {
-      appModel = App.hydrate(app)
-      this.apps.set(app.id, appModel)
-    }
+    this.apps.set(app.id, app)
 
-    app.pages.map((page) => this.pageService.writeCache(page))
-
-    return appModel
+    return app
   }
 
   @modelFlow
   @transaction
-  delete = _async(function* (this: AppService, ids: Array<string>) {
-    const pageRootElements = ids
-      .map((id) => this.apps.get(id))
-      .flatMap((app) => app?.pages.map((page) => page.current.rootElement.id))
-      .filter((id): id is string => Boolean(id))
+  create = _async(function* (
+    this: AppService,
+    { id, name, owner }: ICreateAppData,
+  ) {
+    const pages = this.pageService.pageFactory.addSystemPages({ id, owner })
 
-    ids.forEach((id) => this.apps.delete(id))
+    const app = this.add({
+      id,
+      name,
+      owner,
+      pages,
+    })
+
+    yield* _await(this.appRepository.add(app))
+
+    return app
+  })
+
+  /**
+    This function fetches the initial page and all the common data shared across all pages in the application:
+     - app data
+     - current page
+     - providers page (_app)
+     - components
+     - resources
+     - types
+   */
+  @modelFlow
+  @transaction
+  getRenderedPageAndCommonAppData = _async(function* (
+    this: AppService,
+    appId: string,
+    pageId: string,
+    // Production is pre-built with all required data, no need for network request
+    initialData?: GetRenderedPageAndCommonAppDataQuery,
+  ) {
+    const {
+      apps: [appData],
+      components,
+      resources,
+      ...types
+    } = initialData
+      ? initialData
+      : yield* _await(
+          pageApi.GetRenderedPageAndCommonAppData({ appId, pageId }),
+        )
+
+    if (!appData) {
+      return undefined
+    }
 
     /**
-     * Delete all elements from all pages
+     * Load app, pages, elements
      */
-    yield* _await(
-      Promise.all(
-        pageRootElements.map(async (root) => {
-          await this.elementService.deleteElementSubgraph(root)
-        }),
-      ),
+    const { app } = this.loadPages({ appData, components, pageId })
+
+    this.typeService.loadTypes(types)
+
+    // write cache for resources
+    this.resourceService.load(resources)
+
+    const stores = [...appData.pages, ...components].map(
+      (pageOrComponent) => pageOrComponent.store,
     )
 
-    const {
-      deleteApps: { nodesDeleted },
-    } = yield* _await(
-      appApi.DeleteApps({
-        where: { id_IN: ids },
-        delete: {
-          pages: [
-            {
-              where: {},
-              delete: {},
-            },
-          ],
-          store: {
-            where: {},
-            delete: deleteStoreInput,
-          },
-        },
+    this.storeService.load(stores)
+
+    return app
+  })
+
+  @modelFlow
+  @transaction
+  delete = _async(function* (this: AppService, app: IApp) {
+    /**
+     * Optimistic update
+     */
+    this.apps.delete(app.id)
+
+    /**
+     * Get all pages to delete
+     */
+    const pages = yield* _await(
+      this.pageService.getAll({
+        appConnection: { node: { id: app.id } },
       }),
     )
 
-    return nodesDeleted
+    /**
+     * Get all elements of page to delete
+     */
+    const pageElements = pages.flatMap((page) => page.elements)
+
+    yield* _await(this.elementService.elementRepository.delete(pageElements))
+
+    yield* _await(this.appRepository.delete([app]))
+
+    return app
   })
 }

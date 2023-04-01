@@ -1,47 +1,82 @@
 import type {
-  IAnyType,
   IArrayType,
   IArrayTypeDTO,
+  IType,
 } from '@codelab/frontend/abstract/core'
-import { ITypeDTO } from '@codelab/frontend/abstract/core'
 import { assertIsTypeKind, ITypeKind } from '@codelab/shared/abstract/core'
+import type { Nullable } from '@codelab/shared/abstract/types'
+import { connectNodeId } from '@codelab/shared/domain/mapper'
+import merge from 'lodash/merge'
 import type { Ref } from 'mobx-keystone'
 import { ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
-import { updateBaseTypeCache } from '../base-type'
 import { createBaseType } from './base-type.model'
-import { typeRef } from './union-type.model'
+import { typeRef } from './type.ref'
 
-const hydrate = (fragment: IArrayTypeDTO): ArrayType => {
-  assertIsTypeKind(fragment.kind, ITypeKind.ArrayType)
+const create = ({
+  id,
+  itemType,
+  kind,
+  name,
+  owner,
+}: IArrayTypeDTO): ArrayType => {
+  assertIsTypeKind(kind, ITypeKind.ArrayType)
 
   return new ArrayType({
-    id: fragment.id,
-    kind: fragment.kind,
-    name: fragment.name,
-    itemType: typeRef(fragment.itemType.id),
-    ownerId: fragment.owner.id,
+    id,
+    itemType: itemType ? typeRef(itemType.id) : null,
+    kind,
+    name,
+    owner,
   })
 }
 
 @model('@codelab/ArrayType')
 export class ArrayType
   extends ExtendedModel(createBaseType(ITypeKind.ArrayType), {
-    itemType: prop<Ref<IAnyType>>(),
+    itemType: prop<Nullable<Ref<IType>>>(null),
   })
   implements IArrayType
 {
   @modelAction
-  writeCache(fragment: ITypeDTO) {
-    updateBaseTypeCache(this, fragment)
+  writeCache(arrayTypeDTO: Partial<IArrayTypeDTO>) {
+    super.writeCache(arrayTypeDTO)
 
-    if (fragment.__typename !== ITypeKind.ArrayType) {
-      throw new Error('Invalid ArrayType')
-    }
-
-    this.itemType = typeRef(fragment.itemType.id)
+    this.itemType = arrayTypeDTO.itemType
+      ? typeRef(arrayTypeDTO.itemType.id)
+      : null
 
     return this
   }
 
-  static hydrate = hydrate
+  toCreateInput() {
+    return {
+      ...super.toCreateInput(),
+      itemType: connectNodeId(this.itemType?.id),
+    }
+  }
+
+  toUpdateInput() {
+    return merge(super.toUpdateInput(), {
+      disconnect: this.itemType?.id
+        ? {
+            itemType: {
+              where: {
+                NOT: {
+                  node: {
+                    id: this.itemType.id,
+                  },
+                },
+              },
+            },
+          }
+        : undefined,
+      update: this.itemType?.id
+        ? {
+            itemType: connectNodeId(this.itemType.id),
+          }
+        : undefined,
+    })
+  }
+
+  static create = create
 }

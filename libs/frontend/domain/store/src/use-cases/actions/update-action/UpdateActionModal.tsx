@@ -1,9 +1,6 @@
-import type {
-  IActionService,
-  IResourceService,
-  IUpdateActionDTO,
-} from '@codelab/frontend/abstract/core'
+import type { IUpdateActionData } from '@codelab/frontend/abstract/core'
 import { SelectAction, SelectResource } from '@codelab/frontend/domain/type'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { DisplayIfField, ModalForm } from '@codelab/frontend/view/components'
 import { IActionKind, IResourceType } from '@codelab/shared/abstract/core'
@@ -11,64 +8,55 @@ import { observer } from 'mobx-react-lite'
 import React from 'react'
 import type { Context } from 'uniforms'
 import { AutoField, AutoFields } from 'uniforms-antd'
-import { updateActionSchema } from './updateActionSchema'
+import { updateActionSchema } from './update-action.schema'
 
-export const UpdateActionModal = observer<{
-  actionService: IActionService
-  resourceService: IResourceService
-}>(({ actionService, resourceService }) => {
+export const UpdateActionModal = observer(() => {
+  const { actionService, resourceService } = useStore()
   const closeModal = () => actionService.updateModal.close()
-  const updateAction = actionService.updateModal.action
+  const actionToUpdate = actionService.updateModal.action
 
-  const onSubmit = (data: IUpdateActionDTO) => {
-    if (!updateAction) {
-      throw new Error('Updated action is not set')
-    }
-
-    return actionService.update(updateAction, data)
+  const onSubmit = (actionDTO: IUpdateActionData) => {
+    return actionService.update(actionDTO)
   }
 
   const onSubmitError = createNotificationHandler({
     title: 'Error while updating action',
   })
 
-  const model = {
-    storeId: updateAction?.store.current.id,
-    name: updateAction?.name,
-    type: updateAction?.type,
-    id: updateAction?.id,
-
-    config:
-      updateAction?.type === IActionKind.ApiAction
-        ? updateAction.config.values
-        : undefined,
-    resourceId:
-      updateAction?.type === IActionKind.ApiAction
-        ? updateAction.resource.id
-        : undefined,
-    successActionId:
-      updateAction?.type === IActionKind.ApiAction
-        ? updateAction.successAction?.id
-        : undefined,
-    errorActionId:
-      updateAction?.type === IActionKind.ApiAction
-        ? updateAction.errorAction?.id
-        : undefined,
-
-    code:
-      updateAction?.type === IActionKind.CodeAction
-        ? updateAction.code
-        : undefined,
+  const baseModel = {
+    id: actionToUpdate?.id,
+    name: actionToUpdate?.name,
+    storeId: actionToUpdate?.store.current.id,
+    type: actionToUpdate?.type,
   }
 
-  const getResourceType = (context: Context<IUpdateActionDTO>) =>
+  const model =
+    actionToUpdate?.type === IActionKind.ApiAction
+      ? {
+          config: {
+            data: actionToUpdate.config.current.values,
+            id: actionToUpdate.config.id,
+          },
+          ...baseModel,
+          errorActionId: actionToUpdate.errorAction?.id,
+          resourceId: actionToUpdate.resource.id,
+          successActionId: actionToUpdate.successAction?.id,
+        }
+      : {
+          ...baseModel,
+          code: actionToUpdate?.code,
+        }
+
+  const getResourceType = (context: Context<IUpdateActionData>) =>
     context.model.resourceId
       ? resourceService.resource(context.model.resourceId)?.type
       : null
 
-  const getResourceApiUrl = (context: Context<IUpdateActionDTO>) =>
+  const getResourceApiUrl = (context: Context<IUpdateActionData>) =>
     context.model.resourceId
-      ? resourceService.resource(context.model.resourceId)?.config.get('url')
+      ? resourceService
+          .resource(context.model.resourceId)
+          ?.config.current.get('url')
       : null
 
   return (
@@ -77,64 +65,54 @@ export const UpdateActionModal = observer<{
       onCancel={closeModal}
       open={actionService.updateModal.isOpen}
     >
-      <ModalForm.Form<IUpdateActionDTO>
+      <ModalForm.Form<IUpdateActionData>
         model={model}
         onSubmit={onSubmit}
         onSubmitError={onSubmitError}
         onSubmitSuccess={closeModal}
         schema={updateActionSchema}
       >
-        <AutoFields
-          omitFields={[
-            'code',
-            'resourceId',
-            'config',
-            'successActionId',
-            'errorActionId',
-            'actionsIds',
-          ]}
-        />
+        <AutoFields fields={['name']} />
 
-        {/** Code Action */}
-        <DisplayIfField<IUpdateActionDTO>
-          condition={(context) => context.model.type === IActionKind.CodeAction}
-        >
-          <AutoField label="Action code" name="code" />
-        </DisplayIfField>
+        {actionToUpdate?.type === IActionKind.CodeAction && (
+          <AutoField name="code" />
+        )}
 
-        {/** Api Action */}
-        <DisplayIfField<IUpdateActionDTO>
-          condition={(context) => context.model.type === IActionKind.ApiAction}
-        >
-          <SelectResource name="resourceId" resourceService={resourceService} />
-          <AutoField component={SelectAction} name="successActionId" />
-          <AutoField component={SelectAction} name="errorActionId" />
+        {actionToUpdate?.type === IActionKind.ApiAction && (
+          <>
+            <SelectResource
+              name="resourceId"
+              resourceService={resourceService}
+            />
+            <AutoField component={SelectAction} name="successActionId" />
+            <AutoField component={SelectAction} name="errorActionId" />
 
-          {/** GraphQL Config Form */}
-          <DisplayIfField<IUpdateActionDTO>
-            condition={(context) =>
-              getResourceType(context) === IResourceType.GraphQL
-            }
-          >
-            <AutoField getUrl={getResourceApiUrl} name="config.query" />
-            <AutoField name="config.variables" />
-            <AutoField name="config.headers" />
-          </DisplayIfField>
+            {/** GraphQL Config Form */}
+            <DisplayIfField<IUpdateActionData>
+              condition={(context) =>
+                getResourceType(context) === IResourceType.GraphQL
+              }
+            >
+              <AutoField getUrl={getResourceApiUrl} name="config.data.query" />
+              <AutoField name="config.data.variables" />
+              <AutoField name="config.data.headers" />
+            </DisplayIfField>
 
-          {/** Rest Config Form */}
-          <DisplayIfField<IUpdateActionDTO>
-            condition={(context) =>
-              getResourceType(context) === IResourceType.Rest
-            }
-          >
-            <AutoField name="config.urlSegment" />
-            <AutoField name="config.method" />
-            <AutoField name="config.body" />
-            <AutoField name="config.queryParams" />
-            <AutoField name="config.headers" />
-            <AutoField name="config.responseType" />
-          </DisplayIfField>
-        </DisplayIfField>
+            {/** Rest Config Form */}
+            <DisplayIfField<IUpdateActionData>
+              condition={(context) =>
+                getResourceType(context) === IResourceType.Rest
+              }
+            >
+              <AutoField name="config.data.urlSegment" />
+              <AutoField name="config.data.method" />
+              <AutoField name="config.data.body" />
+              <AutoField name="config.data.queryParams" />
+              <AutoField name="config.data.headers" />
+              <AutoField name="config.data.responseType" />
+            </DisplayIfField>
+          </>
+        )}
       </ModalForm.Form>
     </ModalForm.Modal>
   )

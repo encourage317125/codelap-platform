@@ -10,48 +10,48 @@ import {
 } from './dropdown.command'
 
 export interface AntDropdownCommands {
+  closeDropdown: typeof closeDropdown
+  expectDropdownToClose: typeof expectDropdownToClose
+  expectDropdownToOpen: typeof expectDropdownToOpen
   getDropdown: typeof getDropdown
   getDropdownItem: typeof getDropdownItem
-  selectDropdownItem: typeof selectDropdownItem
   openDropdown: typeof openDropdown
-  closeDropdown: typeof closeDropdown
-  expectDropdownToOpen: typeof expectDropdownToOpen
-  expectDropdownToClose: typeof expectDropdownToClose
+  selectDropdownItem: typeof selectDropdownItem
 }
 
 export const antDropdownCommands: Array<CypressCommand> = [
   {
-    name: 'getDropdown',
     fn: getDropdown,
+    name: 'getDropdown',
   },
   {
-    name: 'getDropdownItem',
     fn: getDropdownItem,
+    name: 'getDropdownItem',
   },
   {
-    name: 'selectDropdownItem',
     fn: selectDropdownItem,
+    name: 'selectDropdownItem',
   },
   {
-    name: 'openDropdown',
     fn: openDropdown,
+    name: 'openDropdown',
     options: {
       prevSubject: 'element',
     },
   },
   {
-    name: 'closeDropdown',
     fn: closeDropdown,
+    name: 'closeDropdown',
     options: {
       prevSubject: 'element',
     },
   },
   {
-    name: 'expectDropdownToOpen',
     fn: expectDropdownToOpen,
+    name: 'expectDropdownToOpen',
   },
   {
-    name: 'expectDropdownToClose',
     fn: expectDropdownToClose,
+    name: 'expectDropdownToClose',
   },
 ]

@@ -2,14 +2,14 @@ import { NextSeo } from 'next-seo'
 import React from 'react'
 
 interface SeoHeadProps {
-  title: string
   description: string
+  title: string
 }
 
-export const SeoHead = ({ title, description }: SeoHeadProps) => (
+export const SeoHead = ({ description, title }: SeoHeadProps) => (
   <NextSeo
     description={description}
-    openGraph={{ title, description: description }}
+    openGraph={{ description: description, title }}
     title={title}
     titleTemplate="%s"
   />

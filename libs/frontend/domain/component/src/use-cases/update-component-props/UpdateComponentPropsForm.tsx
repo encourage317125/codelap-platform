@@ -5,10 +5,10 @@ import { useStore } from '@codelab/frontend/presenter/container'
 import type { UseTrackLoadingPromises } from '@codelab/frontend/view/components'
 import { Spinner } from '@codelab/frontend/view/components'
 import { filterEmptyStrings, mergeProps } from '@codelab/shared/utils'
+import { useAsync } from '@react-hookz/web'
 import { Col, Row } from 'antd'
 import { observer } from 'mobx-react-lite'
-import React from 'react'
-import { useAsync } from 'react-use'
+import React, { useEffect } from 'react'
 import { getDefaultComponentFieldProps } from '../../store'
 
 export interface UpdateComponentPropsFormProps {
@@ -18,26 +18,24 @@ export interface UpdateComponentPropsFormProps {
 
 export const UpdateComponentPropsForm = observer<UpdateComponentPropsFormProps>(
   ({ component, trackPromises }) => {
-    const { typeService, componentService } = useStore()
+    const { propService, typeService } = useStore()
     const { trackPromise } = trackPromises ?? {}
     const apiId = component.api.id
 
-    const { value: interfaceType, loading } = useAsync(
-      () => typeService.getInterfaceAndDescendants(apiId),
-      [apiId],
+    const [{ result: interfaceType, status }, getInterface] = useAsync(() =>
+      typeService.getInterface(apiId),
     )
 
-    const onSubmit = (data: IPropData) => {
+    useEffect(() => {
+      void getInterface.execute()
+    }, [apiId])
+
+    const onSubmit = async (data: IPropData) => {
       const filteredData = filterEmptyStrings(data)
 
-      const promise = componentService.patchComponent(component, {
-        props: {
-          update: {
-            node: {
-              data: JSON.stringify(filteredData),
-            },
-          },
-        },
+      const promise = propService.update({
+        data: JSON.stringify(filteredData),
+        id: component.props.id,
       })
 
       return trackPromise?.(promise) ?? promise
@@ -47,11 +45,11 @@ export const UpdateComponentPropsForm = observer<UpdateComponentPropsFormProps>(
     // so that the value of `defaultValues` wont show when the field is cleared
     const propsModel = mergeProps(
       getDefaultComponentFieldProps(component),
-      component.props?.values,
+      component.props.current.values,
     )
 
     return (
-      <Spinner isLoading={loading}>
+      <Spinner isLoading={status === 'loading'}>
         {interfaceType && (
           <Row gutter={[0, 16]}>
             <Col span={24}>

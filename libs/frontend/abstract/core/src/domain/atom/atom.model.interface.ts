@@ -1,28 +1,41 @@
+import type {
+  AtomCreateInput,
+  AtomUpdateInput,
+} from '@codelab/shared/abstract/codegen'
 import type { IAtomType } from '@codelab/shared/abstract/core'
-import type { IEntity, Nullish } from '@codelab/shared/abstract/types'
+import type { Nullish } from '@codelab/shared/abstract/types'
 import type { Ref } from 'mobx-keystone'
 import type { ICacheService } from '../../service'
+import type { IModel } from '../model.interface'
 import type { ITag } from '../tag'
 import type { IInterfaceType } from '../type'
+import type { IOwnerSchema } from '../user'
 import type { IAtomDTO, IRenderAtomDTO } from './atom.dto.interface'
 
-export interface IAtom extends IEntity, ICacheService<IAtomDTO, IAtom> {
-  name: string
-  icon?: string | null
-  type: IAtomType
-  tags: Array<Ref<ITag>>
-  api: Ref<IInterfaceType>
+export interface IAtom
+  extends ICacheService<IAtomDTO, IAtom>,
+    Omit<IModel<AtomCreateInput, AtomUpdateInput, void>, 'toDeleteInput'>,
+    IOwnerSchema {
   allowCustomTextInjection: boolean
   /**
    * We don't need Ref here, only need id to filter the select options. Making it Ref requires dependency resolution that makes it more difficult.
    *
    * We store preview data here so we can more easily display the tags in the atoms table
    */
-  allowedChildren: Array<Pick<IAtomDTO, 'id' | 'name'>>
+  api: Ref<IInterfaceType>
+  icon?: string | null
+  id: string
+  name: string
+  requiredParents: Array<Ref<IAtom>>
+  suggestedChildren: Array<Ref<IAtom>>
+  tags: Array<Ref<ITag>>
+  type: IAtomType
 }
 
 export type IAtomRef = string
 
-export const isAtomDTO = (atom: Nullish<IRenderAtomDTO>): atom is IAtomDTO => {
+export const isAtomDTO = (
+  atom: Nullish<IRenderAtomDTO>,
+): atom is IRenderAtomDTO => {
   return atom !== undefined && atom !== null
 }

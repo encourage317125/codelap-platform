@@ -1,35 +1,29 @@
-import type { IRenderPropsType } from '@codelab/backend/abstract/core'
-import { IRepository } from '@codelab/backend/abstract/types'
+import { AbstractRepository } from '@codelab/backend/abstract/types'
 import {
   exportRenderPropsTypeSelectionSet,
   Repository,
 } from '@codelab/backend/infra/adapter/neo4j'
-import type { BaseTypeUniqueWhere } from '@codelab/shared/abstract/types'
-import { connectOwner } from '@codelab/shared/domain/mapper'
+import type { IRenderPropsTypeDTO } from '@codelab/frontend/abstract/core'
+import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
+import { connectAuth0Owner } from '@codelab/shared/domain/mapper'
 
-export class RenderPropsTypeRepository extends IRepository<IRenderPropsType> {
+export class RenderPropsTypeRepository extends AbstractRepository<
+  IRenderPropsTypeDTO,
+  OGM_TYPES.RenderPropsType,
+  OGM_TYPES.RenderPropsTypeWhere
+> {
   private RenderPropsType = Repository.instance.RenderPropsType
 
-  async find(where: BaseTypeUniqueWhere) {
-    return (
-      await (
-        await this.RenderPropsType
-      ).find({
-        where,
-        selectionSet: exportRenderPropsTypeSelectionSet,
-      })
-    )[0]
+  async find(where: OGM_TYPES.RenderPropsTypeWhere) {
+    return await (
+      await this.RenderPropsType
+    ).find({
+      selectionSet: exportRenderPropsTypeSelectionSet,
+      where,
+    })
   }
 
-  // async save(renderPropsType: IRenderPropsType, where?: BaseTypeUniqueWhere) {
-  //   if (await this.exists(renderPropsType, where)) {
-  //     return this.update(renderPropsType, this.getWhere(renderPropsType, where))
-  //   }
-
-  //   return (await this.add([renderPropsType]))[0]
-  // }
-
-  protected async _add(renderPropsTypes: Array<IRenderPropsType>) {
+  protected async _add(renderPropsTypes: Array<IRenderPropsTypeDTO>) {
     return (
       await (
         await this.RenderPropsType
@@ -37,22 +31,24 @@ export class RenderPropsTypeRepository extends IRepository<IRenderPropsType> {
         input: renderPropsTypes.map(
           ({ __typename, owner, ...renderPropsType }) => ({
             ...renderPropsType,
-            owner: connectOwner(owner.auth0Id),
+            owner: connectAuth0Owner(owner),
           }),
         ),
+        selectionSet: `{ renderPropsTypes ${exportRenderPropsTypeSelectionSet} }`,
       })
     ).renderPropsTypes
   }
 
   protected async _update(
-    { __typename, owner, ...renderPropsType }: IRenderPropsType,
-    where: BaseTypeUniqueWhere,
+    { __typename, id, name, owner }: IRenderPropsTypeDTO,
+    where: OGM_TYPES.RenderPropsTypeWhere,
   ) {
     return (
       await (
         await this.RenderPropsType
       ).update({
-        update: renderPropsType,
+        selectionSet: `{ renderPropsTypes ${exportRenderPropsTypeSelectionSet} }`,
+        update: { name },
         where,
       })
     ).renderPropsTypes[0]

@@ -1,5 +1,5 @@
+import type { IApp } from '@codelab/frontend/abstract/core'
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
-import { useCurrentApp } from '@codelab/frontend/domain/app'
 import { ExplorerPanePage } from '@codelab/frontend/domain/page'
 import {
   useCurrentAppId,
@@ -12,20 +12,24 @@ import {
   sidebarNavigation,
 } from '@codelab/frontend/view/templates'
 import { auth0Instance } from '@codelab/shared/adapter/auth0'
+import { useAsync, useMountEffect } from '@react-hookz/web'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
 import React from 'react'
 
-const Pages: CodelabPage<DashboardTemplateProps> = observer(() => {
-  const { appService } = useStore()
-  const { app } = useCurrentApp(appService)
+interface PagesProps {
+  app?: IApp
+}
 
+const Pages: CodelabPage<
+  DashboardTemplateProps<PagesProps>,
+  unknown,
+  PagesProps
+> = observer(({ app }) => {
   return (
-    <>
-      <Head>
-        <title>{app?.name ? `${app.name} | ` : ''} Pages | Codelab</title>
-      </Head>
-    </>
+    <Head>
+      <title>{app?.name ? `${app.name} | ` : ''} Pages | Codelab</title>
+    </Head>
   )
 })
 
@@ -33,22 +37,27 @@ export default Pages
 
 export const getServerSideProps = auth0Instance.withPageAuthRequired()
 
-Pages.Layout = observer((page) => {
-  const { pageService, domainService } = useStore()
+Pages.Layout = observer(({ children }) => {
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
+  const { appService } = useStore()
+
+  const [{ result: apps, status }, actions] = useAsync(() =>
+    appService.loadAppsWithNestedPreviews({ id: appId }),
+  )
+
+  useMountEffect(actions.execute)
 
   return (
     <DashboardTemplate
       ExplorerPane={() => (
         <ExplorerPanePage
-          domainService={domainService}
-          pageService={pageService}
+          loading={status === 'loading' || status === 'not-executed'}
         />
       )}
       sidebarNavigation={sidebarNavigation({ appId, pageId })}
     >
-      {page.children}
+      {children({ app: apps?.[0] })}
     </DashboardTemplate>
   )
 })

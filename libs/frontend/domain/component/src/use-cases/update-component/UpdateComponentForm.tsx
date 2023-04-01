@@ -1,14 +1,14 @@
 import type {
   IComponent,
   IComponentService,
-  IUpdateComponentDTO,
+  IUpdateComponentData,
 } from '@codelab/frontend/abstract/core'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { Form, FormContextProvider } from '@codelab/frontend/view/components'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 import { AutoFields } from 'uniforms-antd'
-import { updateComponentSchema } from './updateComponentSchema'
+import { updateComponentSchema } from './update-component.schema'
 
 interface UpdateComponentFormProps {
   component: IComponent
@@ -19,20 +19,20 @@ interface UpdateComponentFormProps {
  */
 export const UpdateComponentForm = observer<UpdateComponentFormProps>(
   ({ component, componentService }) => {
-    const elementTree = component.elementTree
-
     const model = {
+      childrenContainerElement: {
+        id: component.childrenContainerElement.current.id,
+      },
+      id: component.id,
       name: component.name,
-      childrenContainerElementId: component.childrenContainerElementId,
     }
 
-    const onSubmit = (input: IUpdateComponentDTO) => {
-      return componentService.update(component, input)
-    }
+    const onSubmit = (componentData: IUpdateComponentData) =>
+      componentService.update(componentData)
 
     return (
-      <FormContextProvider value={{ elementTree }}>
-        <Form<Omit<IUpdateComponentDTO, 'rootElementId'>>
+      <FormContextProvider value={{ elementTree: component }}>
+        <Form<IUpdateComponentData>
           autosave
           model={model}
           onSubmit={onSubmit}

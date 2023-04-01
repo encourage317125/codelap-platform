@@ -1,18 +1,24 @@
 import type { IEntity, Maybe } from '@codelab/shared/abstract/types'
 
-export interface ICRUDService<Entity, CreateDTO, UpdateDTO> {
-  create(data: Array<CreateDTO>): Promise<Array<Entity>>
-  update(existing: IEntity, data: UpdateDTO): Promise<Array<Entity>>
-  delete(ids: Array<string>): Promise<number>
+export interface ICRUDService<Entity, CreateData, UpdateData extends IEntity> {
+  create(data: CreateData): Promise<Entity>
+  /**
+   * Array<Entity> makes the function more complicated, we can create a separate deleteMany() for services that require it
+   */
+  delete(entity: Entity): Promise<Entity>
+  update(data: UpdateData): Promise<Entity>
 }
 
 export interface ICacheService<CreateDTO, Entity> {
-  writeCache(data: CreateDTO): Entity
+  /**
+   * Allows an existing model to update its cache
+   */
+  writeCache(data: Partial<CreateDTO>): Entity
 }
 
 export interface IQueryService<Entity, EntityWhere, EntityOptions> {
-  getOne(id: string): Promise<Maybe<Entity>>
   getAll(where?: EntityWhere, options?: EntityOptions): Promise<Array<Entity>>
+  getOne(id: string): Promise<Maybe<Entity>>
 }
 
 export interface ICRUDModalService<
@@ -20,8 +26,8 @@ export interface ICRUDModalService<
   Properties extends object = never,
 > {
   createModal: IEntityModalService
-  updateModal: IEntityModalService<Metadata, Properties>
   deleteModal: IEntityModalService<Metadata, Properties>
+  updateModal: IEntityModalService<Metadata, Properties>
 }
 
 /**
@@ -30,8 +36,9 @@ export interface ICRUDModalService<
 export interface IModalService<Metadata = never> {
   isOpen: boolean
   metadata?: Metadata | null
-  open(...args: Metadata extends never ? [] : [Metadata]): void
+
   close(): void
+  open(...args: Metadata extends never ? [] : [Metadata]): void
 }
 
 export type IEntityModalService<

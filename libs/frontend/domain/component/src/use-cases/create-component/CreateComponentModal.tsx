@@ -1,31 +1,40 @@
-import type {
-  IComponentService,
-  ICreateComponentDTO,
-  IUserService,
-} from '@codelab/frontend/abstract/core'
+import type { IInterfaceType } from '@codelab/frontend/abstract/core'
+import { Store } from '@codelab/frontend/domain/store'
+import { InterfaceType, typeRef } from '@codelab/frontend/domain/type'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { ModalForm } from '@codelab/frontend/view/components'
+import { ITypeKind } from '@codelab/shared/abstract/core'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 import tw from 'twin.macro'
 import { AutoFields } from 'uniforms-antd'
-import { createComponentSchema } from './createComponentSchema'
+import { v4 } from 'uuid'
+import type { CreateComponentSchema } from './create-component.schema'
+import { createComponentSchema } from './create-component.schema'
 
-export const CreateComponentModal = observer<{
-  componentService: IComponentService
-  userService: IUserService
-}>(({ componentService, userService }) => {
+export const CreateComponentModal = observer(() => {
+  const { componentService, storeService, typeService, userService } =
+    useStore()
+
   const user = userService.user
 
-  const handleSubmit = (data: ICreateComponentDTO) => {
-    return componentService.create([data])
+  const onSubmit = (componentData: CreateComponentSchema) => {
+    if (!user) {
+      return Promise.reject()
+    }
+
+    const rootElement = { id: v4() }
+
+    return componentService.create({
+      ...componentData,
+      api: { id: v4() },
+      childrenContainerElement: rootElement,
+      rootElement,
+    })
   }
 
   const closeModal = () => componentService.createModal.close()
-
-  const onSubmitError = createNotificationHandler({
-    title: 'Error while creating component',
-  })
 
   return (
     <ModalForm.Modal
@@ -34,16 +43,22 @@ export const CreateComponentModal = observer<{
       open={componentService.createModal.isOpen}
       title={<span css={tw`font-semibold`}>Create component</span>}
     >
-      <ModalForm.Form<Omit<ICreateComponentDTO, 'rootElementId'>>
+      <ModalForm.Form<CreateComponentSchema>
         model={{
-          auth0Id: user?.auth0Id,
+          childrenContainerElement: {
+            id: v4(),
+          },
+          id: v4(),
+          owner: { auth0Id: user?.auth0Id },
         }}
-        onSubmit={handleSubmit}
-        onSubmitError={onSubmitError}
+        onSubmit={onSubmit}
+        onSubmitError={createNotificationHandler({
+          title: 'Error while creating component',
+        })}
         onSubmitSuccess={closeModal}
         schema={createComponentSchema}
       >
-        <AutoFields />
+        <AutoFields omitFields={['childrenContainerElement', 'api']} />
       </ModalForm.Form>
     </ModalForm.Modal>
   )

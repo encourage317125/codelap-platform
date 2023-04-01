@@ -1,21 +1,52 @@
 import type * as cg from '@codelab/shared/abstract/codegen'
 
 export interface IUpdateTypeArgs {
-  update: IUpdateTypeInput
-  disconnect?: IDisconnectNodeInput
-  connect?: IconnectNodeInput
+  connect?: IConnectNodeInput
   delete?: IDeleteTypeInput
+  disconnect?: IDisconnectNodeInput
+  update: IUpdateTypeInput
+  where: ITypeWhere
 }
 
+type ITypeWhere =
+  | cg.ActionTypeWhere
+  | cg.AppTypeWhere
+  | cg.ArrayTypeWhere
+  | cg.CodeMirrorTypeWhere
+  | cg.ElementTypeWhere
+  | cg.EnumTypeWhere
+  | cg.InterfaceTypeWhere
+  | cg.LambdaTypeWhere
+  | cg.PageTypeWhere
+  | cg.PrimitiveTypeWhere
+  | cg.ReactNodeTypeWhere
+  | cg.RenderPropsTypeWhere
+  | cg.UnionTypeWhere
+
+export type IUpdateTypeVars =
+  | cg.UpdateActionTypesMutationVariables
+  | cg.UpdateAppTypesMutationVariables
+  | cg.UpdateArrayTypesMutationVariables
+  | cg.UpdateCodeMirrorTypesMutationVariables
+  | cg.UpdateElementTypesMutationVariables
+  | cg.UpdateEnumTypesMutationVariables
+  | cg.UpdateInterfaceTypesMutationVariables
+  | cg.UpdateLambdaTypesMutationVariables
+  | cg.UpdatePageTypesMutationVariables
+  | cg.UpdatePrimitiveTypesMutationVariables
+  | cg.UpdateReactNodeTypesMutationVariables
+  | cg.UpdateRenderPropsTypesMutationVariables
+  | cg.UpdateUnionTypesMutationVariables
+
 export type ICreateTypeInput =
-  | cg.AppTypeCreateInput
   | cg.ActionTypeCreateInput
+  | cg.AppTypeCreateInput
   | cg.ArrayTypeCreateInput
+  | cg.CodeMirrorTypeCreateInput
   | cg.ElementTypeCreateInput
   | cg.EnumTypeCreateInput
   | cg.InterfaceTypeCreateInput
   | cg.LambdaTypeCreateInput
-  | cg.CodeMirrorTypeCreateInput
   | cg.PageTypeCreateInput
   | cg.PrimitiveTypeCreateInput
   | cg.ReactNodeTypeCreateInput
@@ -25,11 +56,11 @@ export type ICreateTypeInput =
 export type IUpdateTypeInput =
   | cg.AppTypeUpdateInput
   | cg.ArrayTypeUpdateInput
+  | cg.CodeMirrorTypeUpdateInput
   | cg.ElementTypeUpdateInput
   | cg.EnumTypeUpdateInput
   | cg.InterfaceTypeUpdateInput
   | cg.LambdaTypeUpdateInput
-  | cg.CodeMirrorTypeUpdateInput
   | cg.PageTypeUpdateInput
   | cg.PrimitiveTypeUpdateInput
   | cg.ReactNodeTypeUpdateInput
@@ -40,14 +71,14 @@ export type IUpdateTypeInput =
  * Connect
  */
 
-export type IconnectNodeInput =
+export type IConnectNodeInput =
   | cg.AppTypeConnectInput
   | cg.ArrayTypeConnectInput
+  | cg.CodeMirrorTypeConnectInput
   | cg.ElementTypeConnectInput
   | cg.EnumTypeConnectInput
   | cg.InterfaceTypeConnectInput
   | cg.LambdaTypeConnectInput
-  | cg.CodeMirrorTypeConnectInput
   | cg.PageTypeConnectInput
   | cg.PrimitiveTypeConnectInput
   | cg.ReactNodeTypeConnectInput
@@ -60,11 +91,11 @@ export type IconnectNodeInput =
 export type IDisconnectNodeInput =
   | cg.AppTypeDisconnectInput
   | cg.ArrayTypeDisconnectInput
+  | cg.CodeMirrorTypeDisconnectInput
   | cg.ElementTypeDisconnectInput
   | cg.EnumTypeDisconnectInput
   | cg.InterfaceTypeDisconnectInput
   | cg.LambdaTypeDisconnectInput
-  | cg.CodeMirrorTypeDisconnectInput
   | cg.PageTypeDisconnectInput
   | cg.PrimitiveTypeDisconnectInput
   | cg.ReactNodeTypeDisconnectInput
@@ -78,11 +109,11 @@ export type IDisconnectNodeInput =
 export type IDeleteTypeInput =
   | cg.AppTypeDeleteInput
   | cg.ArrayTypeDeleteInput
+  | cg.CodeMirrorTypeDeleteInput
   | cg.ElementTypeDeleteInput
   | cg.EnumTypeDeleteInput
   | cg.InterfaceTypeDeleteInput
   | cg.LambdaTypeDeleteInput
-  | cg.CodeMirrorTypeDeleteInput
   | cg.PageTypeDeleteInput
   | cg.PrimitiveTypeDeleteInput
   | cg.ReactNodeTypeDeleteInput

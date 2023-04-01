@@ -2,9 +2,9 @@ import { Spin } from 'antd'
 import React from 'react'
 
 export interface SpinnerProps {
-  isLoading: boolean
   children?: React.ReactNode
+  isLoading: boolean
 }
 
-export const Spinner = ({ isLoading, children }: SpinnerProps) =>
+export const Spinner = ({ children, isLoading }: SpinnerProps) =>
   isLoading ? <Spin /> : <>{children}</>

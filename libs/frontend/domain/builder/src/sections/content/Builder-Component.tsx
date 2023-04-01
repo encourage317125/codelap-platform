@@ -1,40 +1,26 @@
-import type {
-  IBuilderService,
-  IComponentService,
-  IElementService,
-  IRenderService,
-  IStore,
-} from '@codelab/frontend/abstract/core'
+import type { IStore } from '@codelab/frontend/abstract/core'
 import { RendererType } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { observer } from 'mobx-react-lite'
 import type { JSXElementConstructor } from 'react'
 import React, { useEffect } from 'react'
 import type { BaseBuilderProps } from './BaseBuilder'
 
 interface BuilderComponentProps {
-  componentId: string
-  componentService: IComponentService
-  appStore: IStore
   // Pass in BaseBuilder so we don't have to initialize props again
   BaseBuilder: JSXElementConstructor<BaseBuilderProps>
-  renderService: IRenderService
-  builderService: IBuilderService
-  elementService: IElementService
+  appStore: IStore
+  componentId: string
 }
 
 /**
  * Since the component builder tree changes based on which component id is active, we move the component id dependency to a wrapper we create for the main Builder
  */
 export const BuilderComponent = observer<BuilderComponentProps>(
-  ({
-    componentId,
-    componentService,
-    builderService,
-    renderService,
-    appStore,
-    elementService,
-    BaseBuilder,
-  }) => {
+  ({ appStore, BaseBuilder, componentId }) => {
+    const { builderRenderService, builderService, componentService } =
+      useStore()
+
     const activeComponentTree = builderService.activeElementTree
 
     useEffect(() => {
@@ -45,35 +31,21 @@ export const BuilderComponent = observer<BuilderComponentProps>(
           throw new Error('Component not found')
         }
 
-        const componentTree = component.elementTree
-
-        if (!componentTree) {
-          return
-        }
-
-        await renderService.addRenderer({
+        await builderRenderService.addRenderer({
+          elementTree: component,
           id: componentId,
-          pageTree: componentTree,
-          appTree: null,
-          appStore,
+          providerTree: null,
           rendererType: RendererType.ComponentBuilder,
         })
       })()
     }, [componentId])
 
-    const renderer = renderService.renderers.get(componentId)
+    const renderer = builderRenderService.renderers.get(componentId)
 
     if (!activeComponentTree || !renderer) {
       return null
     }
 
-    return (
-      <BaseBuilder
-        builderService={builderService}
-        elementService={elementService}
-        elementTree={activeComponentTree}
-        renderer={renderer}
-      />
-    )
+    return <BaseBuilder elementTree={activeComponentTree} renderer={renderer} />
   },
 )

@@ -1,3 +1,4 @@
+import type { IAuth0Owner } from '@codelab/frontend/abstract/core'
 import { whereNode, whereNodeId } from './where'
 
 /**
@@ -10,9 +11,12 @@ export const connectNodeIds = (ids: Array<string> | undefined = []) => ({
   connect: ids.map((id) => whereNodeId(id)),
 })
 
-export const connectNode = (key: string, value: string | undefined | null) => ({
-  connect: value ? whereNode(key, value) : undefined,
-})
+export const connectNode = (key: string, value: string | null | undefined) =>
+  value
+    ? {
+        connect: whereNode(key, value),
+      }
+    : undefined
 
-export const connectOwner = (auth0Id: string | undefined) =>
+export const connectAuth0Owner = ({ auth0Id }: IAuth0Owner) =>
   connectNode('auth0Id', auth0Id)

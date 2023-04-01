@@ -1,5 +1,10 @@
+import type {
+  ElementTypeCreateInput,
+  UpdateElementTypesMutationVariables,
+} from '@codelab/shared/abstract/codegen'
 import type { IElementTypeKind, ITypeKind } from '@codelab/shared/abstract/core'
 import type { IBaseType } from '../base-type'
+import type { IElementTypeDTO } from './element-type.dto.interface'
 
 /**
  * Allows picking an element from the current tree
@@ -16,7 +21,12 @@ import type { IBaseType } from '../base-type'
  * @property {ElementTypeKind} elementKind Allows scoping the type of element to only descendants, children or all elements
  *
  */
-export interface IElementType extends IBaseType {
-  kind: ITypeKind.ElementType
+export interface IElementType
+  extends IBaseType<
+    IElementTypeDTO,
+    ElementTypeCreateInput,
+    UpdateElementTypesMutationVariables
+  > {
   elementKind: IElementTypeKind
+  kind: ITypeKind.ElementType
 }

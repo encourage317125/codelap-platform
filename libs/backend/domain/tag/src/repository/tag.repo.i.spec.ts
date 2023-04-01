@@ -1,30 +1,21 @@
 import { AdminService } from '@codelab/backend/domain/admin'
 import { User, UserRepository } from '@codelab/backend/domain/user'
 import { getDriver } from '@codelab/backend/infra/adapter/neo4j'
-import { IRole } from '@codelab/shared/abstract/core'
+import { setupNewUser } from '@codelab/backend/shared/util'
+import type { IUserDTO } from '@codelab/frontend/abstract/core'
 import { v4 } from 'uuid'
 import { Tag } from '../model'
 import { TagRepository } from './tag.repo'
 
 const tagRepository = new TagRepository()
-const userRepository = new UserRepository()
-
-const user = new User({
-  id: v4(),
-  auth0Id: v4(),
-  email: 'admin@codelab.app',
-  username: 'Codelab',
-  roles: [IRole.Admin],
-})
+let user: IUserDTO
 
 beforeAll(async () => {
-  await new AdminService().reset()
-
-  await userRepository.save(user)
-
-  const savedUser = await userRepository.find({ email: user.email })
-
-  expect(savedUser?.username).toEqual('Codelab')
+  user = await setupNewUser({
+    AdminService,
+    User,
+    UserRepository,
+  })
 })
 
 afterAll(async () => {
@@ -32,7 +23,7 @@ afterAll(async () => {
   await driver.close()
 })
 
-describe('Tag repository', () => {
+describe('Tag repository.', () => {
   it('can create a tag', async () => {
     // Parent
     const parentTagId = v4()
@@ -42,23 +33,22 @@ describe('Tag repository', () => {
     const childTagName = 'Child Tag'
 
     const parentTag = new Tag({
-      id: parentTagId,
-      name: parentTagName,
-      owner: { auth0Id: user.auth0Id },
       children: [
         {
           id: childTagId,
-          name: childTagName,
         },
       ],
+      id: parentTagId,
+      name: parentTagName,
+      owner: { auth0Id: user.auth0Id },
     })
 
     const childTag = new Tag({
+      children: [],
       id: childTagId,
       name: childTagName,
       owner: { auth0Id: user.auth0Id },
       parent: parentTag,
-      children: [],
     })
 
     /**
@@ -66,8 +56,8 @@ describe('Tag repository', () => {
      */
     await tagRepository.add([parentTag, childTag])
 
-    let savedParentTag = await tagRepository.find({ id: parentTag.id })
-    let savedChildTag = await tagRepository.find({ id: childTag.id })
+    let savedParentTag = await tagRepository.findOne({ id: parentTag.id })
+    let savedChildTag = await tagRepository.findOne({ id: childTag.id })
 
     // Parent
     expect(savedParentTag?.name).toEqual(parentTagName)
@@ -81,8 +71,8 @@ describe('Tag repository', () => {
     await tagRepository.save(parentTag)
     await tagRepository.save(childTag)
 
-    savedParentTag = await tagRepository.find({ id: parentTag.id })
-    savedChildTag = await tagRepository.find({ id: childTag.id })
+    savedParentTag = await tagRepository.findOne({ id: parentTag.id })
+    savedChildTag = await tagRepository.findOne({ id: childTag.id })
 
     // Parent
     expect(savedParentTag?.name).toEqual(parentTagName)

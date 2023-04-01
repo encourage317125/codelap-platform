@@ -1,5 +1,4 @@
 fragment Resource on Resource {
-  __typename
   id
   name
   type
@@ -8,5 +7,6 @@ fragment Resource on Resource {
   }
   owner {
     id
+    auth0Id
   }
 }

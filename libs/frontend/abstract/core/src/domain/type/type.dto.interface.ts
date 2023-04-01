@@ -4,36 +4,54 @@ import type {
   IPrimitiveTypeKind,
   ITypeKind,
 } from '@codelab/shared/abstract/core'
-import type { TypeFragment } from './fragments'
-import type { IEnumTypeValue } from './types'
+import type { IOwnerSchema } from '../user'
+import type {
+  IActionTypeDTO,
+  IAppTypeDTO,
+  IArrayTypeDTO,
+  ICodeMirrorTypeDTO,
+  ICreateEnumTypeData,
+  IElementTypeDTO,
+  IEnumTypeDTO,
+  IInterfaceTypeDTO,
+  ILambdaTypeDTO,
+  IPageTypeDTO,
+  IPrimitiveTypeDTO,
+  IReactNodeTypeDTO,
+  IRenderPropsTypeDTO,
+  IUnionTypeDTO,
+} from './types'
 
 /**
  * This keeps the form easier, and reduce the number of type services. However we get less fine-grained data validation with Zod in the backend during import/export.
  *
  * For the backend, we'll create a type for each sub-type.
  */
-export interface IAllTypeDTO {
-  id: string
-  name: string
-  kind: ITypeKind
-  primitiveKind?: IPrimitiveTypeKind
-  elementKind?: IElementTypeKind
-  language?: ICodeMirrorLanguage
-  allowedValues?: Array<IEnumTypeValue>
-  unionTypeIds?: Array<string>
+export interface ICreateTypeData extends IOwnerSchema {
+  allowedValues?: Array<ICreateEnumTypeData>
   arrayTypeId?: string
+  elementKind?: IElementTypeKind
+  id: string
+  kind: ITypeKind
+  language?: ICodeMirrorLanguage
+  name: string
+  primitiveKind?: IPrimitiveTypeKind
+  unionTypeIds?: Array<string>
 }
 
-/**
- * Create
- */
-export interface ICreateTypeDTO extends IAllTypeDTO {
-  auth0Id: string
-}
+export type IUpdateTypeData = ICreateTypeData
 
-/**
- * Update
- */
-export type IUpdateTypeDTO = IAllTypeDTO
-
-export type ITypeDTO = TypeFragment
+export type ITypeDTO =
+  | IActionTypeDTO
+  | IAppTypeDTO
+  | IArrayTypeDTO
+  | ICodeMirrorTypeDTO
+  | IElementTypeDTO
+  | IEnumTypeDTO
+  | IInterfaceTypeDTO
+  | ILambdaTypeDTO
+  | IPageTypeDTO
+  | IPrimitiveTypeDTO
+  | IReactNodeTypeDTO
+  | IRenderPropsTypeDTO
+  | IUnionTypeDTO

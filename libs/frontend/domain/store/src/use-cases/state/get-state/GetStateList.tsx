@@ -10,12 +10,12 @@ import React from 'react'
 import { GetStateItem } from './GetStateItem'
 
 export interface GetStateTreeProps {
-  store?: IStore
   fieldService: IFieldService
+  store?: IStore
 }
 
 export const GetStateList = observer<GetStateTreeProps>(
-  ({ store, fieldService }) => {
+  ({ fieldService, store }) => {
     const api = store?.api.current as Maybe<IInterfaceType>
 
     return (

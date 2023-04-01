@@ -1,11 +1,7 @@
-import type {
-  IActionService,
-  ICreateActionDTO,
-  IResourceService,
-  IStore,
-} from '@codelab/frontend/abstract/core'
+import type { ICreateActionData, IStore } from '@codelab/frontend/abstract/core'
 import { HttpMethod } from '@codelab/frontend/abstract/core'
 import { SelectAction, SelectResource } from '@codelab/frontend/domain/type'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { DisplayIfField, ModalForm } from '@codelab/frontend/view/components'
 import { ResourceType } from '@codelab/shared/abstract/codegen'
@@ -14,37 +10,50 @@ import { observer } from 'mobx-react-lite'
 import React from 'react'
 import type { Context } from 'uniforms'
 import { AutoField, AutoFields } from 'uniforms-antd'
-import { createActionSchema } from './createActionSchema'
+import { v4 } from 'uuid'
+import { createActionSchema } from './create-action.schema'
 
 const defaultCodeAction = `function run() {
     // insert your code here
     // this.count += 2;
 }`
 
-export const CreateActionModal = observer<{
-  actionService: IActionService
-  resourceService: IResourceService
-  store?: IStore
-}>(({ actionService, resourceService, store }) => {
-  const closeModal = () => actionService.createModal.close()
+export const CreateActionModal = observer<{ store?: IStore }>(({ store }) => {
+  const { actionService, resourceService } = useStore()
 
-  const onSubmit = (data: ICreateActionDTO) => {
-    return actionService.create([data])
+  const onSubmit = (actionDTO: ICreateActionData) => {
+    console.log('submit', actionDTO)
+
+    return actionService.create(actionDTO)
   }
 
-  const onSubmitError = createNotificationHandler({
-    title: 'Error while creating action',
-  })
+  const closeModal = () => actionService.createModal.close()
 
-  const getResourceType = (context: Context<ICreateActionDTO>) =>
-    context.model.resourceId
-      ? resourceService.resource(context.model.resourceId)?.type
+  const getResourceType = ({ model }: Context<ICreateActionData>) =>
+    model.resourceId ? resourceService.resource(model.resourceId)?.type : null
+
+  const getResourceApiUrl = ({ model }: Context<ICreateActionData>) =>
+    model.resourceId
+      ? resourceService.resource(model.resourceId)?.config.current.get('url')
       : null
 
-  const getResourceApiUrl = (context: Context<ICreateActionDTO>) =>
-    context.model.resourceId
-      ? resourceService.resource(context.model.resourceId)?.config.get('url')
-      : null
+  const model = {
+    code: defaultCodeAction,
+    config: {
+      data: {
+        body: '{}',
+        headers: '{}',
+        method: HttpMethod.GET,
+        query: '',
+        queryParams: '{}',
+        urlSegment: '',
+        variables: '{}',
+      },
+      id: v4(),
+    },
+    id: v4(),
+    storeId: store?.id,
+  }
 
   return (
     <ModalForm.Modal
@@ -52,22 +61,12 @@ export const CreateActionModal = observer<{
       onCancel={closeModal}
       open={actionService.createModal.isOpen}
     >
-      <ModalForm.Form<ICreateActionDTO>
-        model={{
-          storeId: store?.id,
-          code: defaultCodeAction,
-          config: {
-            body: '{}',
-            method: HttpMethod.GET,
-            query: '',
-            headers: '{}',
-            variables: '{}',
-            queryParams: '{}',
-            urlSegment: '',
-          },
-        }}
+      <ModalForm.Form<ICreateActionData>
+        model={model}
         onSubmit={onSubmit}
-        onSubmitError={onSubmitError}
+        onSubmitError={createNotificationHandler({
+          title: 'Error while creating action',
+        })}
         onSubmitSuccess={closeModal}
         schema={createActionSchema}
       >
@@ -83,14 +82,14 @@ export const CreateActionModal = observer<{
         />
 
         {/** Code Action */}
-        <DisplayIfField<ICreateActionDTO>
+        <DisplayIfField<ICreateActionData>
           condition={(context) => context.model.type === IActionKind.CodeAction}
         >
           <AutoField label="Action code" name="code" />
         </DisplayIfField>
 
         {/** Api Action */}
-        <DisplayIfField<ICreateActionDTO>
+        <DisplayIfField<ICreateActionData>
           condition={(context) => context.model.type === IActionKind.ApiAction}
         >
           <SelectResource name="resourceId" resourceService={resourceService} />
@@ -98,28 +97,28 @@ export const CreateActionModal = observer<{
           <AutoField component={SelectAction} name="errorActionId" />
 
           {/** GraphQL Config Form */}
-          <DisplayIfField<ICreateActionDTO>
+          <DisplayIfField<ICreateActionData>
             condition={(context) =>
               getResourceType(context) === ResourceType.GraphQL
             }
           >
-            <AutoField getUrl={getResourceApiUrl} name="config.query" />
-            <AutoField name="config.variables" />
-            <AutoField name="config.headers" />
+            <AutoField getUrl={getResourceApiUrl} name="config.data.query" />
+            <AutoField name="config.data.variables" />
+            <AutoField name="config.data.headers" />
           </DisplayIfField>
 
           {/** Rest Config Form */}
-          <DisplayIfField<ICreateActionDTO>
+          <DisplayIfField<ICreateActionData>
             condition={(context) =>
               getResourceType(context) === ResourceType.Rest
             }
           >
-            <AutoField name="config.urlSegment" />
-            <AutoField name="config.method" />
-            <AutoField name="config.body" />
-            <AutoField name="config.queryParams" />
-            <AutoField name="config.headers" />
-            <AutoField name="config.responseType" />
+            <AutoField name="config.data.urlSegment" />
+            <AutoField name="config.data.method" />
+            <AutoField name="config.data.body" />
+            <AutoField name="config.data.queryParams" />
+            <AutoField name="config.data.headers" />
+            <AutoField name="config.data.responseType" />
           </DisplayIfField>
         </DisplayIfField>
       </ModalForm.Form>

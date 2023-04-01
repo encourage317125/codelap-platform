@@ -1,30 +1,30 @@
-// eslint-disable-next-line @nrwl/nx/enforce-module-boundaries
-import { pageSlug as getPageSlug } from '@codelab/backend/graphql'
 import { RendererType } from '@codelab/frontend/abstract/core'
 import type { AppPagePageProps } from '@codelab/frontend/abstract/types'
+import { pageApi } from '@codelab/frontend/domain/page'
 import { Renderer } from '@codelab/frontend/domain/renderer'
 import { initializeStore } from '@codelab/frontend/model/infra/mobx'
 import {
   useRenderedPage,
   useStore,
 } from '@codelab/frontend/presenter/container'
+import { useMountEffect } from '@react-hookz/web'
 import type { GetStaticPaths, GetStaticProps } from 'next'
 import Head from 'next/head'
 import React from 'react'
 
 const Index = (props: AppPagePageProps) => {
   const store = useStore()
-  const { pageId, appId, renderingData } = props
+  const { renderingData } = props
 
-  const { value } = useRenderedPage({
-    appId,
-    pageId,
-    renderService: store.appRenderService,
-    rendererType: RendererType.Preview,
+  const [{ result }, actions] = useRenderedPage({
     initialData: renderingData,
+    rendererType: RendererType.Preview,
+    renderService: store.appRenderService,
   })
 
-  const { renderer, page } = value ?? {}
+  useMountEffect(actions.execute)
+
+  const { page, renderer } = result ?? {}
 
   return (
     <>
@@ -48,7 +48,7 @@ export const getStaticPaths: GetStaticPaths = async (context) => {
   // 1. The backend is not deployed yet so request to get page data would fail
   // 2. In production when many pages will be created - build may take too long
   // Instead allow manually to build pages by users and keep already generated pages between deploys
-  return { paths: [], fallback: 'blocking' }
+  return { fallback: 'blocking', paths: [] }
 }
 
 export const getStaticProps: GetStaticProps<AppPagePageProps> = async (
@@ -61,7 +61,7 @@ export const getStaticProps: GetStaticProps<AppPagePageProps> = async (
   }
 
   const store = initializeStore({})
-  const { appService, pageService } = store
+  const { appService } = store
   const { domain, page: pageSlug } = context.params
 
   const [app] = await appService.getAll({
@@ -72,18 +72,16 @@ export const getStaticProps: GetStaticProps<AppPagePageProps> = async (
     throw new Error(`No apps found for "${domain}" domain`)
   }
 
-  const page = app.pages.find(
-    (appPage) => getPageSlug({ name: appPage.current.name }) === pageSlug,
-  )
+  const page = app.pages.find((appPage) => appPage.current.slug === pageSlug)
 
   if (!page) {
     throw new Error(`Page ${pageSlug} on "${domain}" domain Not found`)
   }
 
-  const renderingData = await pageService.getRenderedPageAndCommonAppData(
-    app.id,
-    page.id,
-  )
+  const renderingData = await pageApi.GetRenderedPageAndCommonAppData({
+    appId: app.id,
+    pageId: page.id,
+  })
 
   return {
     props: {

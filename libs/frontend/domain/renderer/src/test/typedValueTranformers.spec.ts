@@ -1,13 +1,13 @@
 import type { IRenderOutput, TypedValue } from '@codelab/frontend/abstract/core'
 import { CUSTOM_TEXT_PROP_KEY } from '@codelab/frontend/abstract/core'
 import { render } from '@testing-library/react'
-import { setupTestForRenderer } from './setup/setupTest'
+import { setupTestForRenderer } from './setup/setup-test'
 
 describe('RenderService', () => {
   const data = setupTestForRenderer()
 
   it('should apply typed value transformers', () => {
-    const { props } = data.renderer.renderIntermediateElement(
+    const { props } = data.rootStore.renderer.renderIntermediateElement(
       data.elementToRender,
     ) as IRenderOutput
 
@@ -16,7 +16,6 @@ describe('RenderService', () => {
     })
   })
 
-  // TODO figure out why ReactNodeType doesn't work in this test
   it('should render props when kind is ReactNodeType', async () => {
     const extraProps = {
       someNode: {
@@ -25,7 +24,7 @@ describe('RenderService', () => {
       } as TypedValue<string>,
     }
 
-    const { props } = data.renderer.renderIntermediateElement(
+    const { props } = data.rootStore.renderer.renderIntermediateElement(
       data.elementToRender,
       extraProps,
     ) as IRenderOutput
@@ -34,8 +33,9 @@ describe('RenderService', () => {
 
     expect(
       await findByText(
-        data.componentRootElement.props?.get(CUSTOM_TEXT_PROP_KEY).toString() ??
-          '',
+        data.componentToRender.rootElement.current.props.maybeCurrent
+          ?.get(CUSTOM_TEXT_PROP_KEY)
+          ?.toString() ?? '',
       ),
     ).toBeInTheDocument()
   })
@@ -48,7 +48,7 @@ describe('RenderService', () => {
       } as TypedValue<string>,
     }
 
-    const { props } = data.renderer.renderIntermediateElement(
+    const { props } = data.rootStore.renderer.renderIntermediateElement(
       data.elementToRender,
       extraProps,
     ) as IRenderOutput
@@ -57,8 +57,9 @@ describe('RenderService', () => {
 
     expect(
       await findByText(
-        data.componentRootElement.props?.get(CUSTOM_TEXT_PROP_KEY).toString() ??
-          '',
+        data.componentToRender.rootElement.current.props.maybeCurrent
+          ?.get(CUSTOM_TEXT_PROP_KEY)
+          ?.toString() ?? '',
       ),
     ).toBeInTheDocument()
   })
@@ -71,7 +72,7 @@ describe('RenderService', () => {
       } as TypedValue<string>,
     }
 
-    const { props } = data.renderer.renderIntermediateElement(
+    const { props } = data.rootStore.renderer.renderIntermediateElement(
       data.elementToRender,
       extraProps,
     ) as IRenderOutput

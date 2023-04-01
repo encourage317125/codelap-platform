@@ -1,11 +1,7 @@
+import type { IAppDTO } from '@codelab/frontend/abstract/core'
 import { ROOT_ELEMENT_NAME } from '@codelab/frontend/abstract/core'
-import type { AtomCreateInput } from '@codelab/shared/abstract/codegen'
 import { IAtomType } from '@codelab/shared/abstract/core'
-import { createAtomsData } from '@codelab/shared/data/test'
-import { connectOwner } from '@codelab/shared/domain/mapper'
-import { v4 } from 'uuid'
 import { FIELD_TYPE } from '../support/antd/form'
-import { createAppInput } from '../support/database/app'
 import { loginSession } from '../support/nextjs-auth0/commands/login'
 
 const ELEMENT_CONTAINER = 'Container'
@@ -26,28 +22,28 @@ const elements = [
     parentElement: ELEMENT_CONTAINER,
   },
   {
+    atom: IAtomType.AntDesignGridCol,
     name: ELEMENT_COL_A,
-    atom: IAtomType.AntDesignGridCol,
     parentElement: ELEMENT_ROW,
   },
   {
+    atom: IAtomType.AntDesignGridCol,
     name: ELEMENT_COL_B,
-    atom: IAtomType.AntDesignGridCol,
     parentElement: ELEMENT_ROW,
   },
   {
-    name: ELEMENT_TEXT_1,
     atom: IAtomType.AntDesignTypographyText,
+    name: ELEMENT_TEXT_1,
     parentElement: ELEMENT_COL_A,
   },
   {
-    name: ELEMENT_BUTTON,
     atom: IAtomType.AntDesignButton,
+    name: ELEMENT_BUTTON,
     parentElement: ELEMENT_COL_B,
   },
   {
-    name: ELEMENT_TEXT_2,
     atom: IAtomType.AntDesignTypographyText,
+    name: ELEMENT_TEXT_2,
     parentElement: ELEMENT_BUTTON,
   },
 ]
@@ -58,33 +54,16 @@ describe('Elements CRUD', () => {
   before(() => {
     cy.resetDatabase()
     loginSession()
-    cy.getCurrentUserId()
-      .then((userId) => {
-        const atomsInput: Array<AtomCreateInput> = createAtomsData().map(
-          (atom) => ({
-            id: v4(),
-            name: atom.name,
-            type: atom.type,
-            api: {
-              create: {
-                node: {
-                  id: v4(),
-                  name: `${atom.name} API`,
-                  owner: userId ? connectOwner(userId) : undefined,
-                },
-              },
-            },
-          }),
-        )
-
-        cy.createAtom(atomsInput)
-
-        return cy.createApp(createAppInput(userId))
+    cy.getCurrentOwner()
+      .then((owner) => {
+        return cy.request('/api/cypress/atom').then(() => {
+          return cy.request<IAppDTO>('/api/cypress/app')
+        })
       })
       .then((apps) => {
-        const app = apps[0]
-        const pageId = app?.pages[0]?.id
-        cy.visit(`/apps/${app?.id}/pages/${pageId}/builder`)
+        const app = apps.body
+        const pageId = app.pages?.[0]?.id
+        cy.visit(`/apps/${app.id}/pages/${pageId}/builder`)
         cy.getSpinner().should('not.exist')
 
         // select root now so we can update its child later
@@ -111,14 +90,14 @@ describe('Elements CRUD', () => {
 
       cy.getModal().setFormFieldValue({
         label: 'Parent element',
-        value: ROOT_ELEMENT_NAME,
         type: FIELD_TYPE.SELECT,
+        value: ROOT_ELEMENT_NAME,
       })
 
       cy.getModal().setFormFieldValue({
         label: 'Atom',
-        value: IAtomType.AntDesignTypographyText,
         type: FIELD_TYPE.SELECT,
+        value: IAtomType.AntDesignTypographyText,
       })
 
       cy.getModal()
@@ -135,7 +114,7 @@ describe('Elements CRUD', () => {
     })
   })
 
-  describe(`update`, () => {
+  describe('update', () => {
     it(`should be able to update element`, () => {
       cy.findByText(ELEMENT_CONTAINER).click()
       cy.findByLabelText('Name').clear().type(updatedElementName)
@@ -143,7 +122,7 @@ describe('Elements CRUD', () => {
     })
   })
 
-  describe(`delete`, () => {
+  describe('delete', () => {
     it(`should be able to delete element sub tree`, () => {
       cy.findByText(updatedElementName).rightclick()
       cy.contains(/Delete/).click({ force: true })

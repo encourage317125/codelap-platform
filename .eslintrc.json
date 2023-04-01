@@ -14,20 +14,25 @@
     "jest-formatting",
     "simple-import-sort",
     "lodash",
-    "prefer-arrow"
+    "prefer-arrow",
+    // https://github.com/gajus/eslint-plugin-canonical#no-unused-exports
+    "canonical",
+    "sort-destructure-keys",
+    // @typescript-eslint/member-ordering doesn't auto-fix
+    // But conflicts with member-ordering, since that puts methods after properties, while `typescript-sort-keys` sorts everything alphabetically
+    "typescript-sort-keys"
   ],
+  "parser": "@typescript-eslint/parser",
   "env": {
     "jest/globals": true
   },
   "extends": [
-    "plugin:prettier/recommended"
-    // "plugin:jest/recommended",
-    // "plugin:jest/style"
-    // Only enable for projects like cypress & specs
-    // Typescript adds support to import for ts files
-    //    "plugin:import/recommended",
-    //    "plugin:import/typescript"
-    //    "plugin:lodash/recommended"
+    "plugin:prettier/recommended",
+    "plugin:canonical/recommended"
+    // We first apply `typescript-sort-keys`, then comment off and manually move methods after properties
+    // "plugin:typescript-sort-keys/recommended"
+    // "plugin:import/recommended",
+    // "plugin:lodash/recommended"
   ],
   // Used for import plugin
   "settings": {
@@ -50,6 +55,13 @@
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
       "rules": {
+        "sort-destructure-keys/sort-destructure-keys": [
+          "error",
+          { "caseSensitive": false }
+        ],
+        "canonical/destructuring-property-newline": "off",
+        "canonical/import-specifier-newline": "off",
+        "canonical/id-match": "off",
         // "max-params": [
         //   "error",
         //   {
@@ -321,7 +333,11 @@
               // "type": ["concrete", "abstract"]
               {
                 "sourceTag": "type:abstract",
-                "onlyDependOnLibsWithTags": ["type:abstract", "scope:codegen"]
+                "onlyDependOnLibsWithTags": [
+                  "type:abstract",
+                  "scope:codegen",
+                  "scope:shared"
+                ]
               },
               // {
               //   "sourceTag": "scope:backend",
@@ -403,6 +419,14 @@
             ]
           }
         ],
+        "@typescript-eslint/padding-line-between-statements": [
+          "error",
+          {
+            "blankLine": "always",
+            "prev": "*",
+            "next": ["interface", "type"]
+          }
+        ],
         "padding-line-between-statements": [
           "error",
           {
@@ -458,7 +482,14 @@
       }
     },
     {
+      "files": ["*.schema.ts"],
+      "rules": {
+        "canonical/sort-keys": "off"
+      }
+    },
+    {
       "files": ["*.spec.ts", "*.spec.tsx"],
+      // "plugins": ["plugin:jest/recommended", "plugin:jest/style"],
       "rules": {
         "import/no-unresolved": "error",
         "import/named": "error"
@@ -468,11 +499,33 @@
       "files": ["*.ts", "*.tsx"],
       "extends": [
         "plugin:@nrwl/nx/typescript",
-        "plugin:jest-formatting/strict"
+        "plugin:jest-formatting/strict",
+        "plugin:import/typescript"
       ],
       "rules": {
         "curly": "error",
         "prefer-arrow/prefer-arrow-functions": "error",
+        "@typescript-eslint/member-ordering": [
+          "error",
+          {
+            "default": {
+              // "optionalityOrder": "required-first",
+              // "order": "alphabetically"
+            },
+            "interfaces": {
+              "memberTypes": ["signature", "constructor", "field", "method"],
+              // "optionalityOrder": "required-first",
+              "order": "alphabetically"
+            }
+            // "interfaces": {
+            //   "memberTypes": ["field", "method"],
+            //   "optionalityOrder": "required-first",
+            //   "order": "alphabetically"
+            // }
+          }
+        ],
+        "@typescript-eslint/method-signature-style": ["error", "method"],
+        "@typescript-eslint/sort-type-constituents": "error",
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/consistent-type-definitions": "error",
         "@typescript-eslint/consistent-type-assertions": "error",
@@ -524,8 +577,21 @@
       "rules": {}
     }
     // {
+    //   "files": ["*.ts"],
+    //   "processor": "@graphql-eslint/graphql"
+    // },
+    // {
     //   "files": ["*.graphql"],
-    //   "extends": "plugin:@graphql-eslint/schema-recommended"
+    //   // "parser": "@graphql-eslint/eslint-plugin",
+    //   // "plugins": ["@graphql-eslint"],
+    //   "extends": ["plugin:@graphql-eslint/schema-all"],
+    //   // "parserOptions": {
+    //   //   "operations": "{apps,libs}/**/*.graphql",
+    //   //   "schema": "./schema.graphql"
+    //   // },
+    //   "rules": {
+    //     "@graphql-eslint/known-type-names": "error"
+    //   }
     // }
   ]
 }

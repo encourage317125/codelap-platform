@@ -1,6 +1,6 @@
 import type { IRenderOutput } from '@codelab/frontend/abstract/core'
 import { LoopingRenderPipe } from '../renderPipes/loopingRenderPipe'
-import { setupTestForRenderer } from './setup/setupTest'
+import { setupTestForRenderer } from './setup/setup-test'
 
 const initialProps = {
   data: [
@@ -11,7 +11,7 @@ const initialProps = {
   ],
 }
 
-describe('LoopingRenderPipe', () => {
+describe('LoopingRenderPipe.', () => {
   const data = setupTestForRenderer([LoopingRenderPipe])
 
   beforeEach(() => {
@@ -19,7 +19,7 @@ describe('LoopingRenderPipe', () => {
   })
 
   it('should add renderForEachPropKey props', () => {
-    const renderOutputs = data.renderer.renderIntermediateElement(
+    const renderOutputs = data.rootStore.renderer.renderIntermediateElement(
       data.elementToRender,
       initialProps,
     ) as Array<IRenderOutput>

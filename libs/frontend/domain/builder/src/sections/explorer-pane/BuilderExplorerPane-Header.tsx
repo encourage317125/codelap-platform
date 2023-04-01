@@ -5,23 +5,23 @@ import type {
   IElementTree,
 } from '@codelab/frontend/abstract/core'
 import { CreateElementButton } from '@codelab/frontend/domain/element'
-import type { Maybe, Nullable } from '@codelab/shared/abstract/types'
+import type { Maybe } from '@codelab/shared/abstract/types'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
 
 interface BuilderMainPaneHeaderProps {
-  elementService: IElementService
   builderService: IBuilderService
+  elementService: IElementService
   elementTree: Maybe<IElementTree>
-  root: Nullable<IElement>
+  root: Maybe<IElement>
 }
 
 export const BuilderExplorerPaneHeader = observer(
   ({
-    root,
-    elementService,
     builderService,
+    elementService,
     elementTree,
+    root,
   }: BuilderMainPaneHeaderProps) => {
     if (!root || !elementTree) {
       return null
@@ -30,7 +30,7 @@ export const BuilderExplorerPaneHeader = observer(
     return (
       <CreateElementButton
         createModal={elementService.createModal}
-        elementTreeId={elementTree.id}
+        elementTree={elementTree}
         key={0}
         selectedElementId={builderService.selectedNode?.id}
         title="Element"

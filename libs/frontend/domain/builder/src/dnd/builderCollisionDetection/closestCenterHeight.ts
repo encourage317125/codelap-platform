@@ -4,12 +4,12 @@ import type { CollisionDescriptor, CollisionDetection } from '@dnd-kit/core'
  * Returns the coordinates of the center of a given ClientRect
  */
 interface ClientRect {
-  width: number
+  bottom: number
   height: number
-  top: number
   left: number
   right: number
-  bottom: number
+  top: number
+  width: number
 }
 
 const distanceBetween = (y1: number, y2: number) => Math.abs(y1 - y2)
@@ -26,8 +26,8 @@ const sortCollisionsAsc = (
  */
 export const closestCenterHeight: CollisionDetection = ({
   collisionRect,
-  droppableRects,
   droppableContainers,
+  droppableRects,
 }) => {
   const centerCollisionRect = centerYOfRectangle(collisionRect)
   const collisions: Array<CollisionDescriptor> = []
@@ -43,8 +43,8 @@ export const closestCenterHeight: CollisionDetection = ({
       )
 
       collisions.push({
+        data: { collisionRect, droppableContainer, value: distOnYAxisBetween },
         id,
-        data: { droppableContainer, value: distOnYAxisBetween, collisionRect },
       })
     }
   }

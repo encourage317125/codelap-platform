@@ -13,15 +13,16 @@ export interface PropsFormProps
   extends SubmitRef,
     Pick<
       FormProps<IPropData>,
-      'submitField' | 'onSubmitError' | 'onSubmitSuccess'
+      'onSubmitError' | 'onSubmitSuccess' | 'submitField'
     > {
-  interfaceType?: IInterfaceType
-  initialSchema?: object
-  model?: IPropData
-  onSubmit: (values: IPropData) => Promise<IPropData | void>
   autosave?: boolean
-  setIsLoading?: SetIsLoading
   cssString?: CSSInterpolation
+  initialSchema?: object
+  interfaceType?: IInterfaceType
+  model?: IPropData
+  setIsLoading?: SetIsLoading
+
+  onSubmit(values: IPropData): Promise<IPropData | void>
 }
 
 /**
@@ -29,17 +30,17 @@ export interface PropsFormProps
  */
 export const PropsForm = observer<PropsFormProps>(
   ({
+    autosave,
+    cssString,
+    initialSchema,
     interfaceType,
     model,
     onSubmit,
-    autosave,
-    initialSchema,
-    setIsLoading,
-    submitRef,
     onSubmitError,
-    cssString,
     onSubmitSuccess,
+    setIsLoading,
     submitField,
+    submitRef,
   }) => {
     if (!interfaceType) {
       return null

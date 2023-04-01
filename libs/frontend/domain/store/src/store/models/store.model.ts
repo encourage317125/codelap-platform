@@ -1,16 +1,19 @@
 import type {
+  IAction,
+  IAppDTO,
   IInterfaceType,
   IProp,
   IStore,
+  IStoreDTO,
 } from '@codelab/frontend/abstract/core'
-import { IPropData, IStoreDTO } from '@codelab/frontend/abstract/core'
 import { Prop } from '@codelab/frontend/domain/prop'
 import { typeRef } from '@codelab/frontend/domain/type'
-import { getByExpression } from '@codelab/frontend/shared/utils'
-import { mapDeep } from '@codelab/shared/utils'
-import isString from 'lodash/isString'
-import merge from 'lodash/merge'
-import { computed, reaction } from 'mobx'
+import type {
+  StoreCreateInput,
+  StoreDeleteInput,
+  StoreUpdateInput,
+} from '@codelab/shared/abstract/codegen'
+import { computed } from 'mobx'
 import type { Ref } from 'mobx-keystone'
 import {
   detach,
@@ -21,98 +24,79 @@ import {
   prop,
   rootRef,
 } from 'mobx-keystone'
-import { getActionService } from '../action.service'
+import { actionRef } from './action.ref'
 
-export const hydrate = ({ id, name, api }: IStoreDTO) =>
+const create = ({ api, id, name }: IStoreDTO) => {
   new Store({
+    api: typeRef(api.id) as Ref<IInterfaceType>,
     id,
     name,
-    api: typeRef(api.id) as Ref<IInterfaceType>,
   })
+}
+
+const createName = (app: Pick<IAppDTO, 'name'>) => {
+  return `${app.name} Store`
+}
 
 @model('@codelab/Store')
 export class Store
   extends Model(() => ({
+    actions: prop<Array<Ref<IAction>>>(() => []),
+    api: prop<Ref<IInterfaceType>>().withSetter(),
     id: idProp,
     name: prop<string>(),
-    api: prop<Ref<IInterfaceType>>().withSetter(),
     state: prop<IProp>(() => new Prop({})),
   }))
   implements IStore
 {
-  onAttachedToRootStore() {
-    // every time the snapshot of the configuration changes
-    const reactionDisposer = reaction(
-      () => [this._actionsRunners, this._defaultValues],
-      () => {
-        console.debug('Previous state', this.state.values)
-
-        console.debug('actions changed:', this._actionsRunners)
-        this.state.setMany(this._actionsRunners)
-
-        console.debug('defaults changed:', this._defaultValues)
-        this.state.setMany(this._defaultValues)
-
-        console.debug('New state', this.state.values)
-      },
-      { fireImmediately: true },
-    )
-
-    // when the model is no longer part of the root store stop
-    return () => {
-      reactionDisposer()
-    }
-  }
-
   @modelAction
-  writeCache({ id, name, api }: IStoreDTO) {
-    this.id = id
-    this.name = name
-    this.api = typeRef(api.id) as Ref<IInterfaceType>
+  writeCache({ actions, api, id, name }: Partial<IStoreDTO>) {
+    this.id = id ? id : this.id
+    this.name = name ? name : this.name
+    this.api = api ? (typeRef(api.id) as Ref<IInterfaceType>) : this.api
+    this.actions = actions
+      ? actions.map((action) => actionRef(action.id))
+      : this.actions
 
     return this
   }
 
   @computed
-  get actions() {
-    return getActionService(this).actionsList.filter(
-      (action) => action.store.id === this.id,
-    )
+  get jsonString() {
+    return ''
   }
 
-  @computed
-  private get _defaultValues() {
-    return this.api.current.defaultValues
+  static create = create
+
+  toCreateInput(): StoreCreateInput {
+    const api = this.api.current
+
+    return {
+      api: {
+        create: {
+          node: api.toCreateInput(),
+        },
+      },
+      id: this.id,
+      name: this.name,
+    }
   }
 
-  @computed
-  private get _actionsRunners() {
-    return this.actions
-      .map((action) => ({
-        [action.name]: { run: action.createRunner(this.state) },
-      }))
-      .reduce(merge, {})
+  toUpdateInput(): StoreUpdateInput {
+    return { name: this.name }
   }
 
-  @modelAction
-  public replaceStateInProps(
-    props: IPropData,
-    context: IPropData = this.state.values,
-  ) {
-    props = mapDeep(
-      props,
-      // value mapper
-      (value, key) =>
-        isString(value) ? getByExpression(value, context) : value,
-      // key mapper
-      (value, key) =>
-        (isString(key) ? getByExpression(key, context) : key) as string,
-    )
-
-    return props
+  toDeleteInput(): StoreDeleteInput {
+    return {
+      actions: {
+        ApiAction: [{ where: {} }],
+        CodeAction: [{ where: {} }],
+      },
+      api: { where: {} },
+    }
   }
 
-  static hydrate = hydrate
+  static createName = createName
 }
 
 export const storeRef = rootRef<IStore>('@codelab/StoreRef', {

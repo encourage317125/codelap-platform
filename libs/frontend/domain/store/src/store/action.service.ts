@@ -1,20 +1,21 @@
 import type {
+  IAction,
   IActionService,
-  IApiActionDTO,
-  ICreateActionDTO,
-  ICreateActionInput,
-  IUpdateActionDTO,
+  IActionWhere,
+  ICreateActionData,
+  IUpdateActionData,
 } from '@codelab/frontend/abstract/core'
-import { IActionDTO, IAnyAction } from '@codelab/frontend/abstract/core'
-import { getResourceService } from '@codelab/frontend/domain/resource'
+import { IActionDTO } from '@codelab/frontend/abstract/core'
+import { getPropService } from '@codelab/frontend/domain/prop'
+import { getTypeService } from '@codelab/frontend/domain/type'
 import { ModalService } from '@codelab/frontend/shared/utils'
+import type { ActionFragment } from '@codelab/shared/abstract/codegen'
 import { IActionKind } from '@codelab/shared/abstract/core'
 import { computed } from 'mobx'
 import type { Ref } from 'mobx-keystone'
 import {
   _async,
   _await,
-  createContext,
   Model,
   model,
   modelAction,
@@ -23,25 +24,21 @@ import {
   prop,
   transaction,
 } from 'mobx-keystone'
+import { ActionRepository } from '../services/action.repo'
+import { ActionFactory } from './action.factory'
 import { ActionModalService } from './action-modal.service'
-import {
-  createActionApi,
-  deleteActionApi,
-  getActionsByStore,
-  makeActionCreateInput,
-  makeActionUpdateInput,
-  updateActionApi,
-} from './apis'
-import { Action } from './models'
+import { ApiAction, CodeAction } from './models'
 
 @model('@codelab/ActionService')
 export class ActionService
   extends Model({
-    actions: prop(() => objectMap<IAnyAction>()),
+    actionFactory: prop(() => new ActionFactory({})),
+    actionRepository: prop(() => new ActionRepository({})),
+    actions: prop(() => objectMap<IAction>()),
     createModal: prop(() => new ModalService({})),
-    updateModal: prop(() => new ActionModalService({})),
     deleteModal: prop(() => new ActionModalService({})),
-    selectedActions: prop(() => Array<Ref<IAnyAction>>()).withSetter(),
+    selectedActions: prop(() => Array<Ref<IAction>>()).withSetter(),
+    updateModal: prop(() => new ActionModalService({})),
   })
   implements IActionService
 {
@@ -50,125 +47,100 @@ export class ActionService
     return [...this.actions.values()]
   }
 
+  @computed
+  get propService() {
+    return getPropService(this)
+  }
+
+  @computed
+  get typeService() {
+    return getTypeService(this)
+  }
+
   action(id: string) {
     return this.actions.get(id)
   }
 
   @modelAction
-  addAction(action: IAnyAction) {
+  add(actionDTO: IActionDTO) {
+    const action =
+      actionDTO.__typename === IActionKind.CodeAction
+        ? CodeAction.create(actionDTO)
+        : ApiAction.create(actionDTO)
+
     this.actions.set(action.id, action)
-  }
 
-  @modelAction
-  writeCache(action: IActionDTO) {
-    this.updateResourceCache([action])
-
-    let actionModel = this.action(action.id)
-
-    if (actionModel) {
-      Action.writeCache(action, actionModel)
-    } else {
-      actionModel = Action.create(action)
-      this.actions.set(actionModel.id, actionModel)
-    }
-
-    return actionModel
+    return action
   }
 
   @modelFlow
   @transaction
-  update = _async(function* (
-    this: ActionService,
-    existing: IAnyAction,
-    input: IUpdateActionDTO,
-  ) {
-    const updateInput = makeActionUpdateInput(existing, input)
-    const actions = yield* _await(updateActionApi[existing.type](updateInput))
+  getAll = _async(function* (this: ActionService, where: IActionWhere) {
+    const actionFragments = yield* _await(this.actionRepository.find(where))
 
-    return actions.map((action) => this.writeCache(action))
+    return this.load(actionFragments)
   })
 
   @modelAction
-  updateResourceCache(actions: Array<IActionDTO>) {
-    const resourceService = getResourceService(this)
-
-    const resources = actions
-      .filter((action) => action.__typename === IActionKind.ApiAction)
-      .map((action) => (action as IApiActionDTO).resource)
-
-    return resources.map((resource) => resourceService.writeCache(resource))
+  load(actions: Array<ActionFragment>) {
+    return actions.map((action) =>
+      this.add(this.actionFactory.fromActionFragment(action)),
+    )
   }
-
-  @modelFlow
-  @transaction
-  getAll = _async(function* (this: ActionService, storeId?: string) {
-    const actions = yield* _await(getActionsByStore(storeId))
-
-    return actions.map((action) => this.writeCache(action))
-  })
 
   @modelFlow
   @transaction
   getOne = _async(function* (this: ActionService, id: string) {
     return this.actions.has(id)
       ? this.actions.get(id)
-      : (yield* _await(this.getAll(id)))[0]
+      : (yield* _await(this.getAll({ id })))[0]
   })
 
   @modelFlow
   @transaction
-  create = _async(function* (
-    this: ActionService,
-    data: Array<ICreateActionDTO>,
-  ) {
-    const input: Array<ICreateActionInput> = data.map((action) =>
-      makeActionCreateInput(action),
-    )
+  create = _async(function* (this: ActionService, data: ICreateActionData) {
+    const action = this.add(ActionFactory.mapDataToDTO(data))
 
-    const actions: Array<IActionDTO> = yield* _await(
-      Promise.all(
-        input.map((action) => {
-          if (!action.type) {
-            throw new Error('Action type must be provided')
-          }
+    if (data.type === IActionKind.ApiAction) {
+      this.propService.add({
+        data: JSON.stringify(data.config.data),
+        id: data.config.id,
+      })
+    }
 
-          return createActionApi[action.type](action)
-        }),
-      ).then((res) => res.flat()),
-    )
+    yield* _await(this.actionRepository.add(action))
 
-    return actions.map((action) => this.writeCache(action))
+    return action
   })
 
   @modelFlow
   @transaction
-  delete = _async(function* (this: ActionService, ids: Array<string>) {
-    const actions = ids
-      .map((id) => this.actions.get(id))
-      .filter((action): action is IAnyAction => Boolean(action))
+  update = _async(function* (this: ActionService, data: IUpdateActionData) {
+    const action = this.actions.get(data.id)!
+    const actionDTO = ActionFactory.mapDataToDTO(data)
 
-    ids.forEach((id) => this.actions.delete(id))
+    if (action.type === IActionKind.ApiAction) {
+      action.config.current.writeCache({
+        data: JSON.stringify(data.config.data),
+      })
+    }
 
-    const results = yield* _await(
-      Promise.all(
-        actions.map((action) =>
-          deleteActionApi[action.type]({ where: { id: action.id } }),
-        ),
-      ),
-    )
+    ActionFactory.writeCache(actionDTO, action)
 
-    return results.reduce((total, { nodesDeleted }) => nodesDeleted + total, 0)
+    yield* _await(this.actionRepository.update(action))
+
+    return action
   })
-}
 
-export const actionServiceContext = createContext<IActionService>()
+  @modelFlow
+  @transaction
+  delete = _async(function* (this: ActionService, action: IAction) {
+    const { id } = action
 
-export const getActionService = (self: object) => {
-  const actionStore = actionServiceContext.get(self)
+    this.actions.delete(id)
 
-  if (!actionStore) {
-    throw new Error('ActionService context is not defined')
-  }
+    yield* _await(this.actionRepository.delete(action))
 
-  return actionStore
+    return action
+  })
 }

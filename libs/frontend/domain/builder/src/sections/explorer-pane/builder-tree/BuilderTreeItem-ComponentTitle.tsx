@@ -3,7 +3,7 @@ import type {
   IComponent,
   IElementService,
 } from '@codelab/frontend/abstract/core'
-import { isElement } from '@codelab/frontend/abstract/core'
+import { isElementPageNodeRef } from '@codelab/frontend/abstract/core'
 import { CreateElementButton } from '@codelab/frontend/domain/element'
 import { Col, Row } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -11,9 +11,9 @@ import React from 'react'
 import tw from 'twin.macro'
 
 interface BuilderTreeItemComponentTitleProps {
+  builderService: IBuilderService
   component: IComponent
   elementService: IElementService
-  builderService: IBuilderService
 }
 
 export const BuilderTreeItemComponentTitle = observer(
@@ -23,7 +23,10 @@ export const BuilderTreeItemComponentTitle = observer(
     elementService,
   }: BuilderTreeItemComponentTitleProps) => {
     const { selectedNode } = builderService
-    const selectedNodeId = isElement(selectedNode) && selectedNode.id
+
+    const selectedNodeId = isElementPageNodeRef(selectedNode)
+      ? selectedNode.id
+      : undefined
 
     return (
       <Row justify="space-between">
@@ -31,9 +34,9 @@ export const BuilderTreeItemComponentTitle = observer(
         <Col css={tw`px-2`}>
           <CreateElementButton
             createModal={elementService.createModal}
-            elementTreeId={component.elementTree?.id || ''}
+            elementTree={component}
             key={0}
-            selectedElementId={selectedNodeId || component.rootElementId}
+            selectedElementId={selectedNodeId}
             type="text"
           />
         </Col>

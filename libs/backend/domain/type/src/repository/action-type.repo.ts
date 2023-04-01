@@ -1,48 +1,52 @@
-import type { IActionType } from '@codelab/backend/abstract/core'
-import { IRepository } from '@codelab/backend/abstract/types'
+import { AbstractRepository } from '@codelab/backend/abstract/types'
 import {
   exportActionTypeSelectionSet,
   Repository,
 } from '@codelab/backend/infra/adapter/neo4j'
-import type { BaseTypeUniqueWhere } from '@codelab/shared/abstract/types'
-import { connectOwner } from '@codelab/shared/domain/mapper'
+import type { IActionTypeDTO } from '@codelab/frontend/abstract/core'
+import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
+import { connectAuth0Owner } from '@codelab/shared/domain/mapper'
 
-export class ActionTypeRepository extends IRepository<IActionType> {
+export class ActionTypeRepository extends AbstractRepository<
+  IActionTypeDTO,
+  OGM_TYPES.ActionType,
+  OGM_TYPES.ActionTypeWhere
+> {
   private ActionType = Repository.instance.ActionType
 
-  async find(where: BaseTypeUniqueWhere) {
-    return (
-      await (
-        await this.ActionType
-      ).find({
-        where,
-        selectionSet: exportActionTypeSelectionSet,
-      })
-    )[0]
+  async find(where: OGM_TYPES.ActionTypeWhere) {
+    return await (
+      await this.ActionType
+    ).find({
+      selectionSet: exportActionTypeSelectionSet,
+      where,
+    })
   }
 
-  protected async _add(actionTypes: Array<IActionType>) {
+  protected async _add(actionTypes: Array<IActionTypeDTO>) {
     return (
       await (
         await this.ActionType
       ).create({
         input: actionTypes.map(({ __typename, owner, ...actionType }) => ({
           ...actionType,
-          owner: connectOwner(owner.auth0Id),
+          owner: connectAuth0Owner(owner),
         })),
+        selectionSet: `{ actionTypes ${exportActionTypeSelectionSet} }`,
       })
     ).actionTypes
   }
 
   protected async _update(
-    { __typename, owner, ...actionType }: IActionType,
-    where: BaseTypeUniqueWhere,
+    { __typename, id, name, owner, ...actionType }: IActionTypeDTO,
+    where: OGM_TYPES.ActionTypeWhere,
   ) {
     return (
       await (
         await this.ActionType
       ).update({
-        update: actionType,
+        selectionSet: `{ actionTypes ${exportActionTypeSelectionSet} }`,
+        update: { name },
         where,
       })
     ).actionTypes[0]

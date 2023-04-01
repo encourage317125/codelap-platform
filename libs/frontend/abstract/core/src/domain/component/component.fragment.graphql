@@ -6,17 +6,18 @@ fragment Component on Component {
     name
   }
   owner {
-    id
-    auth0Id
+    ...Owner
   }
   api {
-    id
-    name
+    ...InterfaceType
   }
   props {
     ...Prop
   }
   childrenContainerElement {
     id
+  }
+  store {
+    ...Store
   }
 }

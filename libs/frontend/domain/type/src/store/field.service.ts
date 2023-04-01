@@ -1,17 +1,11 @@
 import type {
-  ICreateFieldDTO,
+  ICreateFieldData,
   IField,
   IFieldService,
   IInterfaceType,
 } from '@codelab/frontend/abstract/core'
-import { IFieldDTO } from '@codelab/frontend/abstract/core'
-import { getElementService } from '@codelab/frontend/presenter/container'
-import type {
-  FieldCreateInput,
-  FieldFragment,
-  FieldUpdateInput,
-} from '@codelab/shared/abstract/codegen'
-import { connectNodeId, reconnectNodeId } from '@codelab/shared/domain/mapper'
+import { getElementService, IFieldDTO } from '@codelab/frontend/abstract/core'
+import type { FieldFragment } from '@codelab/shared/abstract/codegen'
 import { computed } from 'mobx'
 import {
   _async,
@@ -25,7 +19,7 @@ import {
   prop,
   transaction,
 } from 'mobx-keystone'
-import { fieldApi } from './apis/field.api'
+import { FieldRepository } from '../services/field.repo'
 import {
   CreateFieldModalService,
   FieldModalService,
@@ -36,11 +30,12 @@ import { getTypeService } from './type.service.context'
 @model('@codelab/FieldService')
 export class FieldService
   extends Model({
-    id: idProp,
-    fields: prop(() => objectMap<IField>()),
     createModal: prop(() => new CreateFieldModalService({})),
-    updateModal: prop(() => new FieldModalService({})),
     deleteModal: prop(() => new FieldModalService({})),
+    fieldRepository: prop(() => new FieldRepository({})),
+    fields: prop(() => objectMap<IField>()),
+    id: idProp,
+    updateModal: prop(() => new FieldModalService({})),
   })
   implements IFieldService
 {
@@ -62,79 +57,44 @@ export class FieldService
   // some kind of circular dependency happens that breaks the actions in weird and unpredictable ways
   @modelFlow
   @transaction
-  create = _async(function* (this: FieldService, data: Array<ICreateFieldDTO>) {
-    const input: Array<FieldCreateInput> = data.map((field) => ({
-      description: field.description,
-      id: field.id,
-      key: field.key,
-      name: field.name,
-      defaultValues: JSON.stringify(field.defaultValues),
-      validationRules: JSON.stringify(field.validationRules),
-      fieldType: connectNodeId(field.fieldType),
-      api: connectNodeId(field.interfaceTypeId),
-    }))
+  create = _async(function* (
+    this: FieldService,
+    createFieldData: ICreateFieldData,
+  ) {
+    const field = this.add(FieldService.mapDataToDTO(createFieldData))
+    const interfaceType = this.typeService.type(field.api.id) as IInterfaceType
 
-    const {
-      createFields: { fields },
-    } = yield* _await(fieldApi.CreateFields({ input }))
+    interfaceType.writeCache({
+      fields: [{ id: field.id }],
+    })
 
-    for (const { interfaceTypeId } of data) {
-      const interfaceType = this.typeService.type(
-        interfaceTypeId,
-      ) as IInterfaceType
+    yield* _await(this.fieldRepository.add(field))
 
-      interfaceType.writeFieldCache(fields)
-    }
-
-    return fields.map((field) => this.writeCache(field))
+    return field
   })
 
   @modelFlow
   @transaction
   update = _async(function* (
     this: FieldService,
-    existing: IField,
-    data: ICreateFieldDTO,
+    updateFieldData: ICreateFieldData,
   ) {
-    const input: FieldUpdateInput = {
-      fieldType: reconnectNodeId(data.fieldType),
-      description: data.description,
-      id: data.id,
-      key: data.key,
-      name: data.name,
-      defaultValues: JSON.stringify(data.defaultValues),
-      validationRules: JSON.stringify(data.validationRules),
-    }
+    const field = this.getField(updateFieldData.id)!
 
-    const {
-      updateFields: { fields },
-    } = yield* _await(
-      fieldApi.UpdateFields({
-        where: {
-          id: existing.id,
-        },
-        update: input,
-      }),
-    )
+    field.writeCache(FieldService.mapDataToDTO(updateFieldData))
 
-    return fields.map((field) => this.writeCache(field))
+    yield* _await(this.fieldRepository.update(field))
+
+    return field
   })
 
   @modelFlow
   @transaction
-  delete = _async(function* (this: FieldService, ids: Array<string>) {
+  delete = _async(function* (this: FieldService, fields: Array<IField>) {
     // const input = { where: { id: fieldId }, interfaceId }
-    ids.forEach((id) => this.fields.delete(id))
+    fields.forEach((field) => this.fields.delete(field.id))
 
-    const {
-      deleteFields: { nodesDeleted },
-    } = yield* _await(
-      fieldApi.DeleteFields({
-        where: {
-          id_IN: ids,
-        },
-      }),
-    )
+    const nodesDeleted = yield* _await(this.fieldRepository.delete(fields))
 
     return nodesDeleted
 
@@ -154,22 +114,35 @@ export class FieldService
 
   @modelAction
   load(fields: Array<FieldFragment>) {
-    const hydratedFields = fields.map((fragment) => Field.hydrate(fragment))
+    const loadedFields = fields.map((fragment) => Field.create(fragment))
 
-    this.fields = objectMap(hydratedFields.map((field) => [field.id, field]))
+    for (const field of loadedFields) {
+      this.fields.set(field.id, field)
+    }
+
+    return loadedFields
   }
 
   @modelAction
-  writeCache(fragment: IFieldDTO) {
-    let fieldModel = this.fields.get(fragment.id)
+  add(fieldDTO: IFieldDTO) {
+    const field = Field.create(fieldDTO)
 
-    if (fieldModel) {
-      fieldModel.writeCache(fragment)
-    } else {
-      fieldModel = Field.hydrate(fragment)
-      this.fields.set(fragment.id, fieldModel)
+    this.fields.set(field.id, field)
+
+    return field
+  }
+
+  private static mapDataToDTO(fieldData: ICreateFieldData) {
+    return {
+      ...fieldData,
+      api: { id: fieldData.interfaceTypeId },
+      defaultValues: fieldData.defaultValues
+        ? JSON.stringify(fieldData.defaultValues)
+        : null,
+      fieldType: { id: fieldData.fieldType },
+      validationRules: fieldData.validationRules
+        ? JSON.stringify(fieldData.validationRules)
+        : null,
     }
-
-    return fieldModel
   }
 }

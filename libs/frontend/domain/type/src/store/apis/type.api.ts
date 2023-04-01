@@ -1,11 +1,7 @@
 import type {
-  IconnectNodeInput,
   ICreateTypeInput,
-  IDeleteTypeInput,
-  IDisconnectNodeInput,
-  ITypeDTO,
   ITypeWhere,
-  IUpdateTypeInput,
+  IUpdateTypeVars,
 } from '@codelab/frontend/abstract/core'
 import { client } from '@codelab/frontend/model/infra/graphql'
 import type {
@@ -13,6 +9,7 @@ import type {
   ElementTypeCreateInput,
   PrimitiveTypeCreateInput,
   ReactNodeTypeCreateInput,
+  TypeFragment,
 } from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import type { UnboxArray } from '@codelab/shared/abstract/types'
@@ -36,7 +33,7 @@ const _createApi = getCreateSdk(client)
 
 type CreateTypesRecord = Record<
   ITypeKind,
-  (input: Array<ICreateTypeInput>) => Promise<Array<ITypeDTO>>
+  (input: Array<ICreateTypeInput>) => Promise<Array<TypeFragment>>
 >
 
 export const createTypeApi: CreateTypesRecord = {
@@ -94,19 +91,19 @@ export const getAllTypes = async (
   ids?: Array<string>,
 ): Promise<Array<UnboxArray<GetTypesQuery[keyof GetTypesQuery]>>> => {
   const {
-    primitiveTypes,
+    actionTypes,
+    appTypes,
     arrayTypes,
-    unionTypes,
-    interfaceTypes,
+    codeMirrorTypes,
     elementTypes,
-    renderPropsTypes,
-    reactNodeTypes,
     enumTypes,
+    interfaceTypes,
     lambdaTypes,
     pageTypes,
-    appTypes,
-    actionTypes,
-    codeMirrorTypes,
+    primitiveTypes,
+    reactNodeTypes,
+    renderPropsTypes,
+    unionTypes,
   } = await getTypeApi.GetTypes({ ids })
 
   return [
@@ -133,13 +130,7 @@ const _updateApi = getUpdateSdk(client)
 
 type UpdateTypesRecord = Record<
   ITypeKind,
-  (vars: {
-    where: ITypeWhere
-    update?: IUpdateTypeInput
-    delete?: IDeleteTypeInput
-    disconnect?: IDisconnectNodeInput
-    connect?: IconnectNodeInput
-  }) => Promise<Array<ITypeDTO>>
+  (vars: IUpdateTypeVars) => Promise<Array<TypeFragment>>
 >
 
 export const updateTypeApi: UpdateTypesRecord = {
@@ -169,8 +160,6 @@ export const updateTypeApi: UpdateTypesRecord = {
     _updateApi.UpdateCodeMirrorTypes(vars).then(({ types }) => types.types),
   [ITypeKind.PageType]: (vars) =>
     _updateApi.UpdatePageTypes(vars).then(({ types }) => types.types),
-  [ITypeKind.AppType]: (vars) =>
-    _updateApi.UpdateAppTypes(vars).then(({ types }) => types.types),
 }
 
 //
@@ -182,7 +171,7 @@ type DeleteTypesRecord = Record<
   ITypeKind,
   (vars: {
     where: ITypeWhere
-  }) => Promise<{ relationshipsDeleted: number; nodesDeleted: number }>
+  }) => Promise<{ nodesDeleted: number; relationshipsDeleted: number }>
 >
 
 export const deleteTypeApi: DeleteTypesRecord = {

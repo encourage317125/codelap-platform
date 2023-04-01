@@ -1,51 +1,56 @@
 import type {
-  IAnyAction,
+  IAction,
   IApiAction,
-  IApiActionConfig,
+  IApiActionDTO,
+  IBaseResourceConfigData,
   IGraphQLActionConfig,
   IPropData,
   IResource,
   IRestActionConfig,
 } from '@codelab/frontend/abstract/core'
-import { IApiActionDTO, IProp } from '@codelab/frontend/abstract/core'
-import { Prop } from '@codelab/frontend/domain/prop'
+import { IProp } from '@codelab/frontend/abstract/core'
+import { propRef } from '@codelab/frontend/domain/prop'
 import { resourceRef } from '@codelab/frontend/domain/resource'
 import { replaceStateInProps, tryParse } from '@codelab/frontend/shared/utils'
 import {
-  assertIsActionKind,
-  IActionKind,
-  IResourceType,
-} from '@codelab/shared/abstract/core'
+  ApiActionCreateInput,
+  ApiActionDeleteInput,
+  ApiActionUpdateInput,
+} from '@codelab/shared/abstract/codegen'
+import { IActionKind, IResourceType } from '@codelab/shared/abstract/core'
 import type { Nullish } from '@codelab/shared/abstract/types'
+import { connectNodeId } from '@codelab/shared/domain/mapper'
 import type { Axios, Method } from 'axios'
 import axios from 'axios'
 import { GraphQLClient } from 'graphql-request'
 import merge from 'lodash/merge'
+import set from 'lodash/set'
 import { computed } from 'mobx'
 import type { Ref } from 'mobx-keystone'
 import { ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
 import { actionRef } from './action.ref'
-import { createBaseAction, updateBaseAction } from './base-action.model'
+import { createBaseAction } from './base-action.model'
 import { storeRef } from './store.model'
 
-const hydrate = (action: IApiActionDTO): IApiAction => {
-  assertIsActionKind(action.type, IActionKind.ApiAction)
-
-  return new ApiAction({
-    id: action.id,
-    name: action.name,
-    store: storeRef(action.store.id),
-    type: action.type,
-    // TODO: fix up type
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    config: Prop.hydrate(action.config) as any,
-    resource: resourceRef(action.resource.id),
-    successAction: action.successAction
-      ? actionRef(action.successAction.id)
-      : null,
-    errorAction: action.errorAction ? actionRef(action.errorAction.id) : null,
+const create = ({
+  config,
+  errorAction,
+  id,
+  name,
+  resource,
+  store,
+  successAction,
+}: IApiActionDTO) =>
+  new ApiAction({
+    config: propRef(config.id),
+    errorAction: errorAction?.id ? actionRef(errorAction.id) : null,
+    id,
+    name,
+    resource: resourceRef(resource.id),
+    store: storeRef(store.id),
+    successAction: successAction?.id ? actionRef(successAction.id) : null,
+    type: IActionKind.ApiAction,
   })
-}
 
 const restFetch = (
   client: Axios,
@@ -61,12 +66,12 @@ const restFetch = (
   )
 
   return client.request({
-    method: config.method as Method,
-    url: config.urlSegment,
-    responseType: config.responseType,
     data,
-    params,
     headers,
+    method: config.method as Method,
+    params,
+    responseType: config.responseType,
+    url: config.urlSegment,
   })
 }
 
@@ -84,23 +89,24 @@ const graphqlFetch = (
 @model('@codelab/ApiAction')
 export class ApiAction
   extends ExtendedModel(createBaseAction(IActionKind.ApiAction), {
+    config: prop<Ref<IProp>>(),
+    errorAction: prop<Nullish<Ref<IAction>>>(),
     resource: prop<Ref<IResource>>(),
-    config: prop<IApiActionConfig>(),
-    successAction: prop<Nullish<Ref<IAnyAction>>>(),
-    errorAction: prop<Nullish<Ref<IAnyAction>>>(),
+    successAction: prop<Nullish<Ref<IAction>>>(),
   })
   implements IApiAction
 {
-  static hydrate = hydrate
-
   @modelAction
   private replaceStateInConfig(config: IProp) {
-    return replaceStateInProps(config.values, this.store.current.state.values)
+    // FIXME:
+    return replaceStateInProps(config.values, {})
   }
 
   @computed
   get _resourceConfig() {
-    return this.replaceStateInConfig(this.resource.current.config)
+    return this.replaceStateInConfig(
+      this.resource.current.config.current,
+    ) as IBaseResourceConfigData
   }
 
   @computed
@@ -118,65 +124,113 @@ export class ApiAction
     return axios.create({ baseURL: url, headers: tryParse(headers) })
   }
 
-  @modelAction
-  createRunner(state: IProp) {
-    const runner = (...args: Array<unknown>) => {
-      const successAction = this.successAction?.current
-      const errorAction = this.errorAction?.current
-      const resource = this.resource.current
+  createRunner() {
+    const name = this.name
+    const successAction = this.successAction?.current
+    const errorAction = this.errorAction?.current
+    const resource = this.resource.current
+    // FIXME:
+    const config = replaceStateInProps(this.config.current.values, {})
+    const graphQLClient = this._graphqlClient
+    const restClient = this._restClient
+
+    return (...args: Array<unknown>) => {
       const overrideConfig = args[0] as IPropData
-
-      const config = replaceStateInProps(
-        this.config.values,
-        this.store.current.state.values,
-      )
-
-      state.set(this.name, { response: null })
-      state.set(this.name, { error: null })
 
       const fetchPromise =
         resource.type === IResourceType.GraphQL
           ? graphqlFetch(
-              this._graphqlClient,
+              graphQLClient,
               config as IGraphQLActionConfig,
               overrideConfig,
             )
-          : restFetch(
-              this._restClient,
-              config as IRestActionConfig,
-              overrideConfig,
-            )
+          : restFetch(restClient, config as IRestActionConfig, overrideConfig)
 
       return fetchPromise
         .then((response) => {
-          state.set(this.name, { response })
+          set(this, name, { response })
 
-          return successAction?.createRunner(state)(...args)
+          return successAction?.createRunner()(...args)
         })
         .catch((error) => {
-          state.set(this.name, { error: JSON.stringify(error) })
+          set(this, name, { error: JSON.stringify(error) })
 
-          return errorAction?.createRunner(state)(...args)
+          return errorAction?.createRunner()(...args)
         })
     }
-
-    return runner.bind(this)
   }
 
   @modelAction
-  writeCache(action: IApiActionDTO) {
-    updateBaseAction(this, action)
-
-    this.resource = resourceRef(action.resource.id)
-    this.config.writeCache(action.config)
-    this.errorAction = action.errorAction
-      ? actionRef(action.errorAction.id)
-      : null
-    this.successAction = action.successAction
-      ? actionRef(action.successAction.id)
-      : null
-    this.store = storeRef(action.store.id)
+  writeCache({
+    config,
+    errorAction,
+    name,
+    resource,
+    successAction,
+  }: Partial<IApiActionDTO>) {
+    this.name = name ?? this.name
+    this.resource = resource ? resourceRef(resource.id) : this.resource
+    this.config = config ? propRef<IProp>(config.id) : this.config
+    this.errorAction = errorAction
+      ? actionRef(errorAction.id)
+      : this.errorAction
+    this.successAction = successAction
+      ? actionRef(successAction.id)
+      : this.successAction
 
     return this
   }
+
+  @modelAction
+  toCreateInput(): ApiActionCreateInput {
+    return {
+      config: {
+        create: {
+          node: this.config.current.toCreateInput(),
+        },
+      },
+      errorAction: {
+        ApiAction: connectNodeId(this.errorAction?.id),
+        CodeAction: connectNodeId(this.errorAction?.id),
+      },
+      id: this.id,
+      name: this.name,
+      resource: connectNodeId(this.resource.id),
+      store: connectNodeId(this.store.id),
+      successAction: {
+        ApiAction: connectNodeId(this.successAction?.id),
+        CodeAction: connectNodeId(this.successAction?.id),
+      },
+    }
+  }
+
+  @modelAction
+  toUpdateInput(): ApiActionUpdateInput {
+    return {
+      config: {
+        update: {
+          node: this.config.current.toUpdateInput(),
+        },
+      },
+      errorAction: {
+        ApiAction: connectNodeId(this.errorAction?.id),
+        CodeAction: connectNodeId(this.errorAction?.id),
+      },
+      name: this.name,
+      resource: connectNodeId(this.resource.id),
+      successAction: {
+        ApiAction: connectNodeId(this.successAction?.id),
+        CodeAction: connectNodeId(this.successAction?.id),
+      },
+    }
+  }
+
+  @modelAction
+  toDeleteInput(): ApiActionDeleteInput {
+    return {
+      config: { where: {} },
+    }
+  }
+
+  static create = create
 }

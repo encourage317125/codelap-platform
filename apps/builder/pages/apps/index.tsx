@@ -1,12 +1,14 @@
 import { EllipsisOutlined } from '@ant-design/icons'
+import { useUser } from '@auth0/nextjs-auth0'
+import type { IAuth0Owner } from '@codelab/frontend/abstract/core'
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
 import {
-  AppImportContainer,
   BuildAppModal,
   CreateAppButton,
   CreateAppModal,
   DeleteAppModal,
   GetAppsList,
+  ImportAppDialog,
   UpdateAppModal,
 } from '@codelab/frontend/domain/app'
 import {
@@ -21,30 +23,28 @@ import {
   sidebarNavigation,
 } from '@codelab/frontend/view/templates'
 import { auth0Instance } from '@codelab/shared/adapter/auth0'
+import { useAsync, useMountEffect } from '@react-hookz/web'
 import type { MenuProps } from 'antd'
 import { Button, Dropdown, Menu, PageHeader, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
-import React, { useEffect } from 'react'
-import { useAsync } from 'react-use'
+import React from 'react'
 
 const items: MenuProps['items'] = [
   {
-    key: '0',
     icon: (
       <Button href="/api/auth/logout" type="link">
         Sign Out
       </Button>
     ),
+    key: '0',
   },
 ]
 
 const AppsPageHeader = observer(() => {
-  const { appService } = useStore()
-
   const pageHeaderElements = [
-    <AppImportContainer appService={appService} key={0} />,
-    <CreateAppButton appService={appService} key={1} />,
+    <ImportAppDialog key={0} />,
+    <CreateAppButton key={1} />,
     <Dropdown key={2} overlay={<Menu items={items} />} trigger={['click']}>
       <Button icon={<EllipsisOutlined />} />
     </Dropdown>,
@@ -54,16 +54,24 @@ const AppsPageHeader = observer(() => {
 })
 
 const AppsPage: CodelabPage<DashboardTemplateProps> = (props) => {
-  const { userService, appService, domainService } = useStore()
-  const { loading, error, value } = useAsync(() => appService.getAll(), [])
-  const { value: domains } = useAsync(() => domainService.getAll(), [])
+  const { appService } = useStore()
+  const { user } = useUser()
 
-  useEffect(() => {
-    // Only call this once on dev mode
+  const [{ status }, loadApp] = useAsync((owner: IAuth0Owner) =>
+    appService.loadAppsWithNestedPreviews({ owner }),
+  )
+
+  useMountEffect(() => {
+    if (user?.sub) {
+      void loadApp.execute({ auth0Id: user.sub })
+    }
+
+    // in development need to execute this each time page is loaded,
+    // since useUser always returns valid Auth0 user even when it does not exist in neo4j db yet
     if (process.env.NEXT_PUBLIC_BUILDER_HOST?.includes('127.0.0.1')) {
       void fetch('/api/upsert-user')
     }
-  }, [])
+  })
 
   return (
     <>
@@ -71,14 +79,13 @@ const AppsPage: CodelabPage<DashboardTemplateProps> = (props) => {
         <title>Apps | Codelab</title>
       </Head>
 
-      <BuildAppModal appService={appService} domainService={domainService} />
-      <CreateAppModal appService={appService} userService={userService} />
-      <UpdateAppModal appService={appService} userService={userService} />
-      <DeleteAppModal appService={appService} />
+      <BuildAppModal />
+      <CreateAppModal />
+      <UpdateAppModal />
+      <DeleteAppModal />
 
       <ContentSection>
-        {loading && <Spin />}
-        {!loading && <GetAppsList appService={appService} domains={domains} />}
+        {status === 'loading' ? <Spin /> : <GetAppsList />}
       </ContentSection>
     </>
   )
@@ -92,7 +99,7 @@ export default AppsPage
  */
 export const getServerSideProps = auth0Instance.withPageAuthRequired()
 
-AppsPage.Layout = (page) => {
+AppsPage.Layout = ({ children }) => {
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
 
@@ -101,7 +108,7 @@ AppsPage.Layout = (page) => {
       Header={AppsPageHeader}
       sidebarNavigation={sidebarNavigation({ appId, pageId })}
     >
-      {page.children}
+      {children()}
     </DashboardTemplate>
   )
 }

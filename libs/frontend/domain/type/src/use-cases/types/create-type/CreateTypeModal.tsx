@@ -1,8 +1,5 @@
-import type {
-  ICreateTypeDTO,
-  ITypeService,
-  IUserService,
-} from '@codelab/frontend/abstract/core'
+import type { ICreateTypeData } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { ModalForm } from '@codelab/frontend/view/components'
 import { ITypeKind } from '@codelab/shared/abstract/core'
@@ -12,18 +9,16 @@ import tw from 'twin.macro'
 import { AutoField, AutoFields, SelectField } from 'uniforms-antd'
 import { v4 } from 'uuid'
 import { TypeSelect, typeSelectOptions } from '../../../shared'
+import { typeRef } from '../../../store'
 import { createTypeSchema } from './create-type.schema'
 import { DisplayIfKind } from './DisplayIfKind'
 
-export const CreateTypeModal = observer<{
-  typeService: ITypeService
-  userService: IUserService
-}>(({ typeService, userService }) => {
+export const CreateTypeModal = observer(() => {
+  const { typeService, userService } = useStore()
+  const isOpen = typeService.createModal.isOpen
   const closeModal = () => typeService.createModal.close()
-  const user = userService.user
 
-  const onSubmit = async (data: ICreateTypeDTO) => {
-    // Here we want to append ids to enum
+  const onSubmit = async (data: ICreateTypeData) => {
     const input = {
       ...data,
       allowedValues: data.allowedValues?.map((val) => ({
@@ -32,14 +27,8 @@ export const CreateTypeModal = observer<{
       })),
     }
 
-    await typeService.create([input])
-
-    /**
-     * typeService.create writes into cache
-     * if modal is opened -> bug: modal input values are cleared
-     * void = execute typeService.queryGetTypesTableTypes, close modal, and not wait until it finishes
-     */
-    void typeService.getBaseTypes({}).then(() => undefined)
+    const type = await typeService.create(input)
+    await typeService.pagination.data.set(type.id, typeRef(type))
   }
 
   return (
@@ -47,13 +36,13 @@ export const CreateTypeModal = observer<{
       className="create-type-modal"
       okText="Create"
       onCancel={closeModal}
-      open={typeService.createModal.isOpen}
+      open={isOpen}
       title={<span css={tw`font-semibold`}>Create type</span>}
     >
-      <ModalForm.Form<ICreateTypeDTO>
+      <ModalForm.Form<ICreateTypeData>
         model={{
           id: v4(),
-          auth0Id: user?.auth0Id,
+          owner: { auth0Id: userService.user?.auth0Id },
         }}
         onSubmit={onSubmit}
         onSubmitError={createNotificationHandler({
@@ -63,7 +52,7 @@ export const CreateTypeModal = observer<{
         onSubmitSuccess={closeModal}
         schema={createTypeSchema}
       >
-        <AutoFields fields={['name', 'auth0Id']} />
+        <AutoFields fields={['name', 'owner']} />
         <SelectField name="kind" showSearch />
 
         <DisplayIfKind kind={ITypeKind.PrimitiveType}>
@@ -74,7 +63,6 @@ export const CreateTypeModal = observer<{
           <AutoField
             createTypeOptions={typeSelectOptions}
             name="unionTypeIds"
-            types={typeService.typesList}
           />
         </DisplayIfKind>
         {/* <ListField name="unionTypes" />; */}

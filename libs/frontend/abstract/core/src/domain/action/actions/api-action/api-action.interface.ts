@@ -1,19 +1,28 @@
+import type {
+  ApiActionCreateInput,
+  ApiActionDeleteInput,
+  ApiActionUpdateInput,
+} from '@codelab/shared/abstract/codegen'
 import type { IActionKind } from '@codelab/shared/abstract/core'
 import type { Nullish } from '@codelab/shared/abstract/types'
 import type { Ref } from 'mobx-keystone'
 import type { ICacheService } from '../../../../service'
+import type { IProp } from '../../../prop'
 import type { IResource } from '../../../resource'
-import type { IApiActionConfig } from '../../action.dto.interface'
-import type { IAnyAction } from '../../action.interface'
-import type { IActionBase } from '../../action-base.interface'
+import type { IAction } from '../../action.interface'
+import type { IBaseAction } from '../../base-action.interface'
 import type { IApiActionDTO } from './api-action.dto.interface'
 
 export interface IApiAction
-  extends IActionBase,
+  extends IBaseAction,
     ICacheService<IApiActionDTO, IApiAction> {
-  type: IActionKind.ApiAction
+  config: Ref<IProp>
+  errorAction?: Nullish<Ref<IAction>>
   resource: Ref<IResource>
-  config: IApiActionConfig
-  successAction?: Nullish<Ref<IAnyAction>>
-  errorAction?: Nullish<Ref<IAnyAction>>
+  successAction?: Nullish<Ref<IAction>>
+  type: IActionKind.ApiAction
+
+  toCreateInput(): ApiActionCreateInput
+  toDeleteInput(): ApiActionDeleteInput
+  toUpdateInput(): ApiActionUpdateInput
 }

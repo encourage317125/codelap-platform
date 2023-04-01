@@ -1,5 +1,5 @@
 import { LinkOutlined } from '@ant-design/icons'
-import type { IDomain, IDomainService } from '@codelab/frontend/abstract/core'
+import type { IDomain } from '@codelab/frontend/abstract/core'
 import { Alert, Card } from 'antd'
 import { observer } from 'mobx-react-lite'
 import Link from 'next/link'
@@ -11,47 +11,38 @@ import { hideAntBody } from './GetDomainsItem.styles'
 
 export interface GetAppsItemProps {
   domain: IDomain
-  domainService: IDomainService
 }
 
-export const GetDomainItem = observer<GetAppsItemProps>(
-  ({ domain, domainService }) => {
-    const {
-      domainConfig: { misconfigured },
-      projectDomain: { verified },
-    } = domain
+export const GetDomainItem = observer<GetAppsItemProps>(({ domain }) => {
+  const { domainConfig, projectDomain } = domain
+  const url = `https://${domain.name}`
 
-    const url = `https://${domain.name}`
+  const Title = (
+    <div>
+      <Link href={url}>
+        <span>
+          {domain.name} <LinkOutlined />
+        </span>
+      </Link>
+      <ConfigStatus
+        misconfigured={!projectDomain?.verified || domainConfig?.misconfigured}
+      />
+    </div>
+  )
 
-    const Title = (
-      <div>
-        <Link href={url}>
-          <span>
-            {domain.name} <LinkOutlined />
-          </span>
-        </Link>
-        <ConfigStatus misconfigured={!verified || misconfigured} />
-      </div>
-    )
-
-    return (
-      <Card
-        css={hideAntBody}
-        extra={<ItemTools domain={domain} domainService={domainService} />}
-        title={Title}
-      >
-        {!verified && (
-          <Alert
-            description="Domain misconfigured because it's already assigned to another project."
-            message="Error"
-            showIcon
-            type="error"
-          />
-        )}
-        {verified && misconfigured && (
-          <ConfigGuide domain={domain} type="ARecord" />
-        )}
-      </Card>
-    )
-  },
-)
+  return (
+    <Card css={hideAntBody} extra={<ItemTools domain={domain} />} title={Title}>
+      {!projectDomain?.verified && (
+        <Alert
+          description="Domain misconfigured because it's already assigned to another project."
+          message="Error"
+          showIcon
+          type="error"
+        />
+      )}
+      {projectDomain?.verified && domainConfig?.misconfigured && (
+        <ConfigGuide domain={domain} type="ARecord" />
+      )}
+    </Card>
+  )
+})

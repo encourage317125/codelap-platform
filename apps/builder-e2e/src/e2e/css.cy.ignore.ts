@@ -1,7 +1,7 @@
 import { IAtomType } from '@codelab/shared/abstract/core'
-import { connectOwner } from '@codelab/shared/domain/mapper'
+import { connectAuth0Owner } from '@codelab/shared/domain/mapper'
 import { v4 } from 'uuid'
-import { createAppInput } from '../support/database/app'
+import { loginSession } from '../support/nextjs-auth0/commands/login'
 
 const ELEMENT_BUTTON = 'Button'
 const backgroundColor1 = 'rgb(48, 182, 99)'
@@ -36,59 +36,58 @@ describe('CSS CRUD', () => {
   before(() => {
     cy.resetDatabase()
     loginSession()
-    cy.getCurrentUserId()
+    cy.getCurrentOwner()
       .as(uidCache)
-      .then((userId) => {
-        cy.createAtom([
-          {
-            name: atomName,
-            type: IAtomType.AntDesignButton,
-            id: v4(),
-            api: {
-              create: {
-                node: {
-                  id: v4(),
-                  name: `${IAtomType.AntDesignButton} API`,
-                  owner: connectOwner(userId),
-                },
-              },
-            },
-          },
-        ]).as(atomCache)
-
-        cy.createApp(createAppInput(userId)).as(appCache)
+      .then((owner) => {
+        // cy.createAtom([
+        //   {
+        //     api: {
+        //       create: {
+        //         node: {
+        //           id: v4(),
+        //           name: `${IAtomType.AntDesignButton} API`,
+        //           owner: connectAuth0Owner(owner),
+        //         },
+        //       },
+        //     },
+        //     id: v4(),
+        //     name: atomName,
+        //     type: IAtomType.AntDesignButton,
+        //   },
+        // ]).as(atomCache)
+        // cy.createApp(createAppInput({ auth0Id })).as(appCache)
       })
 
     cy.then(function () {
       const app = this[appCache][0]
       const elementId = v4()
-      cy.createElement({
-        id: elementId,
-        name: elementName,
-        parent: {
-          connect: {
-            where: { node: { id: app.pages[0].rootElement.id } },
-          },
-        },
-        props: {
-          create: { node: { data: JSON.stringify({}) } },
-        },
-        renderAtomType: {
-          connect: {
-            where: {
-              node: {
-                id: this[atomCache][0].id,
-              },
-            },
-          },
-        },
-      })
+      // cy.createElement({
+      //   id: elementId,
+      //   name: elementName,
+      //   parent: {
+      //     connect: {
+      //       where: { node: { id: app.pages[0].rootElement.id } },
+      //     },
+      //   },
+      //   props: {
+      //     create: { node: { data: JSON.stringify({}) } },
+      //   },
+      //   renderAtomType: {
+      //     connect: {
+      //       where: {
+      //         node: {
+      //           id: this[atomCache][0].id,
+      //         },
+      //       },
+      //     },
+      //   },
+      // })
 
-      const pageId = app.pages[0].id
-      cy.visit(`/apps/${app.id}/pages/${pageId}/builder`)
-      cy.getSpinner().should('not.exist')
+      // const pageId = app.pages[0].id
+      // cy.visit(`/apps/${app.id}/pages/${pageId}/builder`)
+      // cy.getSpinner().should('not.exist')
 
-      cy.findByText(elementName).click({ force: true })
+      // cy.findByText(elementName).click({ force: true })
     })
   })
 

@@ -1,58 +1,87 @@
-import type { Nullable, Nullish } from '@codelab/shared/abstract/types'
-import type { IPropData } from '../prop'
-import type { ElementFragment } from './element.fragment.graphql.gen'
-
-export enum RenderTypeEnum {
-  Component = 'component',
-  Atom = 'atom',
-}
+import type { IEntity, Nullable, Nullish } from '@codelab/shared/abstract/types'
+import type { IAtomID } from '../atom'
+import type { IComponentID } from '../component'
+import type { IPropDTO } from '../prop'
+import type { IRenderTypeKind } from './render-type'
 
 export interface RenderType {
-  id: string
-  model: RenderTypeEnum
+  // This is the ID of either `atom` or `component`
+  id: IAtomID | IComponentID
+  kind: IRenderTypeKind
 }
 
-export interface ICreateElementDTO {
-  id?: string
-  name: string
-  renderType?: Nullable<RenderType>
-  parentElementId?: string
-  preRenderActionId?: Nullish<string>
-  postRenderActionId?: Nullish<string>
-  customCss?: Nullish<string>
-  guiCss?: Nullish<string>
-  propsData?: string
-  prevSiblingId?: Nullable<string>
-}
-
-export interface IUpdateElementDTO {
-  name: string
-  renderType?: Nullable<RenderType>
-  renderForEachPropKey?: Nullable<string>
-  renderIfExpression?: Nullable<string>
+export interface ICreateElementData {
   customCss?: Nullable<string>
   guiCss?: Nullable<string>
-  props?: Nullable<IPropData>
-  preRenderActionId?: Nullish<string>
-  postRenderActionId?: Nullish<string>
-  propTransformationJs?: Nullish<string>
-  propsData?: string
+  id: string
+  name: string
+  page?: Nullable<IEntity>
+  parentComponent?: Nullable<IEntity>
+  parentElement?: Nullable<IEntity>
+  postRenderAction?: Nullable<IEntity>
+  preRenderAction?: Nullable<IEntity>
+  prevSibling?: Nullable<IEntity>
+  propTransformationJs?: Nullable<string>
+  props?: Nullable<Pick<IPropDTO, 'data'>>
+  /**
+   * We should connect to `atom` or `component` in future
+   */
+  renderType?: Nullable<RenderType>
 }
+
+export type IUpdateElementData = Partial<
+  Pick<
+    ICreateElementData,
+    | 'customCss'
+    | 'guiCss'
+    | 'name'
+    | 'postRenderAction'
+    | 'preRenderAction'
+    | 'renderType'
+  >
+> &
+  Pick<ICreateElementData, 'id'> & {
+    propTransformationJs?: Nullish<string>
+    renderForEachPropKey?: Nullable<string>
+    renderIfExpression?: Nullable<string>
+  }
 
 /**
  * Some properties have their own forms, the base form only uses a subset of fields
  */
-export type IUpdateBaseElementDTO = Pick<
-  IUpdateElementDTO,
-  | 'renderType'
+export type IUpdateBaseElementData = Pick<
+  IUpdateElementData,
+  | 'id'
   | 'name'
-  | 'renderIfExpression'
+  | 'postRenderAction'
+  | 'preRenderAction'
   | 'renderForEachPropKey'
-  | 'preRenderActionId'
-  | 'postRenderActionId'
+  | 'renderIfExpression'
+  | 'renderType'
 >
 
 /**
  * This is the graphql fragment equivalent, used for hydrating object
  */
-export type IElementDTO = ElementFragment
+export interface IElementDTO {
+  // slug: string
+  customCss?: Nullable<string>
+  firstChild?: IEntity | null
+  guiCss?: Nullable<string>
+  id: string
+  name: string
+  nextSibling?: IEntity | null
+  page?: IEntity | null
+  parent?: IEntity | null
+  parentComponent?: IEntity | null
+  postRenderAction?: IEntity | null
+  preRenderAction?: IEntity | null
+  // renderComponentType?: IComponentDTO | null
+  // renderAtomType?: IAtomDTO | null
+  prevSibling?: IEntity | null
+  propTransformationJs?: Nullable<string>
+  props: IEntity
+  renderForEachPropKey?: Nullable<string>
+  renderIfExpression?: Nullable<string>
+  renderType?: Nullable<RenderType>
+}

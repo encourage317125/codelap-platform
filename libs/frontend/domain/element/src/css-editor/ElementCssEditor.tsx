@@ -22,8 +22,8 @@ const { Panel } = Collapse
 
 export interface ElementCssEditorInternalProps {
   element: IElement
-  trackPromises?: UseTrackLoadingPromises
   elementService: IElementService
+  trackPromises?: UseTrackLoadingPromises
 }
 
 /*
@@ -32,12 +32,8 @@ export interface ElementCssEditorInternalProps {
     can guiCss be set to?
   */
 
-export const ElementCssEditor = observer(
-  ({
-    element,
-    trackPromises,
-    elementService,
-  }: ElementCssEditorInternalProps) => {
+export const ElementCssEditor = observer<ElementCssEditorInternalProps>(
+  ({ element, elementService, trackPromises }) => {
     const { trackPromise } = trackPromises ?? {}
 
     const [guiCssObj, setGuiCssObj] = useState<CssMap>(
@@ -62,8 +58,9 @@ export const ElementCssEditor = observer(
 
     const updateCustomCss = useCallback(
       (newCustomCss: string) => {
-        const promise = elementService.patchElement(element, {
+        const promise = elementService.update({
           customCss: newCustomCss,
+          id: element.id,
         })
 
         return trackPromise?.(promise) ?? promise
@@ -98,8 +95,9 @@ export const ElementCssEditor = observer(
 
     const updateGuiCss = useCallback(
       (newGuiCss: string) => {
-        const promise = elementService.patchElement(element, {
+        const promise = elementService.update({
           guiCss: newGuiCss,
+          id: element.id,
         })
 
         return trackPromise?.(promise) ?? promise
@@ -136,7 +134,7 @@ export const ElementCssEditor = observer(
       setGuiCssString(element.guiCss ?? '{}')
     }, [element.guiCss, setGuiCssString])
 
-    if (!element.atom) {
+    if (!element.renderType) {
       return <>Add an atom to this element to edit its CSS</>
     }
 

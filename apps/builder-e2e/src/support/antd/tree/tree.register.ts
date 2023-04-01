@@ -8,32 +8,32 @@ import {
 } from './tree.command'
 
 export interface AntTreeCommands {
-  toggleTreeNodeSwitcher: typeof toggleTreeNodeSwitcher
-  getTreeNode: typeof getTreeNode
   getTree: typeof getTree
-  toggleTreeNodeChk: typeof toggleTreeNodeChk
+  getTreeNode: typeof getTreeNode
   getTreeNodes: typeof getTreeNodes
+  toggleTreeNodeChk: typeof toggleTreeNodeChk
+  toggleTreeNodeSwitcher: typeof toggleTreeNodeSwitcher
 }
 
 export const antTreeCommands: Array<CypressCommand> = [
   {
-    name: 'getTreeNodes',
     fn: getTreeNodes,
+    name: 'getTreeNodes',
   },
   {
-    name: 'toggleTreeNodeChk',
     fn: toggleTreeNodeChk,
+    name: 'toggleTreeNodeChk',
   },
   {
-    name: 'getTreeNode',
     fn: getTreeNode,
+    name: 'getTreeNode',
   },
   {
-    name: 'toggleTreeNodeSwitcher',
     fn: toggleTreeNodeSwitcher,
+    name: 'toggleTreeNodeSwitcher',
   },
   {
-    name: 'getTree',
     fn: getTree,
+    name: 'getTree',
   },
 ]

@@ -20,20 +20,22 @@ import {
   sidebarNavigation,
 } from '@codelab/frontend/view/templates'
 import { auth0Instance } from '@codelab/shared/adapter/auth0'
+import { useAsync, useMountEffect } from '@react-hookz/web'
 import { PageHeader } from 'antd'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
 import React from 'react'
-import { useAsync } from 'react-use'
 
 const TagPage: CodelabPage<DashboardTemplateProps> = observer(() => {
   const { tagService, userService } = useStore()
 
-  const { loading } = useAsync(() => {
+  const [{ status }, loadTagTree] = useAsync(() => {
     tagService.loadTagTree()
 
     return Promise.resolve()
-  }, [])
+  })
+
+  useMountEffect(loadTagTree.execute)
 
   return (
     <>
@@ -41,12 +43,12 @@ const TagPage: CodelabPage<DashboardTemplateProps> = observer(() => {
         <title>Tags | Codelab</title>
       </Head>
 
-      <CreateTagModal tagService={tagService} userService={userService} />
-      <UpdateTagModal tagService={tagService} />
-      <DeleteTagsModal tagService={tagService} />
+      <CreateTagModal />
+      <UpdateTagModal />
+      <DeleteTagsModal />
 
       <ContentSection>
-        <GetTagsTable loading={loading} tagService={tagService} />
+        <GetTagsTable loading={status === 'loading'} />
       </ContentSection>
     </>
   )
@@ -65,18 +67,17 @@ const TagPageHeader = observer(() => {
 
 export default TagPage
 
-TagPage.Layout = observer((page) => {
-  const { tagService } = useStore()
+TagPage.Layout = observer(({ children }) => {
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
 
   return (
     <DashboardTemplate
-      ExplorerPane={() => <GetTagsTree tagService={tagService} />}
+      ExplorerPane={() => <GetTagsTree />}
       Header={TagPageHeader}
       sidebarNavigation={sidebarNavigation({ appId, pageId })}
     >
-      {page.children}
+      {children()}
     </DashboardTemplate>
   )
 })

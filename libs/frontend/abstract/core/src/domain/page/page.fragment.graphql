@@ -2,15 +2,44 @@ fragment Page on Page {
   id
   name
   slug
-  getServerSideProps
   app {
     id
   }
   rootElement {
-    id
-    name
+    ...Element
+    descendantElements {
+      ...Element
+    }
   }
-  pageContainerElement {
+  pageContentContainer {
+    id
+  }
+  store {
+    ...Store
+  }
+  kind
+}
+
+fragment BuilderPage on Page {
+  id
+  name
+  slug
+  rootElement {
+    ...Element
+    descendantElements {
+      ...Element
+    }
+  }
+  app {
+    id
+    owner {
+      ...Owner
+    }
+  }
+  store {
+    ...Store
+  }
+  pageContentContainer {
     id
   }
   kind

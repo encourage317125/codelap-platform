@@ -33,16 +33,11 @@ export class CreateElementModalService
       return undefined
     }
 
-    if (selectedElement && elementTree.elementsList.includes(selectedElement)) {
+    if (selectedElement && elementTree.elements.includes(selectedElement)) {
       return selectedElement
     }
 
-    return elementTree.root
-  }
-
-  @computed
-  get elementTree() {
-    return this.metadata?.elementTree.current
+    return elementTree.rootElement.maybeCurrent
   }
 }
 

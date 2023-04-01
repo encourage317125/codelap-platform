@@ -3,7 +3,7 @@ import {
   CreateResourceButton,
   CreateResourceModal,
   DeleteResourceModal,
-  GetResourcesList,
+  ResourcesList,
   UpdateResourceModal,
 } from '@codelab/frontend/domain/resource'
 import {
@@ -28,9 +28,7 @@ const ResourcesPageHeader = observer(() => {
 
   return (
     <PageHeader
-      extra={[
-        <CreateResourceButton key={0} resourceService={resourceService} />,
-      ]}
+      extra={[<CreateResourceButton key={0} />]}
       ghost={false}
       title="Resources"
     />
@@ -46,14 +44,11 @@ const ResourcesPage: CodelabPage<DashboardTemplateProps> = () => {
         <title>Resources | Codelab</title>
       </Head>
       <ContentSection>
-        <CreateResourceModal
-          resourceService={store.resourceService}
-          userService={store.userService}
-        />
-        <UpdateResourceModal resourceService={store.resourceService} />
-        <DeleteResourceModal resourceService={store.resourceService} />
+        <CreateResourceModal />
+        <UpdateResourceModal />
+        <DeleteResourceModal />
 
-        <GetResourcesList resourceService={store.resourceService} />
+        <ResourcesList />
       </ContentSection>
     </>
   )
@@ -63,7 +58,7 @@ export default ResourcesPage
 
 export const getServerSideProps = auth0Instance.withPageAuthRequired()
 
-ResourcesPage.Layout = observer((resource) => {
+ResourcesPage.Layout = observer(({ children }) => {
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
 
@@ -72,7 +67,7 @@ ResourcesPage.Layout = observer((resource) => {
       Header={ResourcesPageHeader}
       sidebarNavigation={sidebarNavigation({ appId, pageId })}
     >
-      {resource.children}
+      {children()}
     </DashboardTemplate>
   )
 })

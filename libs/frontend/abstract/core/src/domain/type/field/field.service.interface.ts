@@ -1,31 +1,36 @@
 import type { Maybe } from '@codelab/shared/abstract/types'
-import type { Ref } from 'mobx-keystone'
+import type { ObjectMap, Ref } from 'mobx-keystone'
 import type {
-  ICacheService,
   ICRUDModalService,
   ICRUDService,
   IEntityModalService,
 } from '../../../service'
 import type {
-  ICreateFieldDTO,
+  ICreateFieldData,
   IFieldDTO,
-  IUpdateFieldDTO,
+  IUpdateFieldData,
 } from '../field.dto.interface'
 import type { FieldFragment } from '../fragments'
-import type { IAnyType, IInterfaceType } from '../types'
+import type { IInterfaceType, IType } from '../types'
 import type { IField } from './field.interface'
 
 export interface IFieldService
-  extends ICRUDService<IField, ICreateFieldDTO, IUpdateFieldDTO>,
+  extends Omit<
+      ICRUDService<IField, ICreateFieldData, IUpdateFieldData>,
+      'delete'
+    >,
     Omit<
       ICRUDModalService<Ref<IField>, { field: Maybe<IField> }>,
       'createModal'
-    >,
-    ICacheService<IFieldDTO, IField> {
+    > {
   createModal: IEntityModalService<
     Ref<IInterfaceType>,
     { interface: Maybe<IInterfaceType> }
   >
-  getField(id: string): Maybe<IField<IAnyType>>
+  fields: ObjectMap<IField>
+
+  add(fieldDTO: IFieldDTO): IField
+  delete(fields: Array<IField>): Promise<number>
+  getField(id: string): Maybe<IField<IType>>
   load(fields: Array<FieldFragment>): void
 }

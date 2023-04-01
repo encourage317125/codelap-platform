@@ -2,23 +2,25 @@ import type {
   ICodeAction,
   ICodeActionDTO,
 } from '@codelab/frontend/abstract/core'
-import { IProp } from '@codelab/frontend/abstract/core'
-import { assertIsActionKind, IActionKind } from '@codelab/shared/abstract/core'
+import {
+  CodeActionCreateInput,
+  CodeActionDeleteInput,
+  CodeActionUpdateInput,
+} from '@codelab/shared/abstract/codegen'
+import { IActionKind } from '@codelab/shared/abstract/core'
+import { connectNodeId } from '@codelab/shared/domain/mapper'
 import { ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
-import { createBaseAction, updateBaseAction } from './base-action.model'
+import { createBaseAction } from './base-action.model'
 import { storeRef } from './store.model'
 
-const hydrate = (action: ICodeActionDTO): ICodeAction => {
-  assertIsActionKind(action.type, IActionKind.CodeAction)
-
-  return new CodeAction({
-    id: action.id,
-    name: action.name,
-    code: action.code,
-    store: storeRef(action.store.id),
-    type: action.type,
+const create = ({ code, id, name, store }: ICodeActionDTO) =>
+  new CodeAction({
+    code,
+    id,
+    name,
+    store: storeRef(store.id),
+    type: IActionKind.CodeAction,
   })
-}
 
 @model('@codelab/CodeAction')
 export class CodeAction
@@ -27,13 +29,11 @@ export class CodeAction
   })
   implements ICodeAction
 {
-  static hydrate = hydrate
-
   @modelAction
-  createRunner(state: IProp) {
+  createRunner() {
     try {
       // eslint-disable-next-line no-eval
-      return eval(`(${this.code})`).bind(state)
+      return eval(`(${this.code})`)
     } catch (error) {
       console.log(error)
 
@@ -42,11 +42,36 @@ export class CodeAction
   }
 
   @modelAction
-  writeCache = (data: ICodeActionDTO) => {
-    updateBaseAction(this, data)
-
-    this.code = data.code
+  writeCache({ code, name }: Partial<ICodeActionDTO>) {
+    this.name = name ?? this.name
+    this.code = code ?? this.code
 
     return this
   }
+
+  @modelAction
+  toCreateInput(): CodeActionCreateInput {
+    return {
+      code: this.code,
+      id: this.id,
+      name: this.name,
+      store: connectNodeId(this.store.id),
+      type: IActionKind.CodeAction,
+    }
+  }
+
+  @modelAction
+  toUpdateInput(): CodeActionUpdateInput {
+    return {
+      code: this.code,
+      name: this.name,
+    }
+  }
+
+  @modelAction
+  toDeleteInput(): CodeActionDeleteInput {
+    return {}
+  }
+
+  static create = create
 }

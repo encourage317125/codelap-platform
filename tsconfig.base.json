@@ -29,17 +29,41 @@
       "@codelab/backend/abstract/types": [
         "libs/backend/abstract/types/src/index.ts"
       ],
+      "@codelab/backend/application/admin": [
+        "libs/backend/application/admin/src/index.ts"
+      ],
       "@codelab/backend/application/app": [
         "libs/backend/application/app/src/index.ts"
       ],
       "@codelab/backend/application/atom": [
         "libs/backend/application/atom/src/index.ts"
       ],
+      "@codelab/backend/application/component": [
+        "libs/backend/application/component/src/index.ts"
+      ],
+      "@codelab/backend/application/domain": [
+        "libs/backend/application/domain/src/index.ts"
+      ],
+      "@codelab/backend/application/domain/prop": [
+        "libs/backend/application/domain/prop/src/index.ts"
+      ],
+      "@codelab/backend/application/field": [
+        "libs/backend/application/field/src/index.ts"
+      ],
+      "@codelab/backend/application/resource": [
+        "libs/backend/application/resource/src/index.ts"
+      ],
+      "@codelab/backend/application/store": [
+        "libs/backend/application/store/src/index.ts"
+      ],
       "@codelab/backend/application/tag": [
         "libs/backend/application/tag/src/index.ts"
       ],
       "@codelab/backend/application/type": [
         "libs/backend/application/type/src/index.ts"
+      ],
+      "@codelab/backend/application/user": [
+        "libs/backend/application/user/src/index.ts"
       ],
       "@codelab/backend/domain/action": [
         "libs/backend/domain/action/src/index.ts"
@@ -59,13 +83,16 @@
         "libs/backend/domain/element/src/index.ts"
       ],
       "@codelab/backend/domain/page": ["libs/backend/domain/page/src/index.ts"],
+      "@codelab/backend/domain/prop": ["libs/backend/domain/prop/src/index.ts"],
       "@codelab/backend/domain/resource": [
         "libs/backend/domain/resource/src/index.ts"
+      ],
+      "@codelab/backend/domain/store": [
+        "libs/backend/domain/store/src/index.ts"
       ],
       "@codelab/backend/domain/tag": ["libs/backend/domain/tag/src/index.ts"],
       "@codelab/backend/domain/type": ["libs/backend/domain/type/src/index.ts"],
       "@codelab/backend/domain/user": ["libs/backend/domain/user/src/index.ts"],
-      "@codelab/backend/graphql": ["libs/backend/graphql/src/index.ts"],
       "@codelab/backend/infra/adapter/neo4j": [
         "libs/backend/infra/adapter/neo4j/src/index.ts"
       ],
@@ -73,10 +100,7 @@
         "libs/backend/infra/adapter/vercel/src/index.ts"
       ],
       "@codelab/backend/infra/ports": ["libs/backend/infra/ports/src/index.ts"],
-      "@codelab/backend/repo-resolvers": [
-        "libs/backend/repo-resolvers/src/index.ts"
-      ],
-      "@codelab/backend/data": ["libs/backend/data/src/index.ts"],
+      "@codelab/backend/shared/util": ["libs/backend/shared/util/src/index.ts"],
       "@codelab/frontend/abstract/core": [
         "libs/frontend/abstract/core/src/index.ts"
       ],
@@ -141,6 +165,9 @@
       ],
       "@codelab/frontend/presenter/container": [
         "libs/frontend/presenter/container/src/index.ts"
+      ],
+      "@codelab/frontend/shared/data": [
+        "libs/frontend/shared/data/src/index.ts"
       ],
       "@codelab/frontend/shared/style": [
         "libs/frontend/shared/style/src/index.ts"

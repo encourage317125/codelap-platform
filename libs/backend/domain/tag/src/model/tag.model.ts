@@ -1,25 +1,32 @@
-import type {
-  ITag,
-  ITagPreview,
-  IUserRef,
-} from '@codelab/backend/abstract/core'
+import type { IAuth0Owner, ITagDTO } from '@codelab/frontend/abstract/core'
+import type { IEntity } from '@codelab/shared/abstract/types'
 
-export class Tag implements ITag {
+export class Tag implements ITagDTO {
   declare id: string
 
   declare name: string
 
-  owner: IUserRef
+  owner: IAuth0Owner
 
-  children: Array<ITagPreview>
+  children: Array<IEntity>
 
-  parent: ITagPreview | null
+  parent?: IEntity | null
 
-  constructor({ id, name, children = [], parent = null, owner }: ITag) {
+  descendants: Array<IEntity>
+
+  constructor({
+    children = [],
+    descendants = [],
+    id,
+    name,
+    owner,
+    parent = null,
+  }: ITagDTO) {
     this.id = id
     this.name = name
     this.children = children
     this.parent = parent
     this.owner = owner
+    this.descendants = descendants
   }
 }

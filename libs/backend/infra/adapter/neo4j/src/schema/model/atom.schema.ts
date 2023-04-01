@@ -8,29 +8,34 @@ const atomTypeSchema = `enum AtomType {
 export const atomSchema = gql`
   ${atomTypeSchema}
 
-  type Atom {
+  type Atom implements WithOwner {
     id: ID! @id(autogenerate: false)
+    owner: User!
     type: AtomType! @unique
     name: String! @unique
     tags: [Tag!]! @relationship(type: "TAGS_WITH", direction: OUT)
     api: InterfaceType! @relationship(type: "ATOM_API", direction: OUT)
     icon: String
-    allowedChildren: [Atom!]!
+    requiredParents: [Atom!]!
+      @relationship(type: "REQUIRED_PARRENTS", direction: OUT)
+    suggestedChildren: [Atom!]!
       @relationship(type: "ALLOWED_CHILDREN", direction: OUT)
   }
 
   extend type Atom
     @auth(
       rules: [
-        { operations: [CREATE, UPDATE, DELETE], roles: ["Admin"] }
-        { operations: [CONNECT, DISCONNECT], roles: ["Admin", "User"] }
+        {
+          operations: [UPDATE, CREATE, DELETE]
+          roles: ["User"]
+          where: { owner: { auth0Id: "$jwt.sub" } }
+          bind: { owner: { auth0Id: "$jwt.sub" } }
+        }
+        {
+          operations: [UPDATE, CREATE, DELETE]
+          roles: ["Admin"]
+          bind: { owner: { auth0Id: "$jwt.sub" } }
+        }
       ]
     )
-
-  # Can't reuse from Neo4j schema
-  type CreateInfo {
-    bookmark: String
-    nodesCreated: Int!
-    relationshipsCreated: Int!
-  }
 `

@@ -11,21 +11,21 @@ import type { OmitFirstArg } from './types'
 const options = { prevSubject: 'optional' }
 
 export interface CypressSelectorsCommands {
-  getOpenedModal: OmitFirstArg<typeof getOpenedModal>
-  findByButtonText: OmitFirstArg<typeof findByButtonText>
   findButtonByItemText: OmitFirstArg<typeof findButtonByItemText>
+  findByButtonText: OmitFirstArg<typeof findByButtonText>
   findElementByText: OmitFirstArg<typeof findElementByText>
-  selectOptionItem: OmitFirstArg<typeof selectOptionItem>
+  getOpenedModal: OmitFirstArg<typeof getOpenedModal>
   getOptionItem: OmitFirstArg<typeof getOptionItem>
   getSpinner: OmitFirstArg<typeof getSpinner>
+  selectOptionItem: OmitFirstArg<typeof selectOptionItem>
 }
 
 export const selectorCommands: Array<CypressCommand> = [
-  { name: 'findButtonByItemText', fn: findButtonByItemText, options },
-  { name: 'findElementByText', fn: findElementByText, options },
-  { name: 'getOptionItem', fn: getOptionItem, options },
-  { name: 'selectOptionItem', fn: selectOptionItem, options },
-  { name: 'getSpinner', fn: getSpinner, options },
-  { name: 'getOpenedModal', fn: getOpenedModal, options },
-  { name: 'findByButtonText', fn: findByButtonText, options },
+  { fn: findButtonByItemText, name: 'findButtonByItemText', options },
+  { fn: findElementByText, name: 'findElementByText', options },
+  { fn: getOptionItem, name: 'getOptionItem', options },
+  { fn: selectOptionItem, name: 'selectOptionItem', options },
+  { fn: getSpinner, name: 'getSpinner', options },
+  { fn: getOpenedModal, name: 'getOpenedModal', options },
+  { fn: findByButtonText, name: 'findByButtonText', options },
 ]

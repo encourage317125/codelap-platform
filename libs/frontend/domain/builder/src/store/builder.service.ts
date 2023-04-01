@@ -1,57 +1,51 @@
 import type {
   BuilderDragData,
   IBuilderService,
-  INode,
+  IComponent,
+  IElement,
+  IPageNodeRef,
 } from '@codelab/frontend/abstract/core'
 import {
   BuilderWidth,
+  componentRef,
   defaultBuilderWidthBreakPoints,
-  isComponent,
-  isElement,
+  elementRef,
+  isComponentPageNodeRef,
+  isElementPageNodeRef,
   RendererTab,
 } from '@codelab/frontend/abstract/core'
 import { getAtomService } from '@codelab/frontend/domain/atom'
-import { Element, elementRef } from '@codelab/frontend/domain/element'
 import { getTagService } from '@codelab/frontend/domain/tag'
 import { Nullable } from '@codelab/shared/abstract/types'
 import { COMPONENT_TAG_NAME } from '@codelab/shared/data/seed'
 import { isNonNullable } from '@codelab/shared/utils'
 import groupBy from 'lodash/groupBy'
 import { computed } from 'mobx'
-import type { AnyModel, Frozen, Ref } from 'mobx-keystone'
-import {
-  findParent,
-  getRefsResolvingTo,
-  Model,
-  model,
-  modelAction,
-  modelTypeKey,
-  prop,
-} from 'mobx-keystone'
+import type { Frozen } from 'mobx-keystone'
+import { Model, model, modelAction, prop } from 'mobx-keystone'
 
 @model('@codelab/BuilderService')
 export class BuilderService
   extends Model({
-    activeTree: prop<RendererTab>(RendererTab.Page).withSetter(),
-
-    /**
-     * select a node would add it to expand list
-     * sometimes, it's not neccessary to expand the node. E.g:
-     *   - when deleting a node because that node needs to be expanded to delete
-     *   - clear node selection
-     */
-    _selectedNode: prop<Nullable<Ref<INode>>>(null).withSetter(),
-    _hoveredNode: prop<Nullable<Ref<INode>>>(null).withSetter(),
+    activeTab: prop<RendererTab>(RendererTab.Page).withSetter(),
+    builderContainerWidth: prop<number>(0).withSetter(),
     currentBuilderWidth: prop<BuilderWidth>(
       () => defaultBuilderWidthBreakPoints.desktop,
     ),
+    currentDragData: prop<Nullable<Frozen<BuilderDragData>>>(null).withSetter(),
+    expandedComponentTreeNodeIds: prop<Array<string>>(() => []).withSetter(),
+    expandedPageElementTreeNodeIds: prop<Array<string>>(() => []).withSetter(),
+    hoveredNode: prop<Nullable<IPageNodeRef>>(null).withSetter(),
     selectedBuilderWidth: prop<BuilderWidth>(
       () => defaultBuilderWidthBreakPoints.desktop,
     ),
-    builderContainerWidth: prop<number>(0).withSetter(),
-    currentDragData: prop<Nullable<Frozen<BuilderDragData>>>(null).withSetter(),
-    expandedPageElementTreeNodeIds: prop<Array<string>>(() => []).withSetter(),
-    expandedComponentTreeNodeIds: prop<Array<string>>(() => []).withSetter(),
+    /**
+     * select a node would add it to expand list
+     * sometimes, it's not necessary to expand the node. E.g:
+     *   - when deleting a node because that node needs to be expanded to delete
+     *   - clear node selection
+     */
+    selectedNode: prop<Nullable<IPageNodeRef>>(null).withSetter(),
   })
   implements IBuilderService
 {
@@ -97,18 +91,8 @@ export class BuilderService
     )
   }
 
-  @computed
-  get selectedNode() {
-    return this._selectedNode?.current ?? null
-  }
-
-  @computed
-  get hoveredNode() {
-    return this._hoveredNode?.current ?? null
-  }
-
   findNodesToExpand = (
-    selectedNode: INode,
+    selectedNode: IPageNodeRef,
     alreadyExpandedNodeIds: Array<string>,
   ): Array<string> => {
     /**
@@ -118,82 +102,67 @@ export class BuilderService
     const pathResult = this.activeElementTree?.getPathFromRoot(selectedNode)
     const expandedSet = new Set(alreadyExpandedNodeIds)
 
-    // go through each node of the path and keep track of all nodes that need to get expanded
-    const toExpand = pathResult
-      ?.filter((el) => !expandedSet.has(el.id))
-      .map((el) => {
-        return el.id
-      })
-
-    return toExpand ?? []
+    return pathResult?.filter((el) => !expandedSet.has(el)) ?? []
   }
 
   @modelAction
-  selectComponentTreeNode(node: Nullable<Ref<INode>>) {
-    this._selectedNode = node
+  updateExpandedNodes = () => {
+    if (!this.selectedNode) {
+      return
+    }
 
+    const newNodesToExpand = this.findNodesToExpand(
+      this.selectedNode,
+      this.expandedComponentTreeNodeIds,
+    )
+
+    if (this.activeTab === RendererTab.Page) {
+      this.expandedPageElementTreeNodeIds = [
+        ...this.expandedPageElementTreeNodeIds,
+        ...newNodesToExpand,
+      ]
+    } else {
+      this.expandedComponentTreeNodeIds = [
+        ...this.expandedComponentTreeNodeIds,
+        ...newNodesToExpand,
+      ]
+    }
+  }
+
+  @modelAction
+  selectComponentNode(node: Nullable<IComponent>) {
     if (!node) {
       return
     }
 
-    this.expandedComponentTreeNodeIds = [
-      ...this.expandedComponentTreeNodeIds,
-      ...this.findNodesToExpand(
-        node.current,
-        this.expandedComponentTreeNodeIds,
-      ),
-    ]
+    this.selectedNode = componentRef(node)
+    this.updateExpandedNodes()
   }
 
   @modelAction
-  selectPageElementTreeNode(node: Nullable<Ref<INode>>) {
-    this._selectedNode = node
-
+  selectElementNode(node: Nullable<IElement>) {
     if (!node) {
       return
     }
 
-    this.expandedPageElementTreeNodeIds = [
-      ...this.expandedPageElementTreeNodeIds,
-      ...this.findNodesToExpand(
-        node.current,
-        this.expandedPageElementTreeNodeIds,
-      ),
-    ]
-  }
+    this.selectedNode = elementRef(node)
 
-  // @modelAction
-  // setSelectedTreeNode(node: IBuilderDataNode) {
-  //   this._selectedNode = elementRef(node.key.toString())
-  //
-  //   // If this is the component container
-  //   if (node.type === COMPONENT_NODE_TYPE) {
-  //     this._selectedNode = componentRef(node.key.toString())
-  //   }
-  // }
+    this.updateExpandedNodes()
+  }
 
   /**
    * When we select an element within a component tree, we need to know which component we're in. This allows us to find the component and return it
    */
   @computed
   get activeComponent() {
-    if (isComponent(this.selectedNode)) {
-      return this.selectedNode
+    const { selectedNode } = this
+
+    if (isComponentPageNodeRef(selectedNode)) {
+      return selectedNode
     }
 
-    /**
-     * If it's an element, we need to check whether this element is part of a Component
-     */
-    if (isElement(this.selectedNode)) {
-      const refs = getRefsResolvingTo(this.selectedNode, elementRef)
-
-      return [...refs.values()].reduce((prev, node) => {
-        const component = findParent(node, (parent) => {
-          return (parent as AnyModel)[modelTypeKey] === '@codelab/Component'
-        })
-
-        return component ? component : prev
-      }, null)
+    if (isElementPageNodeRef(selectedNode)) {
+      return selectedNode.current.parentComponent ?? null
     }
 
     return null
@@ -209,18 +178,20 @@ export class BuilderService
     /**
      * If we're selecting the component
      */
-    if (isComponent(selectedNode)) {
-      return selectedNode.elementTree
+    if (isComponentPageNodeRef(selectedNode)) {
+      return selectedNode.current
     }
 
     /**
      * If we're selecting an element within the component
      */
-    if (isElement(selectedNode)) {
+    if (isElementPageNodeRef(selectedNode)) {
       /**
        * Given the node, we want the reference that belongs to an ElementTree.
        */
-      return Element.getElementTree(selectedNode)
+      const elementTree = selectedNode.current.closestContainerNode
+
+      return elementTree
     }
 
     return undefined
@@ -242,11 +213,11 @@ export class BuilderService
         width.default < 0
           ? Math.max(width.min, this.builderContainerWidth)
           : width.default,
-      min: width.min,
       max:
         width.max < 0
           ? Math.max(width.min, this.builderContainerWidth)
           : width.max,
+      min: width.min,
     }
   }
 }

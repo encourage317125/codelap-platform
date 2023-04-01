@@ -1,21 +1,30 @@
-import type { Nullish } from '@codelab/shared/abstract/types'
-import type { IAuth0Id } from '../user'
-import type { PageFragment } from './page.fragment.graphql.gen'
+import type { IPageKind } from '@codelab/shared/abstract/core'
+import type { IEntity, Nullish } from '@codelab/shared/abstract/types'
+import type { IOwnerSchema } from '../user'
 
-export interface ICreatePageDTO {
-  id?: string
-  // Allow us to specify rootElementId
-  rootElementId?: string
-  getServerSideProps?: Nullish<string>
+export interface IPageDTO {
+  // slug: string
+  app: IEntity
+  id: string
+  kind: IPageKind
   name: string
-  appId: string
-  auth0Id: IAuth0Id
-  pageContainerElementId?: Nullish<string>
+  // getServerSideProps?: Nullish<string>
+  // The container element of the page
+  pageContentContainer?: Nullish<IEntity>
+  rootElement: IEntity
+  store: IEntity
 }
 
-export type IUpdatePageDTO = Omit<
-  ICreatePageDTO,
-  'id' | 'rootElementId' | 'auth0Id' | 'kind'
->
+export type ISystemPageDTO = IOwnerSchema &
+  Pick<IPageDTO, 'app' | 'kind' | 'name'>
 
-export type IPageDTO = PageFragment
+/**
+ * IOwnerSchema is required for store api
+ */
+export type ICreatePageData = IOwnerSchema &
+  Pick<IPageDTO, 'app' | 'id' | 'name'>
+
+export type IUpdatePageData = Pick<
+  IPageDTO,
+  'app' | 'id' | 'name' | 'pageContentContainer'
+>

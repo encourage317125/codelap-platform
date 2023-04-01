@@ -2,15 +2,17 @@ import type {
   IElement,
   IElementService,
   IRenderer,
-  IUpdateBaseElementDTO,
-  IUpdateElementDTO,
+  IUpdateBaseElementData,
+  IUpdateElementData,
   RenderType,
 } from '@codelab/frontend/abstract/core'
 import {
   DATA_COMPONENT_ID,
   DATA_ELEMENT_ID,
-  RenderTypeEnum,
+  IRenderTypeKind,
+  isComponentInstance,
 } from '@codelab/frontend/abstract/core'
+import { isAtomInstance } from '@codelab/frontend/domain/atom'
 import { SelectAction } from '@codelab/frontend/domain/type'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import type { UseTrackLoadingPromises } from '@codelab/frontend/view/components'
@@ -29,51 +31,51 @@ import React from 'react'
 import { AutoField, AutoFields } from 'uniforms-antd'
 import { AutoComputedElementNameField } from '../../../components/auto-computed-element-name'
 import RenderTypeCompositeField from '../../../components/RenderTypeCompositeField'
-import { updateElementSchema } from './updateElementSchema'
+import { updateElementSchema } from './update-element.schema'
 
 export interface UpdateElementFormProps {
   element: IElement
-  trackPromises?: UseTrackLoadingPromises
   elementService: IElementService
   renderer?: IRenderer
+  trackPromises?: UseTrackLoadingPromises
 }
 
 const makeCurrentModel = (element: IElement) => {
   let renderType: RenderType | null = null
 
-  if (element.atom?.id) {
+  if (isAtomInstance(element.renderType)) {
     renderType = {
-      id: element.atom.id,
-      model: RenderTypeEnum.Atom,
+      id: element.renderType.id,
+      kind: IRenderTypeKind.Atom,
     }
   }
 
-  if (element.renderComponentType?.id) {
+  if (isComponentInstance(element.renderType)) {
     renderType = {
-      id: element.renderComponentType.id,
-      model: RenderTypeEnum.Component,
+      id: element.renderType.id,
+      kind: IRenderTypeKind.Component,
     }
   }
 
   return {
     id: element.id,
     name: element.name,
+    // postRenderAction: element.postRenderAction,
+    // preRenderAction: element.preRenderAction,
     renderForEachPropKey: element.renderForEachPropKey,
     renderIfExpression: element.renderIfExpression,
-    postRenderActionId: element.postRenderActionId,
-    preRenderActionId: element.preRenderActionId,
     renderType,
   }
 }
 
 /** Not intended to be used in a modal */
 export const UpdateElementForm = observer<UpdateElementFormProps>(
-  ({ elementService, element, trackPromises, renderer }) => {
+  ({ element, elementService, renderer, trackPromises }) => {
     const { trackPromise } = trackPromises ?? {}
     const model = makeCurrentModel(element)
 
-    const onSubmit = (data: IUpdateElementDTO) => {
-      const promise = elementService.update(element, data)
+    const onSubmit = (data: IUpdateElementData) => {
+      const promise = elementService.update(data)
 
       if (trackPromise) {
         trackPromise(promise)
@@ -93,16 +95,14 @@ export const UpdateElementForm = observer<UpdateElementFormProps>(
         ? mergeProps(renderOutput.map((output) => output.props))
         : renderOutput.props
 
-      const propsAndState = mergeProps(
-        props,
-        renderer?.appStore.current.state.values,
-      )
+      // FIXME:
+      const propsAndState = mergeProps(props, {})
 
       return omit(propsAndState, ['key', DATA_ELEMENT_ID, DATA_COMPONENT_ID])
     }, [element])
 
     return (
-      <Form<IUpdateBaseElementDTO>
+      <Form<IUpdateBaseElementData>
         autosave
         cssString={`
           & .ant-form-item-explain {
@@ -118,7 +118,6 @@ export const UpdateElementForm = observer<UpdateElementFormProps>(
         })}
         schema={updateElementSchema}
       >
-        {element.id}
         <AutoComputedElementNameField label="Name" name="name" />
         <AutoFields
           omitFields={[
@@ -128,8 +127,8 @@ export const UpdateElementForm = observer<UpdateElementFormProps>(
             // We edit it in the css tab
             'customCss',
             'guiCss',
-            'preRenderActionId',
-            'postRenderActionId',
+            'preRenderAction',
+            'postRenderAction',
             'renderType',
             'name',
           ]}
@@ -137,8 +136,8 @@ export const UpdateElementForm = observer<UpdateElementFormProps>(
         <RenderTypeCompositeField name="renderType" />
         <AutoField
           component={CodeMirrorField({
-            language: CodeMirrorLanguage.Javascript,
             customOptions: createAutoCompleteOptions(propsData, 'this'),
+            language: CodeMirrorLanguage.Javascript,
           })}
           name="renderIfExpression"
         />
@@ -149,8 +148,8 @@ export const UpdateElementForm = observer<UpdateElementFormProps>(
             .sort()
             .map((label) => ({ label, value: label }))}
         />
-        <AutoField component={SelectAction} name="preRenderActionId" />
-        <AutoField component={SelectAction} name="postRenderActionId" />
+        <AutoField component={SelectAction} name="preRenderAction.id" />
+        <AutoField component={SelectAction} name="postRenderAction.id" />
       </Form>
     )
   },

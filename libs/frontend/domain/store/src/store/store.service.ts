@@ -1,15 +1,19 @@
 import type {
-  ICreateStoreDTO,
+  ICreateStoreData,
+  IInterfaceType,
   IStore,
-  IStoreDTO,
   IStoreService,
-  IUpdateStoreDTO,
+  IUpdateStoreData,
 } from '@codelab/frontend/abstract/core'
-import { getTypeService } from '@codelab/frontend/domain/type'
+import { IStoreDTO } from '@codelab/frontend/abstract/core'
+import { getTypeService, typeRef } from '@codelab/frontend/domain/type'
 import { ModalService } from '@codelab/frontend/shared/utils'
-import type { StoreWhere } from '@codelab/shared/abstract/codegen'
-import type { IEntity } from '@codelab/shared/abstract/types'
+import type {
+  StoreFragment,
+  StoreWhere,
+} from '@codelab/shared/abstract/codegen'
 import { computed } from 'mobx'
+import type { Ref } from 'mobx-keystone'
 import {
   _async,
   _await,
@@ -21,29 +25,31 @@ import {
   prop,
   transaction,
 } from 'mobx-keystone'
-import { deleteStoreInput } from '../utils'
-import { getActionService } from './action.service'
-import { makeStoreCreateInput, storeApi } from './apis'
-import { Store } from './models'
+import { StoreRepository } from '../services/store.repo'
+import { getActionService } from './action.service.context'
+import { actionRef, Store } from './models'
 import { StoreModalService } from './store-modal.service'
 
 @model('@codelab/StoreService')
 export class StoreService
   extends Model({
-    stores: prop(() => objectMap<IStore>()),
+    clonedStores: prop(() => objectMap<IStore>()),
     createModal: prop(() => new ModalService({})),
-    updateModal: prop(() => new StoreModalService({})),
     deleteModal: prop(() => new StoreModalService({})),
+    storeRepository: prop(() => new StoreRepository({})),
+    stores: prop(() => objectMap<IStore>()),
+    updateModal: prop(() => new StoreModalService({})),
   })
   implements IStoreService
 {
   @computed
-  private get typeService() {
-    return getTypeService(this)
+  get actionService() {
+    return getActionService(this)
   }
 
-  store(id: string) {
-    return this.stores.get(id)
+  @computed
+  get typeService() {
+    return getTypeService(this)
   }
 
   @computed
@@ -51,102 +57,81 @@ export class StoreService
     return [...this.stores.values()]
   }
 
-  @modelAction
-  private updateActionsCache(stores: Array<IStoreDTO>) {
-    const actionService = getActionService(this)
-    const actions = stores.flatMap((store) => store.actions)
-
-    return actions.map((action) => actionService.writeCache(action))
+  store(id: string) {
+    return this.stores.get(id) || this.clonedStores.get(id)
   }
 
   @modelAction
-  private async fetchStatesApis(stores: Array<IStoreDTO>) {
-    return await this.typeService.getAllWithDescendants(
-      stores.map((store) => store.api.id),
-    )
+  add({ actions, api, id, name }: IStoreDTO) {
+    const store = new Store({
+      actions: actions?.map((action) => actionRef(action.id)),
+      api: typeRef(api.id) as Ref<IInterfaceType>,
+      id,
+      name,
+    })
+
+    this.stores.set(store.id, store)
+
+    return store
   }
 
   @modelAction
-  public writeCache = (store: IStoreDTO) => {
-    const actionService = getActionService(this)
+  load(stores: Array<StoreFragment>) {
+    this.actionService.load(stores.flatMap((store) => store.actions))
+    this.typeService.loadTypes({
+      interfaceTypes: stores.map((store) => store.api),
+    })
 
-    store.actions.map((action) => actionService.writeCache(action))
-
-    let storeModel = this.store(store.id)
-
-    if (storeModel) {
-      storeModel.writeCache(store)
-    } else {
-      storeModel = Store.hydrate(store)
-      this.stores.set(store.id, storeModel)
-    }
-
-    return storeModel
+    return stores.map((store) => this.add(store))
   }
 
   @modelFlow
   @transaction
-  getAll = _async(function* (this: StoreService, where?: StoreWhere) {
-    const { stores } = yield* _await(storeApi.GetStores({ where }))
+  getAll = _async(function* (this: StoreService, where: StoreWhere) {
+    const stores = yield* _await(this.storeRepository.find(where))
 
-    return stores.map((store) => this.writeCache(store))
+    return this.load(stores)
   })
 
   @modelFlow
   @transaction
   getOne = _async(function* (this: StoreService, id: string) {
-    if (!this.stores.has(id)) {
-      yield* _await(this.getAll({ id }))
-    }
+    const [store] = yield* _await(this.getAll({ id }))
 
-    return this.stores.get(id)
+    return store
   })
 
   @modelFlow
   @transaction
-  create = _async(function* (this: StoreService, data: Array<ICreateStoreDTO>) {
-    const input = data.map((store) => makeStoreCreateInput(store))
+  create = _async(function* (this: StoreService, data: ICreateStoreData) {
+    const store = this.add(data)
 
-    const {
-      createStores: { stores },
-    } = yield* _await(storeApi.CreateStores({ input }))
+    yield* _await(this.storeRepository.add(store))
 
-    return stores.map((store) => this.writeCache(store))
+    return store
   })
 
   @modelFlow
   @transaction
-  update = _async(function* (
-    this: StoreService,
-    { id }: IEntity,
-    { name }: IUpdateStoreDTO,
-  ) {
-    const {
-      updateStores: { stores },
-    } = yield* _await(
-      storeApi.UpdateStores({
-        where: { id },
-        update: { name },
-      }),
-    )
+  update = _async(function* (this: StoreService, data: IUpdateStoreData) {
+    const store = this.stores.get(data.id)!
 
-    return stores.map((store) => this.writeCache(store))
+    store.writeCache({ name: data.name })
+
+    yield* _await(this.storeRepository.update(store))
+
+    return store
   })
 
   @modelFlow
   @transaction
-  delete = _async(function* (this: StoreService, ids: Array<string>) {
-    ids.forEach((id) => this.stores.delete(id))
+  delete = _async(function* (this: StoreService, store: IStore) {
+    const { id } = store
 
-    const {
-      deleteStores: { nodesDeleted },
-    } = yield* _await(
-      storeApi.DeleteStores({
-        where: { id_IN: ids },
-        delete: deleteStoreInput,
-      }),
-    )
+    this.stores.delete(id)
 
-    return nodesDeleted
+    yield* _await(this.storeRepository.delete([store]))
+
+    return store!
   })
 }

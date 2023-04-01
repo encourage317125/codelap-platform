@@ -15,13 +15,13 @@ import { typeRef } from '../../../../store'
 import { CreateFieldButton } from '../../../fields'
 
 interface ActionColumnProps {
+  fieldService: IFieldService
   type: ITypeRecord
   typeService: ITypeService
-  fieldService: IFieldService
 }
 
 export const ActionColumn = observer<ActionColumnProps>(
-  ({ type, typeService, fieldService }) => {
+  ({ fieldService, type, typeService }) => {
     return (
       <Space size="middle">
         {type.kind === ITypeKind.InterfaceType ? (

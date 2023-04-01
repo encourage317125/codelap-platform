@@ -2,18 +2,17 @@ import type {
   ICodeMirrorType,
   ICodeMirrorTypeDTO,
 } from '@codelab/frontend/abstract/core'
-import { ITypeDTO } from '@codelab/frontend/abstract/core'
 import type { CodeMirrorLanguage } from '@codelab/shared/abstract/codegen'
 import { assertIsTypeKind, ITypeKind } from '@codelab/shared/abstract/core'
+import merge from 'lodash/merge'
 import { ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
-import { updateBaseTypeCache } from '../base-type'
 import { createBaseType } from './base-type.model'
 
-const hydrate = ({
+const create = ({
   id,
   kind,
-  name,
   language,
+  name,
   owner,
 }: ICodeMirrorTypeDTO): CodeMirrorType => {
   assertIsTypeKind(kind, ITypeKind.CodeMirrorType)
@@ -21,9 +20,9 @@ const hydrate = ({
   return new CodeMirrorType({
     id,
     kind,
-    name,
     language,
-    ownerId: owner.id,
+    name,
+    owner,
   })
 }
 
@@ -35,17 +34,28 @@ export class CodeMirrorType
   implements ICodeMirrorType
 {
   @modelAction
-  writeCache(fragment: ITypeDTO) {
-    updateBaseTypeCache(this, fragment)
+  writeCache(codeMirrorTypeDTO: Partial<ICodeMirrorTypeDTO>) {
+    super.writeCache(codeMirrorTypeDTO)
 
-    if (fragment.__typename !== ITypeKind.CodeMirrorType) {
-      throw new Error('Invalid CodeMirrorType')
-    }
-
-    this.language = fragment.language
+    this.language = codeMirrorTypeDTO.language ?? this.language
 
     return this
   }
 
-  public static hydrate = hydrate
+  toCreateInput() {
+    return {
+      ...super.toCreateInput(),
+      language: this.language,
+    }
+  }
+
+  toUpdateInput() {
+    return merge(super.toUpdateInput(), {
+      update: {
+        language: this.language,
+      },
+    })
+  }
+
+  public static create = create
 }

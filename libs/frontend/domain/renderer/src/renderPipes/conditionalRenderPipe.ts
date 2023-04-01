@@ -20,8 +20,8 @@ export class ConditionalRenderPipe
   implements IRenderPipe
 {
   render(element: IElement, props: IPropData): ArrayOrSingle<IRenderOutput> {
-    const appStore = this.renderer.appStore.current
-    const context = mergeProps(props, appStore.state.values)
+    const store = element.closestContainerNode.store.current
+    const context = mergeProps(props, store.state['values'])
 
     if (shouldRenderElement(element, context)) {
       return this.next.render(element, props)

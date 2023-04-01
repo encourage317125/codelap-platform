@@ -6,10 +6,10 @@ import { observer } from 'mobx-react-lite'
 import React from 'react'
 
 export const UpdateTagButton = observer<
-  {
+  UpdateButtonProps & {
     tagService: ITagService
-  } & UpdateButtonProps
->(({ id, disabled, tagService }) => {
+  }
+>(({ disabled, id, tagService }) => {
   const onClick = () => {
     if (!id) {
       throw new Error('Tag ID is not valid')

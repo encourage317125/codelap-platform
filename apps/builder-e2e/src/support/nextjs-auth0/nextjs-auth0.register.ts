@@ -15,6 +15,12 @@ export interface CypressNextjsAuth0Commands {
   // clear-auth0-cookie
   _clearAuth0Cookie: typeof _clearAuth0Cookie
   _clearAuth0SplittedCookies: typeof _clearAuth0SplittedCookies
+  // preserve-auth0-cookies-once
+  // preserveAuth0CookiesOnce: typeof preserveAuth0CookiesOnce
+  // encrypt: typeof encrypt
+  // set-auth0-cookie
+  _setAuth0Cookie: typeof _setAuth0Cookie
+
   clearAuth0Cookies: typeof clearAuth0Cookies
 
   // get-user-info
@@ -28,43 +34,36 @@ export interface CypressNextjsAuth0Commands {
 
   // logout
   logout: typeof logout
-
-  // preserve-auth0-cookies-once
-  // preserveAuth0CookiesOnce: typeof preserveAuth0CookiesOnce
-  // encrypt: typeof encrypt
-
-  // set-auth0-cookie
-  _setAuth0Cookie: typeof _setAuth0Cookie
 }
 
 export const nextjsAuth0Commands: Array<CypressCommand> = [
   {
-    name: '_clearAuth0Cookie',
     fn: _clearAuth0Cookie,
+    name: '_clearAuth0Cookie',
   },
   {
-    name: '_clearAuth0SplittedCookies',
     fn: _clearAuth0SplittedCookies,
+    name: '_clearAuth0SplittedCookies',
   },
   {
-    name: 'clearAuth0Cookies',
     fn: clearAuth0Cookies,
+    name: 'clearAuth0Cookies',
   },
   {
-    name: 'getUserInfo',
     fn: getUserInfo,
+    name: 'getUserInfo',
   },
   {
-    name: 'getUserTokens',
     fn: getUserTokens,
+    name: 'getUserTokens',
   },
   {
-    name: 'login',
     fn: login,
+    name: 'login',
   },
   {
-    name: 'logout',
     fn: logout,
+    name: 'logout',
   },
   // {
   //   name: 'preserveAuth0CookiesOnce',
@@ -75,7 +74,7 @@ export const nextjsAuth0Commands: Array<CypressCommand> = [
   //   fn: encrypt,
   // },
   {
-    name: '_setAuth0Cookie',
     fn: _setAuth0Cookie,
+    name: '_setAuth0Cookie',
   },
 ]

@@ -163,8 +163,8 @@ commands:
       - run:
           name: 'Set Node Version'
           command: |
-            nvm install 14.18.0
-            nvm alias default 14.18.0
+            nvm install 16.16.0
+            nvm alias default 16.16.0
             node -v
       - run:
           name: 'Setup Env'
@@ -302,6 +302,8 @@ jobs:
       - run:
           name: 'Run Integration Tests'
           command: yarn cli tasks int --stage ci
+          # seed-data.i.spec.ts is running multiple seed/import/export commands which take more than default 10m timeout
+          no_output_timeout: 20m
 
   e2e:
     <<: *executor-params

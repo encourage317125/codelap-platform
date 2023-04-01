@@ -1,33 +1,33 @@
-import type { IField, IInterfaceType } from '@codelab/backend/abstract/core'
-import { IRepository } from '@codelab/backend/abstract/types'
+import { AbstractRepository } from '@codelab/backend/abstract/types'
 import {
   interfaceTypeSelectionSet,
   Repository,
 } from '@codelab/backend/infra/adapter/neo4j'
+import type {
+  IFieldDTO,
+  IInterfaceTypeDTO,
+} from '@codelab/frontend/abstract/core'
 import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
-import type { BaseTypeUniqueWhere } from '@codelab/shared/abstract/types'
-import { connectNodeId, connectOwner } from '@codelab/shared/domain/mapper'
+import {
+  connectAuth0Owner,
+  connectNodeId,
+  connectNodeIds,
+} from '@codelab/shared/domain/mapper'
 
-export class InterfaceTypeRepository extends IRepository<IInterfaceType> {
+export class InterfaceTypeRepository extends AbstractRepository<
+  IInterfaceTypeDTO,
+  OGM_TYPES.InterfaceType,
+  OGM_TYPES.InterfaceTypeWhere
+> {
   private InterfaceType = Repository.instance.InterfaceType
 
-  async all() {
+  async find(where: OGM_TYPES.InterfaceTypeWhere = {}) {
     return await (
       await this.InterfaceType
     ).find({
       selectionSet: interfaceTypeSelectionSet,
+      where,
     })
-  }
-
-  async find(where: BaseTypeUniqueWhere) {
-    return (
-      await (
-        await this.InterfaceType
-      ).find({
-        where,
-        selectionSet: interfaceTypeSelectionSet,
-      })
-    )[0]
   }
 
   /**
@@ -35,7 +35,7 @@ export class InterfaceTypeRepository extends IRepository<IInterfaceType> {
    *
    * Even if interface was deleted & fields are not, it is no harm to leave those old fields un-attached. We could run a clean up process for un-attached fields
    */
-  protected async _add(interfaceTypes: Array<IInterfaceType>) {
+  protected async _add(interfaceTypes: Array<IInterfaceTypeDTO>) {
     return (
       await (
         await this.InterfaceType
@@ -43,10 +43,12 @@ export class InterfaceTypeRepository extends IRepository<IInterfaceType> {
         input: interfaceTypes.map(
           ({ __typename, fields, owner, ...interfaceType }) => ({
             ...interfaceType,
-            fields: this.mapCreateFields(fields),
-            owner: connectOwner(owner.auth0Id),
+            // fields: this.mapCreateFields(fields),
+            fields: connectNodeIds(fields.map(({ id }) => id)),
+            owner: connectAuth0Owner(owner),
           }),
         ),
+        selectionSet: `{ interfaceTypes ${interfaceTypeSelectionSet} }`,
       })
     ).interfaceTypes
   }
@@ -57,15 +59,16 @@ export class InterfaceTypeRepository extends IRepository<IInterfaceType> {
    * Scenario: Say a field was deleted, then we run a seeder, we would have to create for the deleted field
    */
   protected async _update(
-    { __typename, fields, owner, ...data }: IInterfaceType,
-    where: BaseTypeUniqueWhere,
+    { __typename, fields, id, name, owner, ...data }: IInterfaceTypeDTO,
+    where: OGM_TYPES.InterfaceTypeWhere,
   ) {
     return (
       await (
         await this.InterfaceType
       ).update({
+        selectionSet: `{ interfaceTypes ${interfaceTypeSelectionSet} }`,
         update: {
-          ...data,
+          name,
           // fields: this.mapUpdateFields(fields),
         },
         where,
@@ -74,7 +77,7 @@ export class InterfaceTypeRepository extends IRepository<IInterfaceType> {
   }
 
   private mapCreateFields(
-    fields: Array<IField>,
+    fields: Array<IFieldDTO>,
   ): OGM_TYPES.InterfaceTypeFieldsFieldInput {
     return {
       create: fields.map(({ api, fieldType, ...field }) => ({

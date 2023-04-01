@@ -1,34 +1,36 @@
-import type { Nullable, Nullish } from '@codelab/shared/abstract/types'
+import type { ComponentCreateInput } from '@codelab/shared/abstract/codegen'
+import type { IEntity, Nullable, Nullish } from '@codelab/shared/abstract/types'
 import type { Ref } from 'mobx-keystone'
-import type { INodeType } from '../../base'
 import type { ICacheService } from '../../service'
-import type { IElement, IElementTreeService } from '../element'
+import type { IElement, IElementTree } from '../element'
 import type { IProp } from '../prop'
+import type { IStore } from '../store'
 import type { IInterfaceType } from '../type'
+import type { IOwnerSchema } from '../user'
 import type { IComponentDTO } from './component.dto.interface'
 
 export interface IComponent
-  extends INodeType<'Component'>,
-    IElementTreeService,
-    ICacheService<IComponentDTO, IComponent> {
-  id: string
-  name: string
-  rootElementId: string
-  childrenContainerElementId: string
-  ownerId: string
+  extends ICacheService<IComponentDTO, IComponent>,
+    IOwnerSchema,
+    IElementTree {
   api: Ref<IInterfaceType>
-  props?: Nullable<IProp>
+  childrenContainerElement: Ref<IElement>
   instanceElement: Nullable<Ref<IElement>>
+  name: string
+  props: Ref<IProp>
   /**
    * to render a component we create a duplicate for each instance
    * keeps track of source component in case this is a duplicate
    */
-  sourceComponentId?: Nullable<string>
-  setSourceComponentId: (id: string) => void
-  setInstanceElement: (elementRef: Ref<IElement>) => void
-  setChildrenContainerElementId: (id: string) => void
-  setProps(t: Nullable<IProp>): void
+  sourceComponent?: Nullable<IEntity>
+  store: Ref<IStore>
+
   clone(instanceId: string): IComponent
+  setChildrenContainerElement(element: Ref<IElement>): void
+  setInstanceElement(elementRef: Ref<IElement>): void
+  setProps(props: Nullable<Ref<IProp>>): void
+  setSourceComponent(entity: IEntity): void
+  toCreateInput(): ComponentCreateInput
 }
 
 export type IComponentRef = string

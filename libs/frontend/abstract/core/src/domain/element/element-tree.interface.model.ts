@@ -1,6 +1,6 @@
-import type { Maybe, Nullable } from '@codelab/shared/abstract/types'
+import type { Maybe } from '@codelab/shared/abstract/types'
 import type { Ref } from 'mobx-keystone'
-import type { INode } from '../builder'
+import type { IPageNodeRef } from '../page'
 import type { IElement } from './element.model.interface'
 
 /**
@@ -8,22 +8,17 @@ import type { IElement } from './element.model.interface'
  *
  * Possibly could use computed tree to drive the elementTree from an original tree
  *
+ * This is either a `Page` or a `Component`
+ *
  * https://mobx-keystone.js.org/computed-trees
  */
 export interface IElementTree {
+  elements: Array<IElement>
   id: string
-  name: string
-  _root: Nullable<Ref<IElement>>
-  root: Maybe<IElement>
-  elementsList: Array<IElement>
-  getPathFromRoot(element: INode): Array<INode>
-  element(id: string): Maybe<IElement>
-  addElements(elements: Array<IElement>): IElementTree
-  removeElements(elements: Array<IElement>): IElementTree
-}
+  rootElement: Ref<IElement>
 
-export interface IElementTreeService {
-  elementTree: Maybe<IElementTree>
-  setElementTree(t: IElementTree): void
-  initTree(rootElement: IElement, elements: Array<IElement>): IElementTree
+  descendants(subRoot: Ref<IElement>): Array<IElement>
+  element(id: string): Maybe<IElement>
+  getPathFromRoot(pageNode: IPageNodeRef): Array<string>
+  setRootElement(elementRef: Ref<IElement>): void
 }

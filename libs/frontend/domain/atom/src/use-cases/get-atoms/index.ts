@@ -1,2 +1,2 @@
+export * from './AtomsTable'
 export * from './columns'
-export * from './GetAtomsTable'

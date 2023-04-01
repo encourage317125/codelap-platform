@@ -15,26 +15,24 @@ import { CreateFieldButton } from '../../../fields'
 import { TypeDetailsTable } from './TypeDetailsTable'
 
 interface UnionTypeTableProps {
-  unionType: IUnionType
-  typeService: ITypeService
   fieldService: IFieldService
   isLoading: boolean
+  typeService: ITypeService
+  unionType: IUnionType
 }
 
 export const UnionTypeTable = observer<UnionTypeTableProps>(
   ({ fieldService, isLoading, typeService, unionType }) => {
     const columns: Array<ColumnProps<IUnionTypeRecord>> = [
       {
-        title: 'Member Type',
         dataIndex: 'name',
         key: 'name',
         onHeaderCell: headerCellProps,
+        title: 'Member Type',
       },
       {
-        title: 'Action',
         key: 'action',
         onHeaderCell: headerCellProps,
-        width: 100,
         render: (text, record) => (
           <Observer>
             {() => (
@@ -49,13 +47,15 @@ export const UnionTypeTable = observer<UnionTypeTableProps>(
             )}
           </Observer>
         ),
+        title: 'Action',
+        width: 100,
       },
     ]
 
     const dataSource = unionType.typesOfUnionType.map((type) => {
       return {
-        kind: type.current.kind,
         id: type.current.id,
+        kind: type.current.kind,
         name: type.current.name,
       }
     })
@@ -66,13 +66,7 @@ export const UnionTypeTable = observer<UnionTypeTableProps>(
         dataSource={dataSource}
         expandable={{
           expandedRowRender: (record) => {
-            return record.id ? (
-              <TypeDetailsTable
-                fieldService={fieldService}
-                typeId={record.id}
-                typeService={typeService}
-              />
-            ) : null
+            return record.id ? <TypeDetailsTable typeId={record.id} /> : null
           },
         }}
         loading={isLoading}

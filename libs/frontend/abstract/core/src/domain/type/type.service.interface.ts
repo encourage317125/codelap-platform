@@ -11,32 +11,49 @@ import type {
   ICRUDService,
   IQueryService,
 } from '../../service'
-import type { ICreateTypeDTO, IUpdateTypeDTO } from './type.dto.interface'
-import type { IAnyType, IInterfaceType, IInterfaceTypeRef } from './types'
+import type {
+  ICreateTypeData,
+  ITypeDTO,
+  IUpdateTypeData,
+} from './type.dto.interface'
+import type { ITypeRepository } from './type.repo.interface'
+import type { IInterfaceType, IInterfaceTypeRef, IType } from './types'
 
-export interface BaseTypesOptions {
-  offset?: number
-  limit?: number
-  where?: {
-    name: string
-  }
+interface TypeWhere {
+  name: string | undefined
+}
+
+export interface ITypePagination {
+  currentPage: number
+  data: ObjectMap<Ref<IType>>
+  offset: number
+  pageSize: number
+  search: TypeWhere
+  total: number | undefined
+  types: Array<IType>
+
+  getPaginatedTypes(): Promise<Array<IType>>
+  setCurrentPage(page: number): void
+  setPageSize(size: number): void
+  setSearch(where: TypeWhere): void
 }
 
 export interface ITypeService
-  extends ICRUDService<IAnyType, ICreateTypeDTO, IUpdateTypeDTO>,
-    IQueryService<IAnyType, BaseTypeWhere, BaseTypeOptions>,
-    ICRUDModalService<Ref<IAnyType>, { type: Maybe<IAnyType> }> {
-  getBaseTypes(options: BaseTypesOptions): Promise<Array<string>>
-  getInterfaceAndDescendants(id: IInterfaceTypeRef): Promise<IInterfaceType>
-  types: ObjectMap<IAnyType>
-  type(id: string): Maybe<IAnyType>
-  primitiveKind(id: string): Nullable<IPrimitiveTypeKind>
-  typesList: Array<IAnyType>
+  extends ICRUDService<IType, ICreateTypeData, IUpdateTypeData>,
+    Omit<IQueryService<IType, BaseTypeWhere, BaseTypeOptions>, 'getAll'>,
+    ICRUDModalService<Ref<IType>, { type: Maybe<IType> }> {
+  pagination: ITypePagination
   selectedIds: ArraySet<string>
+  typeRepository: ITypeRepository
+  types: ObjectMap<IType>
+  typesList: Array<IType>
+
+  add(type: ITypeDTO): IType
+  addInterface(data: ICreateTypeData): IInterfaceType
+  getAll(ids?: Array<string>): Promise<Array<IType>>
+  getInterface(id: IInterfaceTypeRef): Promise<IInterfaceType>
+  loadTypes(types: Partial<GetTypesQuery>): Array<IType>
+  primitiveKind(id: string): Nullable<IPrimitiveTypeKind>
   setSelectedIds(ids: ArraySet<string>): void
-  getAllWithDescendants(ids: Array<string>): Promise<Array<IAnyType>>
-  loadTypes(types: GetTypesQuery): Array<IAnyType>
-  loadFields(types: GetTypesQuery['interfaceTypes']): void
-  loadTypesByChunks(types: GetTypesQuery): void
-  count: number
+  type(id: string): Maybe<IType>
 }

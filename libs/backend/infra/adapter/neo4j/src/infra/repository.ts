@@ -1,8 +1,8 @@
-import type { IRepository } from '@codelab/backend/infra/ports'
+import type { INeo4jRepository } from '@codelab/backend/infra/ports'
 import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
 import { getOgm } from './ogm'
 
-export class Repository implements IRepository {
+export class Repository implements INeo4jRepository {
   private user: OGM_TYPES.UserModel | undefined
 
   //
@@ -31,6 +31,8 @@ export class Repository implements IRepository {
   private atom: OGM_TYPES.AtomModel | undefined
 
   private element: OGM_TYPES.ElementModel | undefined
+
+  private prop: OGM_TYPES.PropModel | undefined
 
   private component: OGM_TYPES.ComponentModel | undefined
 
@@ -161,6 +163,11 @@ export class Repository implements IRepository {
         this.element,
         'Element',
       )))()
+  }
+
+  get Prop() {
+    return (async () =>
+      (this.prop ??= await this.getOgmInstance<'Prop'>(this.prop, 'Prop')))()
   }
 
   get Component() {

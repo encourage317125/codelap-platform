@@ -5,16 +5,16 @@ import tw from 'twin.macro'
 import { ARecordTabContent } from './TabContent/ARecord'
 
 interface ConfigGuideTabProps {
-  type: 'ARecord' | 'CName'
   domain: IDomain
+  type: 'ARecord' | 'CName'
 }
 
-export const ConfigGuide = ({ type, domain }: ConfigGuideTabProps) => {
+export const ConfigGuide = ({ domain, type }: ConfigGuideTabProps) => {
   const items = [
     {
-      label: 'A Record (Recommended)',
-      key: '1',
       children: <ARecordTabContent />,
+      key: '1',
+      label: 'A Record (Recommended)',
     },
   ]
 

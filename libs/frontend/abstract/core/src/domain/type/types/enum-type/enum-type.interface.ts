@@ -1,9 +1,15 @@
+import type {
+  EnumTypeCreateInput,
+  UpdateEnumTypesMutationVariables,
+} from '@codelab/shared/abstract/codegen'
 import type { ITypeKind } from '@codelab/shared/abstract/core'
 import type { IBaseType } from '../base-type'
+import type { IEnumTypeDTO } from './enum-type.dto.interface'
 
 export interface IEnumTypeValue {
   id: string
   key: string
+  label: string
   value: string
 }
 
@@ -14,7 +20,12 @@ export interface IEnumTypeValue {
  *
  * @property {IEnumTypeValue[]} allowedValues - The list of allowed values.
  */
-export interface IEnumType extends IBaseType {
-  kind: ITypeKind.EnumType
+export interface IEnumType
+  extends IBaseType<
+    IEnumTypeDTO,
+    EnumTypeCreateInput,
+    UpdateEnumTypesMutationVariables
+  > {
   allowedValues: Array<IEnumTypeValue>
+  kind: ITypeKind.EnumType
 }

@@ -1,22 +1,36 @@
 import type {
-  ICreateAppDTO,
-  ICreateElementDTO,
-  ICreatePageDTO,
+  IAppDTO,
+  IAuth0Owner,
+  ICreateElementData,
+  IInterfaceTypeDTO,
+  IStoreDTO,
 } from '@codelab/frontend/abstract/core'
+import { ITypeKind } from '@codelab/shared/abstract/core'
+import type { IEntity } from '@codelab/shared/abstract/types'
 import { v4 } from 'uuid'
 
-export const appData: Pick<ICreateAppDTO, 'id' | 'name'> = {
+export const storeApiData = (owner: IAuth0Owner): IInterfaceTypeDTO => ({
+  __typename: `${ITypeKind.InterfaceType}`,
+  fields: [],
   id: v4(),
-  name: 'Codelab',
-}
+  kind: ITypeKind.InterfaceType,
+  name: `Test Store API`,
+  owner,
+})
 
-export const pageData: Pick<ICreatePageDTO, 'id' | 'name' | 'appId'> = {
+export const storeData = (api: IEntity): IStoreDTO => ({
+  api,
   id: v4(),
-  name: 'Home',
-  appId: appData.id!,
-}
+  name: 'Test Store',
+})
 
-export const buttonElementData: Pick<ICreateElementDTO, 'id' | 'name'> = {
+export const appData = (owner: IAuth0Owner): IAppDTO => ({
+  id: v4(),
+  name: 'Codelab App',
+  owner,
+})
+
+export const buttonElementData: Pick<ICreateElementData, 'id' | 'name'> = {
   id: v4(),
   name: 'Button',
 }

@@ -1,12 +1,6 @@
-import {
-  IAtomType,
-  IPrimitiveTypeKind,
-  ITypeKind,
-} from '@codelab/shared/abstract/core'
-import { connectOwner } from '@codelab/shared/domain/mapper'
-import { v4 } from 'uuid'
+import type { IAppDTO } from '@codelab/frontend/abstract/core'
+import { IAtomType, IPrimitiveTypeKind } from '@codelab/shared/abstract/core'
 import { FIELD_TYPE } from '../support/antd/form'
-import { createAppInput } from '../support/database/app'
 import { loginSession } from '../support/nextjs-auth0/commands/login'
 
 const COMPONENT_NAME = 'New Component'
@@ -19,13 +13,13 @@ const COMPONENT_CHILD_TEXT = `text {{this.${COMPONENT_PROP_NAME}}}`
 const COMPONENT_INSTANCE_TEXT = 'Instance Text'
 
 interface ComponentChildData {
-  name: string
   atom: string
+  name: string
 }
 
 const componentChildren: Array<ComponentChildData> = [
-  { name: COMPONENT_CHILD_SPACE, atom: IAtomType.AntDesignSpace },
-  { name: COMPONENT_CHILD_TYPOGRAPHY, atom: IAtomType.AntDesignTypographyText },
+  { atom: IAtomType.AntDesignSpace, name: COMPONENT_CHILD_SPACE },
+  { atom: IAtomType.AntDesignTypographyText, name: COMPONENT_CHILD_TYPOGRAPHY },
 ]
 
 let testApp: any
@@ -33,59 +27,20 @@ describe('Component CRUD', () => {
   before(() => {
     cy.resetDatabase()
     loginSession()
-    cy.getCurrentUserId()
-      .then((userId) => {
-        cy.createType(
-          {
-            PrimitiveType: {
-              id: v4(),
-              name: IPrimitiveTypeKind.String,
-              primitiveKind: IPrimitiveTypeKind.String,
-              kind: ITypeKind.PrimitiveType,
-              owner: connectOwner(userId),
-            },
-          },
-          ITypeKind.PrimitiveType,
-        )
-        cy.createAtom([
-          {
-            name: IAtomType.AntDesignSpace,
-            type: IAtomType.AntDesignSpace,
-            id: v4(),
-            api: {
-              create: {
-                node: {
-                  id: v4(),
-                  name: `${IAtomType.AntDesignSpace} API`,
-                  owner: connectOwner(userId),
-                },
-              },
-            },
-          },
-          {
-            name: IAtomType.AntDesignTypographyText,
-            type: IAtomType.AntDesignTypographyText,
-            id: v4(),
-            api: {
-              create: {
-                node: {
-                  id: v4(),
-                  name: `${IAtomType.AntDesignTypographyText} API`,
-                  owner: connectOwner(userId),
-                },
-              },
-            },
-          },
-        ])
+    cy.getCurrentOwner()
+      .then((owner) => {
+        cy.request('/api/cypress/type')
 
-        return cy.createApp(createAppInput(userId))
+        return cy.request('/api/cypress/atom').then(() => {
+          return cy.request<IAppDTO>('/api/cypress/app')
+        })
       })
       .then((apps) => {
         testApp = apps
 
-        const app = apps[0]
-        const pageId = app?.pages[0]?.id
-        cy.visit(`/apps/${app?.id}/pages/${pageId}/builder`)
+        const app = apps.body
+        const pageId = app.pages?.[0]?.id
+        cy.visit(`/apps/${app.id}/pages/${pageId}/builder`)
         cy.getSpinner().should('not.exist')
       })
   })
@@ -116,13 +71,13 @@ describe('Component CRUD', () => {
       })
       cy.getModal().setFormFieldValue({
         label: 'Type',
-        value: IPrimitiveTypeKind.String,
         type: FIELD_TYPE.SELECT,
+        value: IPrimitiveTypeKind.String,
       })
       cy.getModal().setFormFieldValue({
         label: 'Nullable',
-        value: true,
         type: FIELD_TYPE.TOGGLE,
+        value: true,
       })
       cy.getModal()
         .getModalAction(/Create/)
@@ -134,6 +89,9 @@ describe('Component CRUD', () => {
       cy.get(`.ant-tree-node-content-wrapper[title="${COMPONENT_NAME}"]`)
         .eq(1)
         .click({ force: true })
+
+      cy.get(`.ant-tree-node-content-wrapper[title="${COMPONENT_NAME}"]`)
+        .eq(1)
         .trigger('contextmenu')
 
       /**
@@ -147,13 +105,13 @@ describe('Component CRUD', () => {
 
           cy.getModal().setFormFieldValue({
             label: 'Render Type',
-            value: 'Atom',
             type: FIELD_TYPE.SELECT,
+            value: 'Atom',
           })
           cy.getModal().setFormFieldValue({
             label: 'Atom',
-            value: child.atom,
             type: FIELD_TYPE.SELECT,
+            value: child.atom,
           })
           cy.getModal().setFormFieldValue({
             label: 'Name',
@@ -184,8 +142,8 @@ describe('Component CRUD', () => {
       cy.get(`.ant-tabs [aria-label="node-index"]`).click()
       cy.get('.ant-tabs-tabpane-active form').setFormFieldValue({
         label: 'Container for component children',
-        value: COMPONENT_CHILD_SPACE,
         type: FIELD_TYPE.SELECT,
+        value: COMPONENT_CHILD_SPACE,
       })
     })
 
@@ -199,13 +157,13 @@ describe('Component CRUD', () => {
 
       cy.getModal().setFormFieldValue({
         label: 'Render Type',
-        value: 'Component',
         type: FIELD_TYPE.SELECT,
+        value: 'Component',
       })
       cy.getModal().setFormFieldValue({
         label: 'Component',
-        value: COMPONENT_NAME,
         type: FIELD_TYPE.SELECT,
+        value: COMPONENT_NAME,
       })
       cy.getModal().setFormFieldValue({
         label: 'Name',
@@ -224,8 +182,8 @@ describe('Component CRUD', () => {
       cy.getSpinner().should('not.exist')
       cy.get('.ant-tabs-tabpane-active form').setFormFieldValue({
         label: 'Component_prop',
-        value: COMPONENT_PROP_VALUE,
         type: FIELD_TYPE.CODE_MIRROR,
+        value: COMPONENT_PROP_VALUE,
       })
     })
 
@@ -237,13 +195,13 @@ describe('Component CRUD', () => {
 
       cy.getModal().setFormFieldValue({
         label: 'Render Type',
-        value: 'Atom',
         type: FIELD_TYPE.SELECT,
+        value: 'Atom',
       })
       cy.getModal().setFormFieldValue({
         label: 'Atom',
-        value: IAtomType.AntDesignTypographyText,
         type: FIELD_TYPE.SELECT,
+        value: IAtomType.AntDesignTypographyText,
       })
       cy.getModal().setFormFieldValue({
         label: 'Name',

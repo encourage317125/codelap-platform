@@ -1,17 +1,34 @@
 import * as Types from '@codelab/shared/abstract/codegen'
 
+import { ElementFragment } from '../element/element.fragment.graphql.gen'
+import { OwnerFragment } from '../user/owner.fragment.graphql.gen'
+import { StoreFragment } from '../store/store.fragment.graphql.gen'
 import { GraphQLClient } from 'graphql-request'
 import * as Dom from 'graphql-request/dist/types.dom'
 import { gql } from 'graphql-tag'
+import { ElementFragmentDoc } from '../element/element.fragment.graphql.gen'
+import { OwnerFragmentDoc } from '../user/owner.fragment.graphql.gen'
+import { StoreFragmentDoc } from '../store/store.fragment.graphql.gen'
 export type PageFragment = {
   id: string
   name: string
   slug: string
-  getServerSideProps?: string | null
   kind: Types.PageKind
   app: { id: string }
-  rootElement: { id: string; name: string }
-  pageContainerElement?: { id: string } | null
+  rootElement: { descendantElements: Array<ElementFragment> } & ElementFragment
+  pageContentContainer?: { id: string } | null
+  store: StoreFragment
+}
+
+export type BuilderPageFragment = {
+  id: string
+  name: string
+  slug: string
+  kind: Types.PageKind
+  rootElement: { descendantElements: Array<ElementFragment> } & ElementFragment
+  app: { id: string; owner: OwnerFragment }
+  store: StoreFragment
+  pageContentContainer?: { id: string } | null
 }
 
 export const PageFragmentDoc = gql`
@@ -19,19 +36,54 @@ export const PageFragmentDoc = gql`
     id
     name
     slug
-    getServerSideProps
     app {
       id
     }
     rootElement {
-      id
-      name
+      ...Element
+      descendantElements {
+        ...Element
+      }
     }
-    pageContainerElement {
+    pageContentContainer {
+      id
+    }
+    store {
+      ...Store
+    }
+    kind
+  }
+  ${ElementFragmentDoc}
+  ${StoreFragmentDoc}
+`
+export const BuilderPageFragmentDoc = gql`
+  fragment BuilderPage on Page {
+    id
+    name
+    slug
+    rootElement {
+      ...Element
+      descendantElements {
+        ...Element
+      }
+    }
+    app {
+      id
+      owner {
+        ...Owner
+      }
+    }
+    store {
+      ...Store
+    }
+    pageContentContainer {
       id
     }
     kind
   }
+  ${ElementFragmentDoc}
+  ${OwnerFragmentDoc}
+  ${StoreFragmentDoc}
 `
 
 export type SdkFunctionWrapper = <T>(

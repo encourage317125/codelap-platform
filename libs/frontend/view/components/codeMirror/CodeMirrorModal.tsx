@@ -10,33 +10,34 @@ type ISetupFactory = (
 ) => UseCodeMirror
 
 export interface CodeMirrorModalProps {
-  visible: boolean
-  onChange: (value: string) => void
-  onSave?: (value: string) => void
+  setupFactory: ISetupFactory
   title?: Nullish<string>
   value?: string
-  closeModal: () => void
-  setupFactory: ISetupFactory
+  visible: boolean
+
+  closeModal(): void
+  onChange(value: string): void
+  onSave?(value: string): void
 }
 
 export const CodeMirrorModal = ({
-  visible,
   closeModal,
-  value,
-  setupFactory: codeMirrorSetupFactory,
   onChange,
   onSave,
+  setupFactory: codeMirrorSetupFactory,
   title,
+  value,
+  visible,
 }: CodeMirrorModalProps) => {
   const editor = useRef<HTMLDivElement | null>(null)
   const [internalValue, setInternalValue] = useState(value)
 
   const { setContainer } = useCodeMirror(
     codeMirrorSetupFactory(editor, {
-      value: internalValue,
-      onChange: setInternalValue,
       height: '100%',
       maxHeight: '100%',
+      onChange: setInternalValue,
+      value: internalValue,
     }),
   )
 

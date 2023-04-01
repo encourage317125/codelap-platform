@@ -10,7 +10,7 @@ export type CreateElementsMutationVariables = Types.Exact<{
 }>
 
 export type CreateElementsMutation = {
-  createElements: { elements: Array<ElementFragment> }
+  createElements: { elements: Array<{ id: string }> }
 }
 
 export type DeleteElementsMutationVariables = Types.Exact<{
@@ -28,16 +28,7 @@ export type UpdateElementsMutationVariables = Types.Exact<{
 }>
 
 export type UpdateElementsMutation = {
-  updateElements: { elements: Array<ElementFragment> }
-}
-
-export type MoveElementsMutationVariables = Types.Exact<{
-  where?: Types.InputMaybe<Types.ElementWhere>
-  update?: Types.InputMaybe<Types.ElementUpdateInput>
-}>
-
-export type MoveElementsMutation = {
-  updateElements: { elements: Array<ElementFragment> }
+  updateElements: { elements: Array<{ id: string }> }
 }
 
 export type GetElementsQueryVariables = Types.Exact<{
@@ -47,26 +38,14 @@ export type GetElementsQueryVariables = Types.Exact<{
 
 export type GetElementsQuery = { elements: Array<ElementFragment> }
 
-export type GetElementTreeQueryVariables = Types.Exact<{
-  options?: Types.InputMaybe<Types.ElementOptions>
-  where?: Types.InputMaybe<Types.ElementWhere>
-}>
-
-export type GetElementTreeQuery = {
-  elementTrees: Array<
-    { descendantElements: Array<ElementFragment> } & ElementFragment
-  >
-}
-
 export const CreateElementsDocument = gql`
   mutation CreateElements($input: [ElementCreateInput!]!) {
     createElements(input: $input) {
       elements {
-        ...Element
+        id
       }
     }
   }
-  ${ElementFragmentDoc}
 `
 export const DeleteElementsDocument = gql`
   mutation DeleteElements($where: ElementWhere!, $delete: ElementDeleteInput) {
@@ -79,37 +58,15 @@ export const UpdateElementsDocument = gql`
   mutation UpdateElements($where: ElementWhere, $update: ElementUpdateInput) {
     updateElements(where: $where, update: $update) {
       elements {
-        ...Element
+        id
       }
     }
   }
-  ${ElementFragmentDoc}
-`
-export const MoveElementsDocument = gql`
-  mutation MoveElements($where: ElementWhere, $update: ElementUpdateInput) {
-    updateElements(where: $where, update: $update) {
-      elements {
-        ...Element
-      }
-    }
-  }
-  ${ElementFragmentDoc}
 `
 export const GetElementsDocument = gql`
   query GetElements($options: ElementOptions, $where: ElementWhere) {
     elements(options: $options, where: $where) {
       ...Element
-    }
-  }
-  ${ElementFragmentDoc}
-`
-export const GetElementTreeDocument = gql`
-  query GetElementTree($options: ElementOptions, $where: ElementWhere) {
-    elementTrees: elements(options: $options, where: $where) {
-      ...Element
-      descendantElements {
-        ...Element
-      }
     }
   }
   ${ElementFragmentDoc}
@@ -177,21 +134,6 @@ export function getSdk(
         'mutation',
       )
     },
-    MoveElements(
-      variables?: MoveElementsMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers'],
-    ): Promise<MoveElementsMutation> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<MoveElementsMutation>(
-            MoveElementsDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders },
-          ),
-        'MoveElements',
-        'mutation',
-      )
-    },
     GetElements(
       variables?: GetElementsQueryVariables,
       requestHeaders?: Dom.RequestInit['headers'],
@@ -203,21 +145,6 @@ export function getSdk(
             ...wrappedRequestHeaders,
           }),
         'GetElements',
-        'query',
-      )
-    },
-    GetElementTree(
-      variables?: GetElementTreeQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers'],
-    ): Promise<GetElementTreeQuery> {
-      return withWrapper(
-        (wrappedRequestHeaders) =>
-          client.request<GetElementTreeQuery>(
-            GetElementTreeDocument,
-            variables,
-            { ...requestHeaders, ...wrappedRequestHeaders },
-          ),
-        'GetElementTree',
         'query',
       )
     },

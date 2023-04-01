@@ -1,10 +1,4 @@
-import type {
-  AntDesignField,
-  IAtom,
-  IField,
-  IType,
-  IUserRef,
-} from '@codelab/backend/abstract/core'
+import type { AntDesignField } from '@codelab/backend/abstract/core'
 import { IUseCase } from '@codelab/backend/abstract/types'
 import {
   atomTypeKeyByFileName,
@@ -17,6 +11,11 @@ import {
   InterfaceTypeRepository,
   TypeFactory,
 } from '@codelab/backend/domain/type'
+import type {
+  IAtomDTO,
+  IAuth0Owner,
+  IFieldDTO,
+} from '@codelab/frontend/abstract/core'
 import { compoundCaseToTitleCase } from '@codelab/shared/utils'
 import merge from 'lodash/merge'
 import { v4 } from 'uuid'
@@ -33,7 +32,7 @@ export class SeedAntDesignFieldsService extends IUseCase<void, void> {
 
   private reactDataFolder = `${process.cwd()}/data/react/`
 
-  private readonly atoms: { [atomName: string]: IAtom }
+  private readonly atoms: { [atomName: string]: IAtomDTO }
 
   fieldRepository: FieldRepository = new FieldRepository()
 
@@ -45,7 +44,10 @@ export class SeedAntDesignFieldsService extends IUseCase<void, void> {
   /**
    * @param atoms Created from hard coded atoms data
    */
-  private constructor(atoms: Array<IAtom>, private readonly owner: IUserRef) {
+  private constructor(
+    atoms: Array<IAtomDTO>,
+    private readonly owner: IAuth0Owner,
+  ) {
     super()
     this.atoms = atoms
       .map((atom) => ({
@@ -54,7 +56,7 @@ export class SeedAntDesignFieldsService extends IUseCase<void, void> {
       .reduce(merge, {})
   }
 
-  static async init(owner: IUserRef) {
+  static async init(owner: IAuth0Owner) {
     const atoms = await new SeedAtomsService().createAtomsData(owner)
 
     return new SeedAntDesignFieldsService(atoms, owner)
@@ -89,8 +91,9 @@ export class SeedAntDesignFieldsService extends IUseCase<void, void> {
 
       for await (const field of fields) {
         await this.fieldRepository.save(field, {
+          // Save by composite key
           api: {
-            name: atom.api.name,
+            id: atom.api.id,
           },
           key: field.key,
         })
@@ -99,22 +102,21 @@ export class SeedAntDesignFieldsService extends IUseCase<void, void> {
   }
 
   private async transformFields(
-    atom: IAtom,
+    atom: IAtomDTO,
     atomFields: Array<AntDesignField>,
   ) {
-    return await atomFields.reduce<Promise<Array<IField>>>(
+    return await atomFields.reduce<Promise<Array<IFieldDTO>>>(
       async (accFields, field) => {
         /**
          * Get the existing atom first, these should have already been seeded at this point
          */
-        let existingField: IField | undefined = await this.fieldRepository.find(
-          {
-            key: field.property,
+        let existingField: IFieldDTO | undefined =
+          await this.fieldRepository.findOne({
             api: {
-              name: atom.api.name,
+              id: atom.api.id,
             },
-          },
-        )
+            key: field.property,
+          })
 
         /**
          * If field doesn't exist try to create it here
@@ -125,8 +127,8 @@ export class SeedAntDesignFieldsService extends IUseCase<void, void> {
            */
           const fieldTypeDTO =
             await new TransformAntDesignTypesService().execute({
-              field,
               atom,
+              field,
               owner: this.owner,
             })
 
@@ -140,16 +142,23 @@ export class SeedAntDesignFieldsService extends IUseCase<void, void> {
           /**
            * We need to upsert here by specifying where as name
            */
+
           const type = await TypeFactory.create(
-            fieldTypeDTO,
-            this.owner,
-            (typeData: IType) => ({ name: typeData.name }),
+            {
+              ...fieldTypeDTO,
+              owner: this.owner,
+            },
+            { name: fieldTypeDTO.name },
           )
 
-          existingField = Field.init({
-            id: v4(),
-            key: field.property,
-            name: compoundCaseToTitleCase(field.property),
+          if (!type) {
+            throw new Error('Error creating type')
+            // return [...(await accFields)]
+          }
+
+          existingField = Field.create({
+            api: { id: atom.api.id },
+            defaultValues: null,
             description: field.description,
             /**
              * Need to get type from the field type
@@ -157,8 +166,9 @@ export class SeedAntDesignFieldsService extends IUseCase<void, void> {
              * If doesn't exist like union or interface we'll need to create it
              */
             fieldType: type,
-            api: { id: atom.api.id },
-            defaultValues: null,
+            id: v4(),
+            key: field.property,
+            name: compoundCaseToTitleCase(field.property),
           })
         }
 

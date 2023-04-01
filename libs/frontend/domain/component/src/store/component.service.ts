@@ -1,24 +1,26 @@
 import type {
   IComponent,
   IComponentService,
-  ICreateComponentDTO,
-  IUpdateComponentDTO,
+  ICreateComponentData,
+  IInterfaceType,
 } from '@codelab/frontend/abstract/core'
 import {
-  COMPONENT_NODE_TYPE,
   COMPONENT_TREE_CONTAINER,
+  getElementService,
   IBuilderDataNode,
   IComponentDTO,
+  IUpdateComponentData,
 } from '@codelab/frontend/abstract/core'
-import { getElementService } from '@codelab/frontend/presenter/container'
+import { getPropService } from '@codelab/frontend/domain/prop'
+import { getStoreService, Store } from '@codelab/frontend/domain/store'
+import {
+  getTypeService,
+  InterfaceType,
+  typeRef,
+} from '@codelab/frontend/domain/type'
 import { ModalService } from '@codelab/frontend/shared/utils'
-import type {
-  ComponentUpdateInput,
-  ComponentWhere,
-  RenderedComponentFragment,
-} from '@codelab/shared/abstract/codegen'
-import type { IEntity } from '@codelab/shared/abstract/types'
-import { reconnectNodeId } from '@codelab/shared/domain/mapper'
+import type { ComponentWhere } from '@codelab/shared/abstract/codegen'
+import { ITypeKind } from '@codelab/shared/abstract/core'
 import { computed } from 'mobx'
 import {
   _async,
@@ -32,8 +34,8 @@ import {
   prop,
   transaction,
 } from 'mobx-keystone'
-import { mapCreateInput } from './api.utils'
-import { componentApi } from './component.api'
+import { v4 } from 'uuid'
+import { ComponentRepository } from '../services/component.repo'
 import { Component } from './component.model'
 import { ComponentModalService } from './component-modal.service'
 
@@ -43,12 +45,13 @@ import { ComponentModalService } from './component-modal.service'
 @model('@codelab/ComponentService')
 export class ComponentService
   extends Model({
-    id: idProp,
-    components: prop(() => objectMap<IComponent>()),
     clonedComponents: prop(() => objectMap<IComponent>()),
+    componentRepository: prop(() => new ComponentRepository({})),
+    components: prop(() => objectMap<IComponent>()),
     createModal: prop(() => new ModalService({})),
-    updateModal: prop(() => new ComponentModalService({})),
     deleteModal: prop(() => new ComponentModalService({})),
+    id: idProp,
+    updateModal: prop(() => new ComponentModalService({})),
   })
   implements IComponentService
 {
@@ -58,75 +61,152 @@ export class ComponentService
   }
 
   @computed
+  get typeService() {
+    return getTypeService(this)
+  }
+
+  @computed
+  get propService() {
+    return getPropService(this)
+  }
+
+  @computed
+  get storeService() {
+    return getStoreService(this)
+  }
+
+  @computed
   get componentList() {
     return [...this.components.values()]
   }
 
   @modelAction
-  loadRenderedComponentsTree(
-    renderedComponentFragments: Array<RenderedComponentFragment>,
+  add(componentDTO: IComponentDTO) {
+    const component = Component.create(componentDTO)
+
+    this.components.set(component.id, component)
+
+    return component
+  }
+
+  @modelFlow
+  @transaction
+  create = _async(function* (
+    this: ComponentService,
+    { name, owner, ...data }: ICreateComponentData,
   ) {
-    renderedComponentFragments.forEach((component) => {
-      const componentModel = this.writeCache(component)
-
-      const { rootElement, hydratedElements } =
-        this.elementService.loadComponentTree(component)
-
-      componentModel.initTree(rootElement, hydratedElements)
+    const storeApi = this.typeService.addInterface({
+      id: v4(),
+      kind: ITypeKind.InterfaceType,
+      name: InterfaceType.createName(`${name} Store`),
+      owner: owner,
     })
-  }
 
-  component(id: string) {
-    return this.components.get(id) || this.clonedComponents.get(id)
-  }
+    const store = this.storeService.add({
+      api: typeRef<IInterfaceType>(storeApi.id),
+      id: v4(),
+      name: Store.createName({ name }),
+    })
+
+    const rootElementProps = this.propService.add({ data: '{}', id: v4() })
+
+    const rootElement = this.elementService.add({
+      ...data.rootElement,
+      name,
+      parentComponent: { id: data.id },
+      props: rootElementProps,
+    })
+
+    const api = this.typeService.addInterface({
+      ...data.api,
+      kind: ITypeKind.InterfaceType,
+      name: InterfaceType.createName(name),
+      owner,
+    })
+
+    const componentProps = this.propService.add({
+      data: '{}',
+      id: v4(),
+    })
+
+    const component = this.add({
+      ...data,
+      api,
+      name,
+      owner,
+      props: componentProps,
+      rootElement,
+      store,
+    })
+
+    yield* _await(this.componentRepository.add(component))
+
+    return component
+  })
+
+  @modelFlow
+  @transaction
+  update = _async(function* (
+    this: ComponentService,
+    { childrenContainerElement, id, name }: IUpdateComponentData,
+  ) {
+    const component = this.components.get(id)!
+
+    component.writeCache({ childrenContainerElement, name })
+    this.writeCloneCache({ childrenContainerElement, id, name })
+
+    yield* _await(this.componentRepository.update(component))
+
+    return component
+  })
+
+  @modelFlow
+  @transaction
+  delete = _async(function* (this: ComponentService, component: IComponent) {
+    const { id } = component
+
+    this.components.delete(id)
+    this.removeClones(id)
+
+    yield* _await(this.componentRepository.delete([component]))
+
+    return component
+  })
 
   @computed
   get componentAntdNode(): IBuilderDataNode {
     return {
-      key: COMPONENT_TREE_CONTAINER,
-      // Container shouldn't have any type
-      type: null,
-      title: 'Components',
-      selectable: false,
       children: [...this.components.values()].map((component) => {
-        const elementTree = component.elementTree
-        const dataNode = elementTree?.root?.antdNode
+        const dataNode = component.rootElement.current.antdNode
 
         return {
-          key: component.id,
-          title: component.name,
-          type: COMPONENT_NODE_TYPE,
-          // This should bring up a meta pane for editing the component
-          selectable: true,
           children: [dataNode].filter((data): data is IBuilderDataNode =>
             Boolean(data),
           ),
-          rootKey: elementTree?.root?.id ?? null,
+          key: component.id,
+          node: component,
+          rootKey: component.rootElement.id,
+          // This should bring up a meta pane for editing the component
+          selectable: true,
+          title: component.name,
         }
       }),
+      key: COMPONENT_TREE_CONTAINER,
+      // Container shouldn't have any type
+      node: null,
       rootKey: null,
+      selectable: false,
+      title: 'Components',
     }
   }
 
   @modelFlow
   @transaction
-  getAll = _async(function* (this: ComponentService, where?: ComponentWhere) {
-    const { components } = yield* _await(componentApi.GetComponents({ where }))
+  getAll = _async(function* (this: ComponentService, where: ComponentWhere) {
+    const components = yield* _await(this.componentRepository.find(where))
 
     return components
-      .map((component) => {
-        if (this.components.get(component.id)) {
-          return this.components.get(component.id)
-        } else {
-          const componentModel = Component.hydrate(component)
-          this.components.set(component.id, componentModel)
-          // are used by CRUD general components
-          // so not contain rendered component
-          // componentModel.loadComponentTree(component)
-
-          return componentModel
-        }
-      })
+      .map((component) => this.add(component))
       .filter((component): component is Component => Boolean(component))
   })
 
@@ -142,145 +222,31 @@ export class ComponentService
     return all[0]
   })
 
-  @modelFlow
-  @transaction
-  create = _async(function* (
-    this: ComponentService,
-    data: Array<ICreateComponentDTO>,
-  ) {
-    const input = data.map((component) => mapCreateInput(component))
-
-    const {
-      createComponents: { components },
-    } = yield* _await(
-      componentApi.CreateComponents({
-        input,
-      }),
-    )
-
-    if (!components[0]) {
-      // Throw an error so that the transaction middleware rolls back the changes
-      throw new Error('Component was not created')
-    }
-
-    const component = components[0]
-    const componentModel = Component.hydrate(component)
-
-    this.components.set(component.id, componentModel)
-
-    const { rootElement, hydratedElements } =
-      this.elementService.loadComponentTree(component)
-
-    componentModel.initTree(rootElement, hydratedElements)
-
-    return [componentModel]
-  })
-
-  @modelFlow
-  @transaction
-  update = _async(function* (
-    this: ComponentService,
-    existingComponent: IEntity,
-    { name, childrenContainerElementId }: IUpdateComponentDTO,
-  ) {
-    const {
-      updateComponents: { components },
-    } = yield* _await(
-      componentApi.UpdateComponents({
-        update: {
-          name,
-          childrenContainerElement: reconnectNodeId(childrenContainerElementId),
-        },
-        where: { id: existingComponent.id },
-      }),
-    )
-
-    return components.map((component) => this.writeCache(component))
-  })
-
-  @modelFlow
-  @transaction
-  delete = _async(function* (this: ComponentService, ids: Array<string>) {
-    ids.forEach((id) => {
-      this.components.delete(id)
-      this.removeClones(id)
-    })
-
-    const {
-      deleteComponents: { nodesDeleted },
-    } = yield* _await(
-      componentApi.DeleteComponents({
-        where: { id_IN: ids },
-        delete: {
-          api: {},
-        },
-      }),
-    )
-
-    return nodesDeleted
-  })
-
-  @modelFlow
-  @transaction
-  public patchComponent = _async(function* (
-    this: ComponentService,
-    entity: IEntity,
-    input: ComponentUpdateInput,
-  ) {
-    const {
-      updateComponents: { components },
-    } = yield* _await(
-      componentApi.UpdateComponents({
-        where: { id: entity.id },
-        update: input,
-      }),
-    )
-
-    return components.map((component) => this.writeCache(component))[0]!
-  })
-
   @modelAction
-  writeCache(componentFragment: IComponentDTO) {
-    let componentModel = this.component(componentFragment.id)
-
-    if (componentModel) {
-      componentModel.writeCache(componentFragment)
-      this.writeClonesCache(componentFragment)
-    } else {
-      componentModel = Component.hydrate(componentFragment)
-      this.components.set(componentModel.id, componentModel)
-    }
-
-    return componentModel
-  }
-
-  @modelAction
-  writeClonesCache(componentFragment: IComponentDTO) {
+  private writeCloneCache({
+    childrenContainerElement,
+    id,
+    name,
+  }: IUpdateComponentData) {
     return [...this.clonedComponents.values()]
-      .filter(
-        (component) => component.sourceComponentId === componentFragment.id,
-      )
-      .map((component) => {
-        const clonedChildrenContainer =
-          component.elementTree?.elementsList.find(
-            ({ sourceElementId }) =>
-              sourceElementId === componentFragment.childrenContainerElement.id,
-          )
+      .filter((componentClone) => componentClone.sourceComponent?.id === id)
+      .map((clone) => {
+        const containerClone = clone.elements.find(
+          ({ sourceElement }) =>
+            sourceElement?.id === childrenContainerElement.id,
+        )
 
-        const childrenContainerElement =
-          clonedChildrenContainer ?? componentFragment.childrenContainerElement
-
-        return component.writeCache({
-          ...componentFragment,
-          childrenContainerElement,
+        return clone.writeCache({
+          childrenContainerElement: containerClone,
+          name,
         })
       })
   }
 
   @modelAction
-  removeClones(componentId: string) {
+  private removeClones(componentId: string) {
     return [...this.clonedComponents.entries()]
-      .filter(([_, component]) => component.sourceComponentId === componentId)
+      .filter(([_, component]) => component.sourceComponent?.id === componentId)
       .forEach(([elementId]) => this.clonedComponents.delete(elementId))
   }
 }

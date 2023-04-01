@@ -11,8 +11,8 @@ const deriveKey = (secret: string) =>
   hkdf(secret, BYTE_LENGTH, { info: ENCRYPTION_INFO, ...options })
 
 interface EncryptData {
-  secret: string
   [key: string]: unknown
+  secret: string
 }
 
 export const encrypt = (arg: EncryptData) => {
@@ -24,9 +24,9 @@ export const encrypt = (arg: EncryptData) => {
     JWE.encrypt(JSON.stringify(thingToEncrypt), key, {
       alg: 'dir',
       enc: 'A256GCM',
-      uat: epochNow,
-      iat: epochNow,
       exp: epochNow + 7 * 24 * 60 * 60,
+      iat: epochNow,
+      uat: epochNow,
     }),
   )
 }

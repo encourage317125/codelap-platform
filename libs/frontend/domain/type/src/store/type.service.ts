@@ -1,16 +1,15 @@
 import type {
-  ICreateTypeDTO,
-  IInterfaceType,
   IInterfaceTypeRef,
   ITypeService,
-  IUpdateTypeDTO,
+  IUpdateTypeData,
 } from '@codelab/frontend/abstract/core'
-import { IAnyType, ITypeDTO } from '@codelab/frontend/abstract/core'
+import {
+  ICreateTypeData,
+  IType,
+  ITypeDTO,
+} from '@codelab/frontend/abstract/core'
 import { ModalService } from '@codelab/frontend/shared/utils'
-import type {
-  BaseTypeWhere,
-  FieldFragment,
-} from '@codelab/shared/abstract/codegen'
+import { TypeKind } from '@codelab/shared/abstract/codegen'
 import type { IPrimitiveTypeKind } from '@codelab/shared/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { Nullable } from '@codelab/shared/abstract/types'
@@ -28,69 +27,34 @@ import {
   prop,
   transaction,
 } from 'mobx-keystone'
-import { GetTypesQuery } from '../graphql/get-type.endpoints.graphql.gen'
-import { createTypeFactory, updateTypeInputFactory } from '../use-cases'
-import {
-  createTypeApi,
-  deleteTypeApi,
-  getAllTypes,
-  getTypeApi,
-  updateTypeApi,
-} from './apis/type.api'
-import { baseTypesFactory } from './base-types.factory'
+import type { GetTypesQuery } from '../graphql/get-type.endpoints.graphql.gen'
+import { TypeRepository } from '../services'
 import { getFieldService } from './field.service.context'
-import { typeFactory } from './type.factory'
+import { InterfaceType } from './models'
+import { TypeFactory } from './type.factory'
 import { TypeModalService } from './type-modal.service'
+import { TypePaginationService } from './type-pagination.service'
 
 @model('@codelab/TypeService')
 export class TypeService
   extends Model({
+    createModal: prop(() => new ModalService({})),
+    /**
+     * Used to show current paginated types
+     */
+    deleteModal: prop(() => new TypeModalService({})),
     id: idProp,
+    pagination: prop(() => new TypePaginationService({})),
+    selectedIds: prop(() => arraySet<string>()).withSetter(),
+    typeRepository: prop(() => new TypeRepository({})),
     /**
      * This holds all types
      */
-    types: prop(() => objectMap<IAnyType>()),
-    count: prop(() => 0),
-
-    createModal: prop(() => new ModalService({})),
+    types: prop(() => objectMap<IType>()),
     updateModal: prop(() => new TypeModalService({})),
-    deleteModal: prop(() => new TypeModalService({})),
-
-    selectedIds: prop(() => arraySet<string>()).withSetter(),
   })
   implements ITypeService
 {
-  /**
-   * `page` & `pageSize` are optional
-   */
-  @modelFlow
-  @transaction
-  getBaseTypes = _async(function* (
-    this: TypeService,
-    { offset, limit, where },
-  ) {
-    const {
-      baseTypes: { totalCount, items },
-    } = yield* _await(
-      getTypeApi.GetBaseTypes({
-        options: {
-          offset,
-          limit,
-          where,
-        },
-      }),
-    )
-
-    this.count = totalCount
-
-    return items.map((type) => {
-      const typeModel = baseTypesFactory(type)
-      this.types.set(type.id, typeModel)
-
-      return typeModel.id
-    })
-  })
-
   @computed
   private get fieldService() {
     return getFieldService(this)
@@ -101,9 +65,22 @@ export class TypeService
     // loading sub types messes up the order of the next page
     // we need to sort here to make sure the types on the
     // table are always sorted alphabetically
-    return [...this.types.values()].sort((typeA, typeB) =>
+    return Array.from(this.types.values()).sort((typeA, typeB) =>
       typeA.name.toLowerCase() < typeB.name.toLowerCase() ? -1 : 1,
     )
+  }
+
+  @modelAction
+  addInterface(data: ICreateTypeData) {
+    const interfaceType = new InterfaceType({
+      id: data.id,
+      name: data.name,
+      owner: data.owner,
+    })
+
+    this.types.set(interfaceType.id, interfaceType)
+
+    return interfaceType
   }
 
   @modelAction
@@ -126,100 +103,86 @@ export class TypeService
    * Caches all types into mobx
    */
   @modelAction
-  loadTypes = (types: GetTypesQuery) => {
+  loadTypes = (types: Partial<GetTypesQuery>) => {
     const flatTypes = Object.values(types).flat()
-    const loadedTypes = flatTypes.map((fragment) => typeFactory(fragment))
-
-    this.types = objectMap(
-      loadedTypes.map((typeModel) => [typeModel.id, typeModel]),
+    this.fieldService.load(
+      (types.interfaceTypes || []).flatMap((fragment) => fragment.fields),
     )
+
+    const loadedTypes = flatTypes.map((fragment) =>
+      TypeFactory.create(fragment),
+    )
+
+    for (const type of loadedTypes) {
+      this.types.set(type.id, type)
+    }
 
     return loadedTypes
   }
 
   @modelAction
-  loadFields = (types: GetTypesQuery['interfaceTypes']) => {
-    const flatTypes = Object.values(types).flat()
-    const fields: Array<FieldFragment> = []
-
-    flatTypes.forEach((fragment) => {
-      fields.push(...fragment.fields)
-    })
-
-    this.fieldService.load(fields)
-  }
-
-  @modelAction
-  addTypeLocal(type: IAnyType) {
+  addTypeLocal(type: IType) {
     this.types.set(type.id, type)
   }
 
   @modelAction
-  writeCache(fragment: ITypeDTO) {
-    let typeModel = this.types.get(fragment.id)
+  add(typeDTO: ITypeDTO) {
+    const type = TypeFactory.create(typeDTO)
 
-    if (typeModel) {
-      typeModel.writeCache(fragment)
-    } else {
-      typeModel = typeFactory(fragment)
-      this.types.set(fragment.id, typeModel)
+    this.types.set(type.id, type)
 
-      // Write cache to the fields
-      if (
-        typeModel.kind === ITypeKind.InterfaceType &&
-        fragment.__typename === 'InterfaceType'
-      ) {
-        typeModel.writeFieldCache(fragment.fields)
-      }
-    }
-
-    return typeModel
-  }
-
-  @modelAction
-  loadTypesByChunks(this: TypeService, types: GetTypesQuery) {
-    // type loading is quiet a heavy operation which takes up to 500ms of blocking time.
-    // split types loading into many chunks and queue each of them as a macrotask.
-    // this will unblock UI and allow other js to execute between them, which makes UI much more responsive.
-    this.loadFields(types.interfaceTypes)
-
-    this.loadTypes(types)
-
-    Object.values(types.interfaceTypes).map((type) => {
-      const typeModel = this.type(type.id) as IInterfaceType
-
-      typeModel.load(type.fields)
-    })
+    return type
   }
 
   @modelFlow
   @transaction
-  update = _async(function* (
-    this: TypeService,
-    entity: IAnyType,
-    data: IUpdateTypeDTO,
-  ) {
-    const args = {
-      where: { id: entity.id },
-      ...updateTypeInputFactory(data),
-    }
+  update = _async(function* (this: TypeService, data: IUpdateTypeData) {
+    const type = this.types.get(data.id)!
+    const typeDTO = TypeFactory.mapDataToDTO(data)
+    TypeFactory.writeCache(typeDTO, type)
 
-    const updatedTypes = yield* _await(updateTypeApi[entity.kind](args))
+    yield* _await(this.typeRepository.update(type))
 
-    return updatedTypes.map((type) => this.writeCache(type))
+    return type
   })
 
+  /**
+   * fetches the types with the given ids
+   * while loading all their descendant types
+   * @returns only the types having their id in ids
+   */
   @modelFlow
   @transaction
-  getAll = _async(function* (this: TypeService, where?: BaseTypeWhere) {
-    const ids = where?.id_IN ?? undefined
-    const types = yield* _await(getAllTypes(ids))
+  getAll = _async(function* (this: TypeService, ids: Array<string>) {
+    const typeFragments = yield* _await(
+      this.typeRepository.find({ id_IN: ids }),
+    )
+
+    const parentIds = typeFragments.map((typeFragment) => typeFragment.id)
+
+    // load the descendants of the requested types
+    const descendantTypeFragments = yield* _await(
+      this.typeRepository.findDescendants(parentIds),
+    )
+
+    const allFragments = [...typeFragments, ...descendantTypeFragments]
+
+    // initialize fields
+    allFragments.forEach((typeFragment) => {
+      if (typeFragment.__typename === TypeKind.InterfaceType) {
+        typeFragment.fields.forEach((fieldFragment) => {
+          this.fieldService.add(fieldFragment)
+        })
+      }
+    })
 
     return (
-      types
-        .map((type) => {
-          return this.writeCache(type)
+      allFragments
+        .map((typeFragment) => {
+          return this.add(typeFragment)
         })
+        // return only the requested types
+        .filter((type) => ids.includes(type.id))
         // Sort the most recently fetched types
         .sort((typeA, typeB) =>
           typeA.name.toLowerCase() < typeB.name.toLowerCase() ? -1 : 1,
@@ -238,55 +201,22 @@ export class TypeService
       return this.types.get(id)
     }
 
-    const all = yield* _await(this.getAll({ id_IN: [id] }))
+    const all = yield* _await(this.getAll([id]))
 
     return all[0]
   })
 
-  @modelFlow
-  @transaction
-  getAllWithDescendants = _async(function* (
-    this: TypeService,
-    ids: Array<string> = [],
-  ) {
-    const { arrayTypes, unionTypes, interfaceTypes } = yield* _await(
-      getTypeApi.GetDescendants({ ids }),
-    )
-
-    const allDescendantIds = [
-      ...arrayTypes,
-      ...unionTypes,
-      ...interfaceTypes,
-    ].reduce<Array<string>>(
-      (descendantIds, { descendantTypesIds }) => [
-        ...descendantIds,
-        ...descendantTypesIds.flat(),
-      ],
-      [],
-    )
-
-    // remove duplicates
-    const allIds = [...new Set([...ids, ...allDescendantIds])]
-
-    return yield* _await(this.getAll({ id_IN: allIds }))
-  })
-
   /**
-   * A wrapper around getAllWithDescendants with some type checking
+   * A wrapper around getAll with some type checking.
+   * Gets the interface while loading its descendant types
    */
   @modelFlow
   @transaction
-  getInterfaceAndDescendants = _async(function* (
+  getInterface = _async(function* (
     this: TypeService,
     interfaceTypeId: IInterfaceTypeRef,
   ) {
-    const interfaceWithDescendants = yield* _await(
-      this.getAllWithDescendants([interfaceTypeId]),
-    )
-
-    const interfaceType = interfaceWithDescendants.find(
-      ({ id }) => id === interfaceTypeId,
-    )
+    const [interfaceType] = yield* _await(this.getAll([interfaceTypeId]))
 
     if (!interfaceType) {
       throw new Error('Type not found')
@@ -299,48 +229,24 @@ export class TypeService
     return interfaceType
   })
 
-  /*
-   * The array of types must be of same type
-   *
-   * Issue with interfaceType & fieldConnections variable getting repeated in Neo4j if we create multiple at a time.
-   */
   @modelFlow
   @transaction
-  create = _async(function* (this: TypeService, data: Array<ICreateTypeDTO>) {
-    const input = createTypeFactory(data)
+  create = _async(function* (this: TypeService, data: ICreateTypeData) {
+    const type = this.add(TypeFactory.mapDataToDTO(data))
 
-    const types: Array<ITypeDTO> = yield* _await(
-      Promise.all(
-        input.map((type) => {
-          if (!type.kind) {
-            throw new Error('Type requires a kind')
-          }
+    yield* _await(this.typeRepository.add(type))
 
-          return createTypeApi[type.kind](input)
-        }),
-      ).then((res) => res.flat()),
-    )
-
-    return types.map((type) => this.writeCache(type))
+    return type
   })
 
   @modelFlow
   @transaction
-  delete = _async(function* (this: TypeService, ids: Array<string>) {
-    const types = ids
-      .map((id) => this.types.get(id))
-      .filter((type): type is IAnyType => Boolean(type))
+  delete = _async(function* (this: TypeService, type: IType) {
+    const { id } = type
+    this.types.delete(id)
 
-    ids.forEach((id) => this.types.delete(id))
+    yield* _await(this.typeRepository.delete([type]))
 
-    const results = yield* _await(
-      Promise.all(
-        types.map((type) =>
-          deleteTypeApi[type.kind]({ where: { id: type.id } }),
-        ),
-      ),
-    )
-
-    return results.reduce((total, { nodesDeleted }) => nodesDeleted + total, 0)
+    return type
   })
 }

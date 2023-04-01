@@ -6,10 +6,6 @@ import {
   TabletOutlined,
   ToolOutlined,
 } from '@ant-design/icons'
-import type {
-  IBuilderService,
-  IPageService,
-} from '@codelab/frontend/abstract/core'
 import {
   BuilderWidthBreakPoints,
   defaultBuilderWidthBreakPoints,
@@ -18,34 +14,35 @@ import { PageType } from '@codelab/frontend/abstract/types'
 import {
   useCurrentAppId,
   useCurrentPageId,
+  useStore,
 } from '@codelab/frontend/presenter/container'
+import { useAsync } from '@react-hookz/web'
 import { InputNumber, Menu, Space } from 'antd'
 import type { ItemType } from 'antd/lib/menu/hooks/useItems'
 import { observer } from 'mobx-react-lite'
 import { useRouter } from 'next/router'
-import React, { useCallback, useState } from 'react'
-import { useAsync } from 'react-use'
+import React, { useCallback, useEffect, useState } from 'react'
 import tw from 'twin.macro'
-// import { BuilderSizeBreakpoints, mainContentWidthBreakPoint } from './constants'
 
-export type MenuItemProps = {
+export type MenuItemProps = ItemType & {
   hide?: boolean
-} & ItemType
+}
 
-export const PageDetailHeader = observer<{
-  pageService: IPageService
-  builderService?: IBuilderService
-}>(({ pageService, builderService }) => {
+export const PageDetailHeader = observer(() => {
+  const { builderService, pageService } = useStore()
   const router = useRouter()
-  const currentAppId = useCurrentAppId()
+  const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
 
-  const { loading } = useAsync(
-    () => pageService.getAll({ appConnection: { node: { id: currentAppId } } }),
-    [currentAppId],
-  )
+  const getPages = useAsync(() =>
+    pageService.getAll({ appConnection: { node: { id: appId } } }),
+  )[1]
 
-  const pagesList = pageService.pagesByApp(currentAppId)
+  useEffect(() => {
+    void getPages.execute()
+  }, [appId])
+
+  const pagesList = pageService.pagesByApp(appId)
   const currentPage = pagesList.find((page) => page.id === pageId)
   const isBuilder = router.pathname === PageType.PageBuilder
 
@@ -63,7 +60,7 @@ export const PageDetailHeader = observer<{
   const handleBreakpointSelected = useCallback(
     (breakpoint: BuilderWidthBreakPoints) => {
       setSelectedWidthBreakpoint(breakpoint)
-      builderService?.setSelectedBuilderWidth(
+      builderService.setSelectedBuilderWidth(
         defaultBuilderWidthBreakPoints[breakpoint],
       )
     },
@@ -72,9 +69,6 @@ export const PageDetailHeader = observer<{
 
   const menuItems: Array<MenuItemProps> = [
     {
-      label: <FileOutlined />,
-      key: 'sub1',
-      title: currentPage?.name,
       children: pagesList.map((page) => ({
         key: page.id,
         label: <span>{page.name}</span>,
@@ -89,72 +83,75 @@ export const PageDetailHeader = observer<{
           ),
       })),
       hide: false,
+      key: 'sub1',
+      label: <FileOutlined />,
+      title: currentPage?.name,
     },
     {
-      label: isBuilder ? <EyeOutlined /> : <ToolOutlined />,
+      hide: false,
       key: '1',
-      title: isBuilder ? 'Preview' : 'Builder',
+      label: isBuilder ? <EyeOutlined /> : <ToolOutlined />,
       onClick: switchPreviewMode,
       style: { backgroundColor: 'initial' },
-      hide: false,
+      title: isBuilder ? 'Preview' : 'Builder',
     },
     {
-      label: <MobileOutlined />,
+      hide: !isBuilder,
       key: BuilderWidthBreakPoints.Mobile,
-      title: 'mobile',
+      label: <MobileOutlined />,
       onClick: () => handleBreakpointSelected(BuilderWidthBreakPoints.Mobile),
       style: { backgroundColor: 'initial' },
-      hide: !isBuilder,
+      title: 'mobile',
     },
     {
-      label: <MobileOutlined rotate={-90} />,
+      hide: !isBuilder,
       key: BuilderWidthBreakPoints.MobileVertical,
-      title: 'mobile vertical',
+      label: <MobileOutlined rotate={-90} />,
       onClick: () =>
         handleBreakpointSelected(BuilderWidthBreakPoints.MobileVertical),
       style: { backgroundColor: 'initial' },
-      hide: !isBuilder,
+      title: 'mobile vertical',
     },
     {
-      label: <TabletOutlined />,
+      hide: !isBuilder,
       key: BuilderWidthBreakPoints.TabletHorizontal,
-      title: 'tablet horizontal',
+      label: <TabletOutlined />,
       onClick: () =>
         handleBreakpointSelected(BuilderWidthBreakPoints.TabletHorizontal),
       style: { backgroundColor: 'initial' },
-      hide: !isBuilder,
+      title: 'tablet horizontal',
     },
     {
-      label: <DesktopOutlined />,
+      hide: !isBuilder,
       key: BuilderWidthBreakPoints.Desktop,
-      title: 'desktop',
+      label: <DesktopOutlined />,
       onClick: () => handleBreakpointSelected(BuilderWidthBreakPoints.Desktop),
       style: { backgroundColor: 'initial' },
-      hide: !isBuilder,
+      title: 'desktop',
     },
     {
+      hide: !isBuilder,
+      key: 'custom',
       label: (
         <Space direction="horizontal" size="small">
           <InputNumber
             controls={false}
-            max={builderService?.selectedBuilderWidth.max}
-            min={builderService?.selectedBuilderWidth.min}
+            max={builderService.selectedBuilderWidth.max}
+            min={builderService.selectedBuilderWidth.min}
             onChange={(value) =>
-              builderService?.setSelectedBuilderWidth({
+              builderService.setSelectedBuilderWidth({
                 ...builderService.selectedBuilderWidth,
                 default: Number(value),
               })
             }
             size="small"
-            value={builderService?.currentBuilderWidth.default ?? ''}
+            value={builderService.currentBuilderWidth.default}
           />
           <span>px</span>
         </Space>
       ),
-      key: 'custom',
-      title: 'custom size',
       style: { backgroundColor: 'initial' },
-      hide: !isBuilder,
+      title: 'custom size',
     },
   ]
 

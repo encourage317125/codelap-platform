@@ -24,19 +24,19 @@ import { useBuilderHotkeys, useBuilderHoverHandlers } from '../../hooks'
 import { useBuilderResize } from '../../hooks/useBuilderResize'
 import { useBuilderRootClickHandler } from '../../hooks/useBuilderRootClickHandler'
 
-type BuilderProps = {
-  elementTree: IElementTree
-} & Pick<
+type BuilderProps = Pick<
   IBuilderService,
-  | 'set_hoveredNode'
-  | 'currentDragData'
-  | 'selectedNode'
-  | 'set_selectedNode'
   | 'currentBuilderWidth'
+  | 'currentDragData'
   | 'selectedBuilderWidth'
+  | 'selectedNode'
   | 'setCurrentBuilderWidth'
+  | 'setHoveredNode'
+  | 'setSelectedNode'
 > &
   Pick<IElementService, 'deleteModal'> & {
+    elementTree: IElementTree
+  } & {
     rendererProps: RendererRoot
   }
 /**
@@ -45,41 +45,36 @@ type BuilderProps = {
 
 export const Builder = observer<BuilderProps>(
   ({
-    currentDragData,
-    set_hoveredNode,
-    selectedNode,
-    elementTree,
-    deleteModal,
-    set_selectedNode,
-    rendererProps,
     currentBuilderWidth: mainContentWidth,
+    currentDragData,
+    deleteModal,
+    elementTree,
+    rendererProps,
     selectedBuilderWidth: selectedMainContentWidth,
+    selectedNode,
     setCurrentBuilderWidth,
+    setHoveredNode,
+    setSelectedNode,
   }) => {
-    // to render the body of the app, the root is required
-    if (!elementTree.root) {
-      return null
-    }
-
-    const { handleMouseOver, handleMouseLeave } = useBuilderHoverHandlers({
+    const { handleMouseLeave, handleMouseOver } = useBuilderHoverHandlers({
       currentDragData,
-      set_hoveredNode,
+      setHoveredNode,
     })
 
     const builderResizable = useBuilderResize({
-      width: mainContentWidth,
       selectedWidth: selectedMainContentWidth,
       setCurrentBuilderWidth,
+      width: mainContentWidth,
     })
 
-    const { setNodeRef, isOver, over } = useDroppable({
-      id: elementTree.root.id,
+    const { isOver, over, setNodeRef } = useDroppable({
+      id: elementTree.rootElement.id,
     })
 
     useBuilderHotkeys({
-      selectedNode,
-      set_selectedNode,
       deleteModal,
+      selectedNode,
+      setSelectedNode,
     })
 
     const handleContainerClick = useBuilderRootClickHandler()

@@ -36,27 +36,27 @@ export const aliasGraphQLOperation = (
 export const DefaultGraphQLRequestID = 'GraphqlRequest'
 
 export const graphqlRequest = (
-  body: string | Record<string, any>,
+  body: Record<string, any> | string,
   alias = DefaultGraphQLRequestID,
   config?: any,
 ) =>
   cy
     .request({
+      body,
       method: 'POST',
       url: '/api/graphql',
-      body,
       ...config,
     })
     .as(alias)
 
 export interface CypressGraphQLHelpersCommands {
-  interceptGraphQL: typeof interceptGraphQL
   graphqlRequest: typeof graphqlRequest
+  interceptGraphQL: typeof interceptGraphQL
   waitForApiCalls: typeof waitForApiCalls
 }
 
 export const graphQLCommands: Array<CypressCommand> = [
-  { name: 'interceptGraphQL', fn: interceptGraphQL },
-  { name: 'graphqlRequest', fn: graphqlRequest },
-  { name: 'waitForApiCalls', fn: waitForApiCalls },
+  { fn: interceptGraphQL, name: 'interceptGraphQL' },
+  { fn: graphqlRequest, name: 'graphqlRequest' },
+  { fn: waitForApiCalls, name: 'waitForApiCalls' },
 ]

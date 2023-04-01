@@ -1,37 +1,31 @@
-import type {
-  ICreateTagDTO,
-  ITagService,
-  IUserService,
-} from '@codelab/frontend/abstract/core'
+import type { ICreateTagData } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { createNotificationHandler } from '@codelab/frontend/shared/utils'
 import { ModalForm } from '@codelab/frontend/view/components'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
-import { AutoFields, SelectField } from 'uniforms-antd'
-import { createTagSchema } from './createTagSchema'
+import { AutoField, AutoFields } from 'uniforms-antd'
+import { v4 } from 'uuid'
+import { createTagSchema } from './create.tag.schema'
 
-export const CreateTagModal = observer<{
-  tagService: ITagService
-  userService: IUserService
-}>(({ tagService, userService }) => {
-  const onSubmit = (input: ICreateTagDTO) => {
-    return tagService.create([input])
+export const CreateTagModal = observer(() => {
+  const { tagService, userService } = useStore()
+  const isOpen = tagService.createModal.isOpen
+
+  const onSubmit = (input: ICreateTagData) => {
+    return tagService.create(input)
   }
 
-  const options = tagService.tagsSelectOptions
   const defaultOption = tagService.selectedOption
   const closeModal = () => tagService.createModal.close()
 
   return (
-    <ModalForm.Modal
-      okText="Create Tag"
-      onCancel={closeModal}
-      open={tagService.createModal.isOpen}
-    >
+    <ModalForm.Modal okText="Create Tag" onCancel={closeModal} open={isOpen}>
       <ModalForm.Form
         model={{
-          parentTagId: `${defaultOption.value}`,
-          auth0Id: userService.user?.auth0Id,
+          id: v4(),
+          owner: { auth0Id: userService.user?.auth0Id },
+          parent: { id: defaultOption.value.toString() },
         }}
         onSubmit={onSubmit}
         onSubmitError={createNotificationHandler({
@@ -40,15 +34,9 @@ export const CreateTagModal = observer<{
         onSubmitSuccess={closeModal}
         schema={createTagSchema}
       >
-        <AutoFields omitFields={['parentTagId']} />
+        <AutoFields omitFields={['parent']} />
         {/* <DisplayIfNotRoot> */}
-        <SelectField
-          label="Parent Tag"
-          name="parentTagId"
-          optionFilterProp="label"
-          options={options}
-          showSearch
-        />
+        <AutoField label="Parent Tag" name="parent.id" />
         {/* </DisplayIfNotRoot> */}
       </ModalForm.Form>
     </ModalForm.Modal>

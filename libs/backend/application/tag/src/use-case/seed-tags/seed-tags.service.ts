@@ -1,19 +1,32 @@
-import type {
-  ITag,
-  IUserRef,
-  TagNodeData,
-} from '@codelab/backend/abstract/core'
+import type { TagNodeData } from '@codelab/backend/abstract/core'
 import { IUseCase } from '@codelab/backend/abstract/types'
 import { TagRepository } from '@codelab/backend/domain/tag'
+import type { IAuth0Owner, ITagDTO } from '@codelab/frontend/abstract/core'
 import { v4 } from 'uuid'
 import { createTagTreeData, flattenTagTree } from './tag-input.factory'
 
-export class SeedTagsService extends IUseCase<IUserRef, void> {
+export class SeedTagsService extends IUseCase<IAuth0Owner, void> {
   tagRepository: TagRepository = new TagRepository()
 
-  async _execute(owner: IUserRef) {
+  async _execute(owner: IAuth0Owner) {
     const tags = await this.createTagsData(owner)
 
+    /**
+     * Omit parent and children since they need to be created first
+     */
+    await Promise.all(
+      tags.map(
+        async ({ children, parent, ...tag }) =>
+          await this.tagRepository.save(
+            { ...tag, children: [], owner },
+            { name: tag.name },
+          ),
+      ),
+    )
+
+    /**
+     * set parent and children after all tags are created
+     */
     await Promise.all(
       tags.map(
         async (tag) => await this.tagRepository.save(tag, { name: tag.name }),
@@ -24,9 +37,9 @@ export class SeedTagsService extends IUseCase<IUserRef, void> {
   /**
    * Here we want to flatten the hierarchical data
    */
-  private async createTagsData(owner: IUserRef): Promise<Array<ITag>> {
+  private async createTagsData(owner: IAuth0Owner): Promise<Array<ITagDTO>> {
     const existingTags = new Map(
-      (await this.tagRepository.all()).map((tag) => [tag.name, tag]),
+      (await this.tagRepository.find()).map((tag) => [tag.name, tag]),
     )
 
     const tagData: Array<TagNodeData & { id: string }> = await Promise.all(
@@ -45,9 +58,6 @@ export class SeedTagsService extends IUseCase<IUserRef, void> {
       const parent = tag.parent ? tagDataMap.get(tag.parent) : null
 
       return {
-        id: tag.id,
-        owner,
-        name: tag.name,
         children: tag.children.map((child) => {
           const childTag = tagDataMap.get(child.name)
 
@@ -60,6 +70,10 @@ export class SeedTagsService extends IUseCase<IUserRef, void> {
             name: childTag.name,
           }
         }),
+        descendants: [],
+        id: tag.id,
+        name: tag.name,
+        owner,
         parent: parent ? { id: parent.id, name: parent.name } : undefined,
       }
     })

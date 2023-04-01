@@ -1,5 +1,4 @@
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
-import { useCurrentApp } from '@codelab/frontend/domain/app'
 import {
   CreateDomainButton,
   CreateDomainModal,
@@ -19,20 +18,15 @@ import {
   sidebarNavigation,
 } from '@codelab/frontend/view/templates'
 import { auth0Instance } from '@codelab/shared/adapter/auth0'
+import { useAsync, useMountEffect } from '@react-hookz/web'
 import { PageHeader, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import React from 'react'
-import { useAsync } from 'react-use'
 
 const DomainsPageHeader = observer(() => {
-  const { domainService } = useStore()
-
-  const pageHeaderButtons = [
-    <CreateDomainButton domainService={domainService} key={0} />,
-  ]
-
+  const pageHeaderButtons = [<CreateDomainButton key={0} />]
   const router = useRouter()
   const onBack = () => router.push('/apps')
 
@@ -47,14 +41,14 @@ const DomainsPageHeader = observer(() => {
 })
 
 const DomainsPage: CodelabPage<DashboardTemplateProps> = (props) => {
-  const { userService, domainService, appService } = useStore()
+  const { appService, domainService } = useStore()
   const appId = useCurrentAppId()
-  const { app } = useCurrentApp(appService)
 
-  const { value, loading } = useAsync(
-    () => domainService.getAll({ appConnection: { node: { id: appId } } }),
-    [],
+  const [{ error, result: app, status }, getApp] = useAsync(() =>
+    appService.getOne(appId),
   )
+
+  useMountEffect(getApp.execute)
 
   return (
     <>
@@ -62,22 +56,12 @@ const DomainsPage: CodelabPage<DashboardTemplateProps> = (props) => {
         <title>{app?.name ? `${app.name} | ` : ''} Domains | Codelab</title>
       </Head>
 
-      <CreateDomainModal
-        domainService={domainService}
-        userService={userService}
-      />
-      <DeleteDomainModal
-        domainService={domainService}
-        userService={userService}
-      />
-      <UpdateDomainModal
-        domainService={domainService}
-        userService={userService}
-      />
+      <CreateDomainModal />
+      <DeleteDomainModal />
+      <UpdateDomainModal />
 
       <ContentSection>
-        {loading && <Spin />}
-        {!loading && <GetDomainsList domainService={domainService} />}
+        {status === 'loading' ? <Spin /> : <GetDomainsList />}
       </ContentSection>
     </>
   )
@@ -87,7 +71,7 @@ export default DomainsPage
 
 export const getServerSideProps = auth0Instance.withPageAuthRequired()
 
-DomainsPage.Layout = (page) => {
+DomainsPage.Layout = ({ children }) => {
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
 
@@ -96,7 +80,7 @@ DomainsPage.Layout = (page) => {
       Header={DomainsPageHeader}
       sidebarNavigation={sidebarNavigation({ appId, pageId })}
     >
-      {page.children}
+      {children()}
     </DashboardTemplate>
   )
 }

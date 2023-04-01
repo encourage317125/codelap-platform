@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ICreateField } from '@codelab/backend/abstract/core'
 import type { IFieldDTO } from '@codelab/frontend/abstract/core'
-import type { FieldFragment } from '@codelab/shared/abstract/codegen'
+import type { IEntity } from '@codelab/shared/abstract/types'
 import { compoundCaseToTitleCase } from '@codelab/shared/utils'
 
 export class Field implements IFieldDTO {
@@ -11,7 +9,7 @@ export class Field implements IFieldDTO {
 
   readonly description: string | null
 
-  readonly fieldType: { id: string }
+  readonly fieldType: IEntity
 
   readonly id: string
 
@@ -30,7 +28,7 @@ export class Field implements IFieldDTO {
     key,
     name = null,
     validationRules = null,
-  }: FieldFragment) {
+  }: IFieldDTO) {
     this.api = { id: api.id }
     this.defaultValues = defaultValues
     this.description = description
@@ -48,13 +46,13 @@ export class Field implements IFieldDTO {
     return `${apiName}-${fieldKey}`
   }
 
-  static init({ id, key, fieldType, api }: ICreateField) {
+  static create({ api, fieldType, id, key }: IFieldDTO) {
     return new Field({
-      id,
-      name: compoundCaseToTitleCase(key),
-      key,
-      fieldType,
       api,
+      fieldType,
+      id,
+      key,
+      name: compoundCaseToTitleCase(key),
     })
   }
 }

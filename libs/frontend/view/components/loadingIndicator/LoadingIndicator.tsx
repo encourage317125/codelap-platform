@@ -6,22 +6,22 @@ import React from 'react'
 import type { LoadingData } from './useTrackLoadingPromises'
 
 interface LoadIndicatorProps extends LoadingData {
-  renderErrored?: (error: unknown) => React.ReactElement
-  renderLoading?: () => React.ReactElement
-  renderNotLoading?: () => React.ReactElement
   style?: CSSProperties | ((state: LoadingData) => CSSProperties)
+  renderErrored?(error: unknown): React.ReactElement
+  renderLoading?(): React.ReactElement
+  renderNotLoading?(): React.ReactElement
 }
 
 export const LoadingIndicator = ({
-  isLoading,
   error,
-  renderNotLoading,
-  renderLoading,
+  isLoading,
   renderErrored,
+  renderLoading,
+  renderNotLoading,
   style: styleProp,
 }: LoadIndicatorProps) => {
   const elementStyle = isFunction(styleProp)
-    ? styleProp({ isLoading, error })
+    ? styleProp({ error, isLoading })
     : styleProp || {}
 
   if (error) {

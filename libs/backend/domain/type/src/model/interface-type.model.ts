@@ -1,15 +1,16 @@
 import type {
-  IAtom,
-  ICreateInterfaceType,
-  IField,
-  IInterfaceType,
-  IUserRef,
-} from '@codelab/backend/abstract/core'
+  IAtomDTO,
+  IAuth0Owner,
+  IFieldDTO,
+  IInterfaceTypeDTO,
+} from '@codelab/frontend/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
+import type { IEntity } from '@codelab/shared/abstract/types'
 import { v4 } from 'uuid'
+import { capitalize } from 'voca'
 import { BaseType } from './base-type.model'
 
-export class InterfaceType extends BaseType implements IInterfaceType {
+export class InterfaceType extends BaseType implements IInterfaceTypeDTO {
   declare id: string
 
   declare name: string
@@ -18,42 +19,32 @@ export class InterfaceType extends BaseType implements IInterfaceType {
 
   declare __typename: `${ITypeKind.InterfaceType}`
 
-  declare owner: IUserRef
+  declare owner: IAuth0Owner
 
-  fields: Array<IField>
+  fields: Array<IEntity>
 
-  private constructor({ id, name, kind, fields, owner }: IInterfaceType) {
-    super({ id, name, kind, __typename: ITypeKind.InterfaceType, owner })
+  constructor({ fields, id, name, owner }: IInterfaceTypeDTO) {
+    super({ id, kind: ITypeKind.InterfaceType, name, owner })
+
     this.fields = fields
   }
 
   static getApiName(
-    { name }: Pick<IAtom, 'name'>,
-    field?: Pick<IField, 'key'>,
+    { name }: Pick<IAtomDTO, 'name'>,
+    field?: Pick<IFieldDTO, 'key'>,
   ) {
-    return field?.key ? `${name} ${field.key} API` : `${name} API`
-  }
-
-  static init({ owner, name, fields }: ICreateInterfaceType) {
-    return new InterfaceType({
-      id: v4(),
-      __typename: ITypeKind.InterfaceType,
-      kind: ITypeKind.InterfaceType,
-      name,
-      owner,
-      fields,
-    })
+    return field?.key ? `${name} ${capitalize(field.key)} API` : `${name} API`
   }
 
   /**
    * Make create data from atom name
    */
-  static createFromAtomName(name: string, owner: IUserRef): IInterfaceType {
+  static createFromAtomName(name: string, owner: IAuth0Owner) {
     return new InterfaceType({
-      id: v4(),
-      name: InterfaceType.getApiName({ name }),
-      kind: ITypeKind.InterfaceType,
       fields: [],
+      id: v4(),
+      kind: ITypeKind.InterfaceType,
+      name: InterfaceType.getApiName({ name }),
       owner,
     })
   }

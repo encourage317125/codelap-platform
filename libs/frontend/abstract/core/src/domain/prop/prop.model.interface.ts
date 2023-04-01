@@ -1,26 +1,36 @@
-import type { Frozen } from 'mobx-keystone'
+import type {
+  PropCreateInput,
+  PropUpdateInput,
+} from '@codelab/shared/abstract/codegen'
+import type { Nullable } from '@codelab/shared/abstract/types'
+import type { Frozen, Ref } from 'mobx-keystone'
 import type { ICacheService } from '../../service'
 import type { IElement } from '../element'
+import type { IModel } from '../model.interface'
+import type { IInterfaceType } from '../type'
 import type { IPropDTO } from './prop.dto.interface'
 
-export interface IProp<T = IPropData> extends ICacheService<IPropDTO, IProp> {
+export interface IProp
+  extends Omit<IModel<PropCreateInput, PropUpdateInput, void>, 'toDeleteInput'>,
+    ICacheService<IPropDTO, IProp> {
+  api?: Nullable<Ref<IInterfaceType>>
+  data: Frozen<Nullable<IPropData>>
   id: string
-  data: Frozen<T>
   jsonString: string
-  values: T
+  values: IPropData
 
-  set(key: string, value: object): void
-  setSilently(key: string, value: object): void
-  setMany(data: IPropData): void
+  clone(): IProp
   delete(key: string): void
   get(key: string): unknown
-  clone(): IProp
+  set(key: string, value: boolean | object | string): void
+  setMany(data: IPropData): void
+  setSilently(key: string, value: object): void
+  toCreateInput(): PropCreateInput
+  toUpdateInput(): PropUpdateInput
 }
 
-export interface IPropData {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type IPropData = Record<string, any>
 
 export interface IPropDataByElementId {
   [id: IElement['id']]: IPropData

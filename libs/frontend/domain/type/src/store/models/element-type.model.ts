@@ -2,22 +2,21 @@ import type {
   IElementType,
   IElementTypeDTO,
 } from '@codelab/frontend/abstract/core'
-import { ITypeDTO } from '@codelab/frontend/abstract/core'
 import type { IElementTypeKind } from '@codelab/shared/abstract/core'
 import { assertIsTypeKind, ITypeKind } from '@codelab/shared/abstract/core'
+import merge from 'lodash/merge'
 import { ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
-import { updateBaseTypeCache } from '../base-type'
 import { createBaseType } from './base-type.model'
 
-const hydrate = ({ id, kind, name, elementKind, owner }: IElementTypeDTO) => {
+const create = ({ elementKind, id, kind, name, owner }: IElementTypeDTO) => {
   assertIsTypeKind(kind, ITypeKind.ElementType)
 
   return new ElementType({
+    elementKind,
     id,
     kind,
     name,
-    elementKind,
-    ownerId: owner.id,
+    owner,
   })
 }
 
@@ -29,17 +28,29 @@ export class ElementType
   implements IElementType
 {
   @modelAction
-  writeCache(fragment: ITypeDTO) {
-    updateBaseTypeCache(this, fragment)
+  writeCache(elementTypeDTO: Partial<IElementTypeDTO>) {
+    super.writeCache(elementTypeDTO)
 
-    if (fragment.__typename !== ITypeKind.ElementType) {
-      throw new Error('Invalid ElementType')
-    }
-
-    this.elementKind = fragment.elementKind
+    this.elementKind = elementTypeDTO.elementKind ?? this.elementKind
 
     return this
   }
 
-  public static hydrate = hydrate
+  toCreateInput() {
+    return {
+      ...super.toCreateInput(),
+      elementKind: this.elementKind,
+    }
+  }
+
+  toUpdateInput() {
+    return merge(super.toUpdateInput(), {
+      ...super.toUpdateInput(),
+      update: {
+        elementKind: this.elementKind,
+      },
+    })
+  }
+
+  public static create = create
 }

@@ -25,114 +25,114 @@ import {
 } from './modal.command'
 
 export interface AntModalCommands {
+  cancelModalConfirm: typeof cancelModalConfirm
+  closeModal: typeof closeModal
+  confirmModalConfirm: typeof confirmModalConfirm
+  expectModalActions: typeof expectModalActions
+  expectModalConfirmActions: typeof expectModalConfirmActions
+  expectModalConfirmText: typeof expectModalConfirmText
+  expectModalConfirmTitle: typeof expectModalConfirmTitle
+  expectModalText: typeof expectModalText
+  expectModalTitle: typeof expectModalTitle
+  expectModalToClose: typeof expectModalToClose
+  expectModalToOpen: typeof expectModalToOpen
   getModal: typeof getModal
-  getModalTitle: typeof getModalTitle
-  getModalBody: typeof getModalBody
   getModalAction: typeof getModalAction
-  getModalConfirmTitle: typeof getModalConfirmTitle
+  getModalBody: typeof getModalBody
+  getModalConfirmAction: typeof getModalConfirmAction
   getModalConfirmBody: typeof getModalConfirmBody
   getModalConfirmButtons: typeof getModalConfirmButtons
-  getModalConfirmAction: typeof getModalConfirmAction
   getModalConfirmCancel: typeof getModalConfirmCancel
   getModalConfirmOk: typeof getModalConfirmOk
-  expectModalTitle: typeof expectModalTitle
-  expectModalText: typeof expectModalText
-  expectModalActions: typeof expectModalActions
-  expectModalConfirmTitle: typeof expectModalConfirmTitle
-  expectModalConfirmText: typeof expectModalConfirmText
-  expectModalConfirmActions: typeof expectModalConfirmActions
-  expectModalToOpen: typeof expectModalToOpen
-  expectModalToClose: typeof expectModalToClose
-  closeModal: typeof closeModal
+  getModalConfirmTitle: typeof getModalConfirmTitle
+  getModalTitle: typeof getModalTitle
   resolveModal: typeof resolveModal
   resolveModalConfirm: typeof resolveModalConfirm
-  confirmModalConfirm: typeof confirmModalConfirm
-  cancelModalConfirm: typeof cancelModalConfirm
 }
 
 export const antModalCommands: Array<CypressCommand> = [
   {
-    name: 'getModal',
     fn: getModal,
+    name: 'getModal',
   },
   {
-    name: 'getModalTitle',
     fn: getModalTitle,
+    name: 'getModalTitle',
   },
   {
-    name: 'getModalBody',
     fn: getModalBody,
+    name: 'getModalBody',
   },
   {
-    name: 'getModalAction',
     fn: getModalAction,
+    name: 'getModalAction',
   },
   {
-    name: 'getModalConfirmTitle',
     fn: getModalConfirmTitle,
+    name: 'getModalConfirmTitle',
   },
   {
-    name: 'getModalConfirmBody',
     fn: getModalConfirmBody,
+    name: 'getModalConfirmBody',
   },
   {
-    name: 'getModalConfirmButtons',
     fn: getModalConfirmButtons,
+    name: 'getModalConfirmButtons',
   },
   {
-    name: 'getModalConfirmCancel',
     fn: getModalConfirmCancel,
+    name: 'getModalConfirmCancel',
   },
   {
-    name: 'getModalConfirmOk',
     fn: getModalConfirmOk,
+    name: 'getModalConfirmOk',
   },
   {
-    name: 'expectModalTitle',
     fn: expectModalTitle,
+    name: 'expectModalTitle',
   },
   {
-    name: 'expectModalText',
     fn: expectModalText,
+    name: 'expectModalText',
   },
   {
-    name: 'expectModalActions',
     fn: expectModalActions,
+    name: 'expectModalActions',
   },
   {
-    name: 'expectModalConfirmTitle',
     fn: expectModalConfirmTitle,
+    name: 'expectModalConfirmTitle',
   },
   {
-    name: 'expectModalConfirmText',
     fn: expectModalConfirmText,
+    name: 'expectModalConfirmText',
   },
   {
-    name: 'expectModalConfirmActions',
     fn: expectModalConfirmActions,
+    name: 'expectModalConfirmActions',
   },
   {
-    name: 'expectModalToOpen',
     fn: expectModalToOpen,
+    name: 'expectModalToOpen',
   },
   {
-    name: 'closeModal',
     fn: closeModal,
+    name: 'closeModal',
   },
   {
-    name: 'resolveModal',
     fn: resolveModal,
+    name: 'resolveModal',
   },
   {
-    name: 'resolveModalConfirm',
     fn: resolveModalConfirm,
+    name: 'resolveModalConfirm',
   },
   {
-    name: 'confirmModalConfirm',
     fn: confirmModalConfirm,
+    name: 'confirmModalConfirm',
   },
   {
-    name: 'cancelModalConfirm',
     fn: cancelModalConfirm,
+    name: 'cancelModalConfirm',
   },
 ]

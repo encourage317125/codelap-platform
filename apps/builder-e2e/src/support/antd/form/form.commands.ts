@@ -38,7 +38,7 @@ import {
 
 export const getFormFieldLabel = (
   subject: any,
-  { label, ...options }: FormFieldOptions & CommonOptions,
+  { label, ...options }: CommonOptions & FormFieldOptions,
 ): Cypress.Chainable<any> => {
   const opts = logAndMute('getFormFieldLabel', label, options)
 
@@ -53,7 +53,7 @@ export const getFormFieldLabel = (
 
 export const getFormField = (
   subject: any,
-  { label, ...options }: FormFieldOptions & CommonOptions = {},
+  { label, ...options }: CommonOptions & FormFieldOptions = {},
 ): Cypress.Chainable<any> => {
   const opts = logAndMute('getFormField', label, options)
 
@@ -71,7 +71,7 @@ export const getFormInput = (
     label,
     type = FIELD_TYPE.INPUT,
     ...options
-  }: FormInputOptions & CommonOptions = {},
+  }: CommonOptions & FormInputOptions = {},
 ) => {
   const opts = logAndMute(
     'getFormInput',
@@ -147,12 +147,12 @@ export const expectSelectPlaceholder =
 
 export const expectFormFieldValue = ({
   label,
-  type = FIELD_TYPE.INPUT,
-  value,
   placeholder,
   scrollIntoView = true,
+  type = FIELD_TYPE.INPUT,
+  value,
   ...options
-}: FormFieldValueOptions & CommonOptions) => {
+}: CommonOptions & FormFieldValueOptions) => {
   const shouldExpectValue = Boolean(
     (!isObject(value) || !isEmpty(value)) && (isNumber(value) || value),
   )
@@ -243,7 +243,7 @@ export const expectFormFieldError = ({
   error: expectedHint,
   label,
   ...options
-}: { error?: string } & FormFieldOptions & CommonOptions) => {
+}: CommonOptions & FormFieldOptions & { error?: string }) => {
   const opts = logAndMute(
     'expectFieldError',
     `${label}: ${expectedHint}`,
@@ -270,25 +270,25 @@ export const expectFormFields = (
     | Array<FormFieldValueOrErrorOptions>
     | Record<string, FormFieldValueOrErrorOptions>,
   {
-    values,
     errors,
+    values,
     ...options
-  }: (
-    | {
-        values?: Array<string | number | Array<string>>
-        errors?: Array<string>
-      }
-    | {
-        values?: Record<string, string | number | Array<string>>
-        errors?: Record<string, string>
-      }
-  ) &
-    CommonOptions = {},
+  }: CommonOptions &
+    (
+      | {
+          errors?: Array<string>
+          values?: Array<Array<string> | number | string>
+        }
+      | {
+          errors?: Record<string, string>
+          values?: Record<string, Array<string> | number | string>
+        }
+    ) = {},
 ) => {
-  const mergedFields = mergeFields(fields, { value: values, error: errors })
-  forEach(mergedFields, ({ value, placeholder, error, ...fieldSelector }) => {
+  const mergedFields = mergeFields(fields, { error: errors, value: values })
+  forEach(mergedFields, ({ error, placeholder, value, ...fieldSelector }) => {
     if (!isUndefined(value) || !isUndefined(placeholder)) {
-      expectFormFieldValue({ ...options, value, placeholder, ...fieldSelector })
+      expectFormFieldValue({ ...options, placeholder, value, ...fieldSelector })
     }
 
     if (error) {
@@ -300,7 +300,7 @@ export const expectFormFields = (
 export const expectFormFieldsFn =
   (
     fields: ExpectFormFieldsArgs[0],
-    options: Omit<ExpectFormFieldsArgs[1], 'values' | 'errors'>,
+    options: Omit<ExpectFormFieldsArgs[1], 'errors' | 'values'>,
   ) =>
   (
     values: NonNullable<ExpectFormFieldsArgs[1]>['values'],
@@ -308,8 +308,8 @@ export const expectFormFieldsFn =
   ) =>
     expectFormFields(fields, {
       ...options,
-      values,
       errors,
+      values,
     } as ExpectFormFieldsArgs[1])
 
 export const getSelectDropdown = (options?: CommonOptions) =>
@@ -347,7 +347,7 @@ export const setInputValue =
   (
     subject: any,
     value: string,
-    { append, ...options }: { append?: boolean } & CommonOptions = {},
+    { append, ...options }: CommonOptions & { append?: boolean } = {},
   ) =>
   ($el: JQuery) => {
     if (value) {
@@ -366,7 +366,7 @@ export const setSelectValue =
     {
       scrollTo,
       ...options
-    }: { scrollTo?: ScrollPosition } & TickOptions & CommonOptions = {},
+    }: CommonOptions & TickOptions & { scrollTo?: ScrollPosition } = {},
   ) =>
   ($el: JQuery) => {
     if (value) {
@@ -409,11 +409,11 @@ export const setMultiselectValue =
       append,
       scrollTo: scrollTos,
       ...options
-    }: {
-      append?: boolean
-      scrollTo?: ScrollPosition | Array<ScrollPosition>
-    } & TickOptions &
-      CommonOptions = {},
+    }: CommonOptions &
+      TickOptions & {
+        append?: boolean
+        scrollTo?: Array<ScrollPosition> | ScrollPosition
+      } = {},
   ) =>
   ($el: JQuery) => {
     if (!append) {
@@ -451,7 +451,7 @@ export const setTagsValue =
     {
       append,
       ...options
-    }: { append?: boolean } & TickOptions & CommonOptions = {},
+    }: CommonOptions & TickOptions & { append?: boolean } = {},
   ) =>
   ($el: JQuery) => {
     if (!append) {
@@ -509,7 +509,7 @@ export const setFormFieldValue = (
     type = FIELD_TYPE.INPUT,
     value,
     ...options
-  }: FormFieldValueOptions & CommonOptions,
+  }: CommonOptions & FormFieldValueOptions,
 ) => {
   const opts = logAndMute('setFieldValue', `${label}: ${value}`, options)
   const getField = () => getFormField(subject, { label, ...opts })
@@ -523,8 +523,8 @@ export const setFormFieldValue = (
         view.dispatch({
           changes: {
             from: 0,
-            to: view.state.doc.length,
             insert: String(value),
+            to: view.state.doc.length,
           },
         })
       })
@@ -616,11 +616,11 @@ export const setFormFieldValues = (
   {
     values,
     ...options
-  }: {
+  }: CommonOptions & {
     values?:
-      | Array<string | number | Array<string>>
-      | Record<string, string | number | Array<string>>
-  } & CommonOptions = {},
+      | Array<Array<string> | number | string>
+      | Record<string, Array<string> | number | string>
+  } = {},
 ) => {
   const mergedFields = mergeFields(fields, { value: values })
   forEach(mergedFields, (field) => {

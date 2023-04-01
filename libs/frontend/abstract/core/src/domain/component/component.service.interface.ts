@@ -1,12 +1,10 @@
 import type {
   ComponentOptions,
-  ComponentUpdateInput,
   ComponentWhere,
 } from '@codelab/shared/abstract/codegen'
 import type { Maybe } from '@codelab/shared/abstract/types'
 import type { ObjectMap, Ref } from 'mobx-keystone'
 import type {
-  ICacheService,
   ICRUDModalService,
   ICRUDService,
   IQueryService,
@@ -14,33 +12,21 @@ import type {
 import type { IBuilderDataNode } from '../../ui'
 import type {
   IComponentDTO,
-  ICreateComponentDTO,
-  IUpdateComponentDTO,
+  ICreateComponentData,
+  IUpdateComponentData,
 } from './component.dto.interface'
 import type { IComponent } from './component.model.interface'
-import type { RenderedComponentFragment } from './component-render.fragment.graphql.gen'
+import type { IComponentRepository } from './component.repo.interface'
 
 export interface IComponentService
-  extends ICRUDService<IComponent, ICreateComponentDTO, IUpdateComponentDTO>,
+  extends ICRUDService<IComponent, ICreateComponentData, IUpdateComponentData>,
     IQueryService<IComponent, ComponentWhere, ComponentOptions>,
-    ICRUDModalService<Ref<IComponent>, { component: Maybe<IComponent> }>,
-    ICacheService<IComponentDTO, IComponent> {
-  components: ObjectMap<IComponent>
+    ICRUDModalService<Ref<IComponent>, { component: Maybe<IComponent> }> {
   clonedComponents: ObjectMap<IComponent>
-  componentList: Array<IComponent>
-  component(id: string): Maybe<IComponent>
   componentAntdNode: IBuilderDataNode
-  patchComponent(
-    component: IComponent,
-    input: ComponentUpdateInput,
-  ): Promise<IComponent>
-  /**
-term: Rendered. Everything with these terms requires to load dependencies of elementTree to be functional:
-component
-  rootElement
-    decendantElements
-   */
-  loadRenderedComponentsTree(
-    renderedComponentFragments: Array<RenderedComponentFragment>,
-  ): void
+  componentList: Array<IComponent>
+  componentRepository: IComponentRepository
+  components: ObjectMap<IComponent>
+
+  add(componentDTO: IComponentDTO): IComponent
 }

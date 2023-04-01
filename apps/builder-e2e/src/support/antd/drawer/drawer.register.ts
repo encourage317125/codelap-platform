@@ -9,37 +9,37 @@ import {
 } from './drawer.command'
 
 export interface AntDrawerCommands {
-  getDrawer: typeof getDrawer
-  getDrawerTitle: typeof getDrawerTitle
   closeDrawer: typeof closeDrawer
   expectDrawerTitle: typeof expectDrawerTitle
-  expectDrawerToOpen: typeof expectDrawerToOpen
   expectDrawerToClose: typeof expectDrawerToClose
+  expectDrawerToOpen: typeof expectDrawerToOpen
+  getDrawer: typeof getDrawer
+  getDrawerTitle: typeof getDrawerTitle
 }
 
 export const antDrawerCommands: Array<CypressCommand> = [
   {
-    name: 'getDrawer',
     fn: getDrawer,
+    name: 'getDrawer',
   },
   {
-    name: 'getDrawerTitle',
     fn: getDrawerTitle,
+    name: 'getDrawerTitle',
   },
   {
-    name: 'closeDrawer',
     fn: closeDrawer,
+    name: 'closeDrawer',
   },
   {
-    name: 'expectDrawerTitle',
     fn: expectDrawerTitle,
+    name: 'expectDrawerTitle',
   },
   {
-    name: 'expectDrawerToOpen',
     fn: expectDrawerToOpen,
+    name: 'expectDrawerToOpen',
   },
   {
-    name: 'expectDrawerToClose',
     fn: expectDrawerToClose,
+    name: 'expectDrawerToClose',
   },
 ]

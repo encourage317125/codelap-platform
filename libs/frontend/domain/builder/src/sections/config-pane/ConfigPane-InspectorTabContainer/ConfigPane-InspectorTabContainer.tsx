@@ -8,10 +8,14 @@ import {
 } from '@ant-design/icons'
 import type {
   IElementTree,
-  INode,
+  IPageNodeRef,
   IRenderer,
 } from '@codelab/frontend/abstract/core'
-import { isComponent, isElement } from '@codelab/frontend/abstract/core'
+import {
+  isComponentPageNodeRef,
+  isElementPageNodeRef,
+} from '@codelab/frontend/abstract/core'
+import { isAtomInstance } from '@codelab/frontend/domain/atom'
 import { UpdateComponentPropsForm } from '@codelab/frontend/domain/component'
 import {
   ElementCssEditor,
@@ -40,18 +44,19 @@ import { TAB_NAMES } from './data'
 export interface MetaPaneBuilderProps {
   elementTree: Maybe<IElementTree>
   renderService?: Maybe<IRenderer>
-  UpdateElementContent: (props: {
-    node: INode
+
+  UpdateElementContent(props: {
+    node: IPageNodeRef
     trackPromises: UseTrackLoadingPromises
-  }) => React.ReactElement | null
+  }): React.ReactElement | null
 }
 
 interface TooltipIconProps {
-  title: string
   icon: ReactNode
+  title: string
 }
 
-const TooltipIcon = ({ title, icon }: TooltipIconProps) => {
+const TooltipIcon = ({ icon, title }: TooltipIconProps) => {
   return (
     <Tooltip
       css={css`
@@ -67,7 +72,7 @@ const TooltipIcon = ({ title, icon }: TooltipIconProps) => {
 }
 
 export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
-  ({ UpdateElementContent, elementTree, renderService }) => {
+  ({ elementTree, renderService, UpdateElementContent }) => {
     const { builderService, elementService, pageService } = useStore()
     const selectedNode = builderService.selectedNode
     const trackPromises = useTrackLoadingPromises()
@@ -76,16 +81,14 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
       return <Spin />
     }
 
-    const autocomplete = renderService?.state
+    // FIXME:
+    // const autocomplete = renderService?.state
+    const autocomplete = {}
     const allowExpressions = true
-    const appStore = renderService?.appStore.current
+    //  const appStore = renderService?.appStore.current
 
     const tabItems = [
       {
-        key: TAB_NAMES.Node,
-        label: (
-          <TooltipIcon icon={<NodeIndexOutlined />} title={TAB_NAMES.Node} />
-        ),
         children: (
           <UpdateElementContent
             key={selectedNode.id}
@@ -93,21 +96,20 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
             trackPromises={trackPromises}
           />
         ),
+        key: TAB_NAMES.Node,
+        label: (
+          <TooltipIcon icon={<NodeIndexOutlined />} title={TAB_NAMES.Node} />
+        ),
       },
       {
-        key: TAB_NAMES.Props,
-        label: (
-          <TooltipIcon icon={<SettingOutlined />} title={TAB_NAMES.Props} />
-        ),
         children: (
           <div key={selectedNode.id}>
-            {isElement(selectedNode) &&
-            (selectedNode.atom || selectedNode.renderComponentType) ? (
+            {isElementPageNodeRef(selectedNode) &&
+            selectedNode.current.renderType ? (
               <FormContextProvider
                 value={{
-                  autocomplete,
-                  appStore,
                   allowExpressions,
+                  autocomplete,
                   elementTree,
                 }}
               >
@@ -116,9 +118,9 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
                   trackPromises={trackPromises}
                 />
               </FormContextProvider>
-            ) : isComponent(selectedNode) ? (
+            ) : isComponentPageNodeRef(selectedNode) ? (
               <UpdateComponentPropsForm
-                component={selectedNode}
+                component={selectedNode.current}
                 trackPromises={trackPromises}
               />
             ) : (
@@ -126,16 +128,17 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
             )}
           </div>
         ),
+        key: TAB_NAMES.Props,
+        label: (
+          <TooltipIcon icon={<SettingOutlined />} title={TAB_NAMES.Props} />
+        ),
       },
       {
-        key: TAB_NAMES.CSS,
-        label: (
-          <TooltipIcon icon={<FormatPainterOutlined />} title={TAB_NAMES.CSS} />
-        ),
         children:
-          isElement(selectedNode) && selectedNode.atom ? (
+          isElementPageNodeRef(selectedNode) &&
+          isAtomInstance(selectedNode.current.renderType) ? (
             <ElementCssEditor
-              element={selectedNode}
+              element={selectedNode.current}
               elementService={elementService}
               key={selectedNode.id}
               trackPromises={trackPromises}
@@ -143,15 +146,12 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
           ) : (
             `Add an atom to this page element to edit its CSS`
           ),
+        key: TAB_NAMES.CSS,
+        label: (
+          <TooltipIcon icon={<FormatPainterOutlined />} title={TAB_NAMES.CSS} />
+        ),
       },
       {
-        key: TAB_NAMES.PropsInspector,
-        label: (
-          <TooltipIcon
-            icon={<CodeOutlined />}
-            title={TAB_NAMES.PropsInspector}
-          />
-        ),
         children: renderService && (
           <PropsInspectorTab
             key={selectedNode.id}
@@ -159,8 +159,23 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
             renderer={renderService}
           />
         ),
+        key: TAB_NAMES.PropsInspector,
+        label: (
+          <TooltipIcon
+            icon={<CodeOutlined />}
+            title={TAB_NAMES.PropsInspector}
+          />
+        ),
       },
       {
+        children: isElementPageNodeRef(selectedNode) ? (
+          <UpdateElementPropTransformationForm
+            element={selectedNode.current}
+            elementService={elementService}
+            key={selectedNode.id}
+            trackPromises={trackPromises}
+          />
+        ) : null,
         key: TAB_NAMES.PropsTransformation,
         label: (
           <TooltipIcon
@@ -168,24 +183,13 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
             title={TAB_NAMES.PropsTransformation}
           />
         ),
-        children: isElement(selectedNode) ? (
-          <UpdateElementPropTransformationForm
-            element={selectedNode}
-            elementService={elementService}
-            key={selectedNode.id}
-            trackPromises={trackPromises}
-          />
-        ) : null,
       },
       {
-        key: TAB_NAMES.Page,
-        label: <TooltipIcon icon={<FileOutlined />} title={TAB_NAMES.Page} />,
         children: (
           <FormContextProvider
             value={{
-              autocomplete,
-              appStore,
               allowExpressions,
+              autocomplete,
               elementTree,
             }}
           >
@@ -195,6 +199,8 @@ export const ConfigPaneInspectorTabContainer = observer<MetaPaneBuilderProps>(
             />
           </FormContextProvider>
         ),
+        key: TAB_NAMES.Page,
+        label: <TooltipIcon icon={<FileOutlined />} title={TAB_NAMES.Page} />,
       },
     ]
 

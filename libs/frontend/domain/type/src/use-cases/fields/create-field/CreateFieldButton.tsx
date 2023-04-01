@@ -9,12 +9,12 @@ import type { InterfaceType } from '../../../store'
 import { typeRef } from '../../../store'
 
 export interface CreateFieldButtonProps {
-  interfaceId?: string
   fieldService: IFieldService
+  interfaceId?: string
 }
 
 export const CreateFieldButton = observer<CreateFieldButtonProps>(
-  ({ interfaceId, fieldService }) => {
+  ({ fieldService, interfaceId }) => {
     return interfaceId ? (
       <Button
         css={tw`flex justify-center items-center`}
@@ -26,7 +26,9 @@ export const CreateFieldButton = observer<CreateFieldButtonProps>(
           )
         }}
         size="small"
-      />
+      >
+        Field
+      </Button>
     ) : null
   },
 )

@@ -1,4 +1,5 @@
 import type { ExportAppData, IAppExport } from '@codelab/backend/abstract/core'
+import { AbstractRepository } from '@codelab/backend/abstract/types'
 import { exportActions, importActions } from '@codelab/backend/domain/action'
 import { createComponent } from '@codelab/backend/domain/component'
 import {
@@ -7,30 +8,109 @@ import {
 } from '@codelab/backend/domain/element'
 import { getPageData } from '@codelab/backend/domain/page'
 import {
+  appSelectionSet,
   pageSelectionSet,
   Repository,
 } from '@codelab/backend/infra/adapter/neo4j'
+import type { IAppDTO, IAuth0Owner } from '@codelab/frontend/abstract/core'
 import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
-import { connectNodeId, connectOwner } from '@codelab/shared/domain/mapper'
-import { cLog } from '@codelab/shared/utils'
+import {
+  connectAuth0Owner,
+  connectNodeId,
+  connectNodeIds,
+  reconnectNodeId,
+  reconnectNodeIds,
+} from '@codelab/shared/domain/mapper'
+import { cLog, createUniqueName } from '@codelab/shared/utils'
 import omit from 'lodash/omit'
 import { validate } from './validate'
 
-export const createApp = async (app: IAppExport, userId: string) => {
+export class AppRepository extends AbstractRepository<
+  IAppDTO,
+  OGM_TYPES.App,
+  OGM_TYPES.AppWhere
+> {
+  private App = Repository.instance.App
+
+  async find(where: OGM_TYPES.AppWhere = {}) {
+    return await (
+      await this.App
+    ).find({
+      selectionSet: appSelectionSet,
+      where,
+    })
+  }
+
+  /**
+   * We only deal with connecting/disconnecting relationships, actual items should exist already
+   */
+  protected async _add(apps: Array<IAppDTO>) {
+    return (
+      await (
+        await this.App
+      ).create({
+        input: apps.map(({ id, name, owner, pages }) => ({
+          _compoundName: createUniqueName(name, owner.auth0Id),
+          id,
+          owner: connectAuth0Owner(owner),
+          pages: connectNodeIds(pages?.map((page) => page.id)),
+        })),
+      })
+    ).apps
+  }
+
+  protected async _update(
+    { name, owner, pages }: IAppDTO,
+    where: OGM_TYPES.AppWhere,
+  ) {
+    return (
+      await (
+        await this.App
+      ).update({
+        update: {
+          _compoundName: createUniqueName(name, owner.auth0Id),
+          pages: reconnectNodeIds(pages?.map((page) => page.id)).map(
+            (input) => ({
+              ...input,
+              // overriding disconnect from reconnectNodeIds because it disconnects everythin
+              // including the pages connected in previous items of the input array. This causes
+              // the transaction to register only the last page being connected in the input array
+              // TODO: Check it it's the case for other places using reconnectNodeIds and if so update it.
+              disconnect: [
+                {
+                  where: {
+                    NOT: {
+                      node: {
+                        id_IN: pages?.map((page) => page.id),
+                      },
+                    },
+                  },
+                },
+              ],
+            }),
+          ),
+        },
+        where,
+      })
+    ).apps[0]
+  }
+}
+
+export const createApp = async (app: IAppExport, owner: IAuth0Owner) => {
   cLog(omit(app, ['pages']))
 
   const App = await Repository.instance.App
   const { pages } = app
   await validate(pages)
 
-  for (const { elements, components } of pages) {
+  for (const { components, elements } of pages) {
     for (const element of elements) {
-      await importElementInitial(element, userId)
+      await importElementInitial(element, owner)
     }
 
     // components should be created after their root elements
     for (const component of components) {
-      await createComponent(component, userId)
+      await createComponent(component, owner)
     }
 
     for (const element of elements) {
@@ -38,7 +118,7 @@ export const createApp = async (app: IAppExport, userId: string) => {
     }
   }
 
-  const pagesData = app.pages.map(({ elements, components, ...props }) => ({
+  const pagesData = app.pages.map(({ components, elements, ...props }) => ({
     ...props,
   }))
 
@@ -53,12 +133,11 @@ export const createApp = async (app: IAppExport, userId: string) => {
   if (existing.length) {
     console.log('Deleting app/pages before re-creating...')
     await App.delete({
-      where: {
-        id: app.id,
-      },
       delete: {
         pages: [{ where: {} }],
-        store: { where: {} },
+      },
+      where: {
+        id: app.id,
       },
     })
   }
@@ -70,37 +149,19 @@ export const createApp = async (app: IAppExport, userId: string) => {
   } = await App.create({
     input: [
       {
+        _compoundName: createUniqueName(app.name, owner.auth0Id),
         id: app.id,
-        name: app.name,
-        owner: connectOwner(userId),
-        store: {
-          create: {
-            node: {
-              id: app.store.id,
-              name: app.store.name,
-              // api: connectNodeId(app.store.api.id),
-              api: {
-                create: {
-                  node: {
-                    id: app.store.api.id,
-                    name: `${app.store.name} API`,
-                    owner: connectOwner(userId),
-                  },
-                },
-              },
-            },
-          },
-        },
+        owner: connectAuth0Owner(owner),
         pages: {
           create: app.pages.map((page) => ({
             node: {
+              _compoundName: createUniqueName(page.name, app.id),
               id: page.id,
-              name: page.name,
-              rootElement: connectNodeId(page.rootElement.id),
               kind: page.kind,
-              pageContainerElement: page.pageContainerElement?.id
-                ? connectNodeId(page.pageContainerElement.id)
+              pageContentContainer: page.pageContentContainer?.id
+                ? connectNodeId(page.pageContentContainer.id)
                 : undefined,
+              rootElement: connectNodeId(page.rootElement.id),
             },
           })),
         },
@@ -110,7 +171,7 @@ export const createApp = async (app: IAppExport, userId: string) => {
 
   console.log('Creating actions...')
 
-  await importActions(app.store.actions, app.store.id)
+  // await importActions(app.store.actions, app.store.id)
 
   return importedApp
 }
@@ -120,29 +181,28 @@ export const createApp = async (app: IAppExport, userId: string) => {
  */
 export const getApp = async (app: OGM_TYPES.App): Promise<ExportAppData> => {
   const Page = await Repository.instance.Page
-  const actions = await exportActions(app.store.id)
 
   const pages = await Page.find({
-    where: { app: { id: app.id } },
     selectionSet: pageSelectionSet,
+    where: { app: { id: app.id } },
   })
 
   const pagesData = await Promise.all(
     pages.map(async (page) => {
-      const { elements, components } = await getPageData(page)
-      const { id, name, kind, rootElement, pageContainerElement } = page
+      const { components, elements } = await getPageData(page)
+      const { id, kind, name, pageContentContainer, rootElement } = page
 
       return {
+        components,
+        elements,
         id: id,
-        name: name,
         kind: kind,
+        name: name,
         rootElement: {
           id: rootElement.id,
           name: rootElement.name,
         },
-        elements,
-        components,
-        ...(pageContainerElement ? { pageContainerElement } : {}),
+        ...(pageContentContainer ? { pageContentContainer } : {}),
       }
     }),
   )
@@ -151,7 +211,6 @@ export const getApp = async (app: OGM_TYPES.App): Promise<ExportAppData> => {
     app: {
       ...app,
       pages: pagesData,
-      store: { ...app.store, actions },
     },
   }
 }

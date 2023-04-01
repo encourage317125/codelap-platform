@@ -9,13 +9,12 @@ import { StoreProvider } from '@codelab/frontend/presenter/container'
 import React, { useMemo } from 'react'
 import { GlobalStyles } from 'twin.macro'
 
-const App = ({ pageProps, Component }: IAppProps<IPageProps>) => {
+const App = ({ Component, pageProps }: IAppProps<IPageProps>) => {
   const store = useMemo(() => initializeStore(pageProps), [])
 
   return (
     <StoreProvider value={store}>
       <GlobalStyles />
-
       <Component
         // eslint-disable-next-line react/jsx-props-no-spreading
         {...pageProps}

@@ -1,5 +1,6 @@
-import type { ExportedData } from '@codelab/backend/abstract/core'
-import { importUserData } from '@codelab/backend/data'
+import type { IUserDataExport } from '@codelab/backend/abstract/core'
+import { ImportAdminDataService } from '@codelab/backend/application/admin'
+import { importUserData } from '@codelab/backend/application/user'
 import { Repository } from '@codelab/backend/infra/adapter/neo4j'
 import fs from 'fs'
 import inquirer from 'inquirer'
@@ -18,7 +19,6 @@ import {
 } from '../../shared/path-args'
 import { selectUserPrompt } from '../../shared/prompts/selectUser'
 import { Stage } from '../../shared/utils/stage'
-import { importSeedData } from './import-seed-data'
 
 type ImportProps = ExportProps & {
   email?: string
@@ -30,8 +30,6 @@ type ImportProps = ExportProps & {
  * User data includes apps, user type, resources
  */
 export const importCommand: CommandModule<ImportProps, ImportProps> = {
-  command: 'import',
-  describe: 'Import user data',
   builder: (argv) =>
     argv
       .options({
@@ -43,23 +41,19 @@ export const importCommand: CommandModule<ImportProps, ImportProps> = {
         ...getStageOptions([Stage.Dev, Stage.Test]),
       })
       .middleware([loadStageMiddleware, upsertUserMiddleware]),
+  command: 'import',
+  describe: 'Import user data',
   // https://stackoverflow.com/questions/63912968/where-can-i-find-documentation-for-builder-in-yargs-npm
   /**
    *
    * @param file File for the user data
    */
-  handler: async ({
-    email,
-    seedDataPath,
-    userDataPath,
-    skipSeedData,
-    skipUserData,
-  }) => {
+  handler: async ({ email, seedDataPath, skipSeedData, skipUserData }) => {
     const User = await Repository.instance.User
 
-    const selectedUserId = email
-      ? (await User.find({ where: { email } }))[0]?.id
-      : (await inquirer.prompt([await selectUserPrompt()])).selectedUserId
+    const selectedAuth0Id = email
+      ? (await User.find({ where: { email } }))[0]?.auth0Id
+      : (await inquirer.prompt([await selectUserPrompt()])).selectedAuth0Id
 
     const shouldSkipSeedData: boolean =
       skipSeedData !== undefined
@@ -67,10 +61,10 @@ export const importCommand: CommandModule<ImportProps, ImportProps> = {
         : !(
             await inquirer.prompt([
               {
-                type: 'confirm',
-                name: 'confirm',
                 default: false,
                 message: 'Would you like to import seed data?',
+                name: 'confirm',
+                type: 'confirm',
               },
             ])
           ).confirm
@@ -81,10 +75,10 @@ export const importCommand: CommandModule<ImportProps, ImportProps> = {
         : !(
             await inquirer.prompt([
               {
-                type: 'confirm',
-                name: 'confirm',
                 default: false,
                 message: 'Would you like to import user data?',
+                name: 'confirm',
+                type: 'confirm',
               },
             ])
           ).confirm
@@ -93,21 +87,7 @@ export const importCommand: CommandModule<ImportProps, ImportProps> = {
      * Seed atoms & types for the project
      */
     if (!shouldSkipSeedData) {
-      const inputFilePath =
-        seedDataPath !== undefined
-          ? seedDataPath
-          : (
-              await inquirer.prompt([
-                {
-                  type: 'input',
-                  name: 'inputFilePath',
-                  message: 'Enter a path to import from, relative to ./',
-                  default: './data/seed-data.json',
-                },
-              ])
-            ).inputFilePath
-
-      await importSeedData(selectedUserId, inputFilePath)
+      await new ImportAdminDataService().execute({ auth0Id: selectedAuth0Id })
     }
 
     // If we specified a file for import
@@ -118,9 +98,9 @@ export const importCommand: CommandModule<ImportProps, ImportProps> = {
           : (
               await inquirer.prompt([
                 {
-                  type: 'input',
-                  name: 'inputFilePath',
                   message: 'Enter a path to import from, relative to ./',
+                  name: 'inputFilePath',
+                  type: 'input',
                 },
               ])
             ).inputFilePath
@@ -130,8 +110,8 @@ export const importCommand: CommandModule<ImportProps, ImportProps> = {
         'utf8',
       )
 
-      const data = JSON.parse(json) as ExportedData
-      await importUserData(data, selectedUserId)
+      const userData = JSON.parse(json) as IUserDataExport
+      await importUserData(userData, { auth0Id: selectedAuth0Id })
     }
 
     yargs.exit(0, null!)

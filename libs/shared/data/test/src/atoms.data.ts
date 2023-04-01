@@ -1,59 +1,42 @@
-import type { IAtomExport } from '@codelab/backend/abstract/core'
-import { IAtomType } from '@codelab/shared/abstract/core'
-import { getApiName } from '@codelab/shared/domain/mapper'
+import type {
+  IAtomDTO,
+  IAuth0Owner,
+  IInterfaceTypeDTO,
+} from '@codelab/frontend/abstract/core'
+import { IAtomType, ITypeKind } from '@codelab/shared/abstract/core'
 import { v4 } from 'uuid'
 
-type CreateAtoms = (
-  atomIds?: [string, string],
-  interfaceIds?: [string, string],
-) => Array<IAtomExport>
-
-export const createAtomsData: CreateAtoms = (
-  [buttonId, textId] = [v4(), v4()],
-  [buttonInterfaceId, textInterfaceId] = [v4(), v4()],
-) => [
-  {
-    id: buttonId,
-    name: IAtomType.AntDesignButton,
-    type: IAtomType.AntDesignButton,
-    api: {
-      id: buttonInterfaceId,
-      name: getApiName(IAtomType.AntDesignButton),
-    },
-    tags: [],
-    allowedChildren: [],
-  },
-  {
-    id: textId,
-    name: IAtomType.AntDesignTypographyText,
-    type: IAtomType.AntDesignTypographyText,
-    api: {
-      id: textInterfaceId,
-      name: getApiName(IAtomType.AntDesignTypographyText),
-    },
-    tags: [],
-    allowedChildren: [],
-  },
-  {
-    id: v4(),
-    name: IAtomType.AntDesignGridCol,
-    type: IAtomType.AntDesignGridCol,
-    api: {
-      id: v4(),
-      name: getApiName(IAtomType.AntDesignGridCol),
-    },
-    tags: [],
-    allowedChildren: [],
-  },
-  {
-    id: v4(),
-    name: IAtomType.AntDesignGridRow,
-    type: IAtomType.AntDesignGridRow,
-    api: {
-      id: v4(),
-      name: getApiName(IAtomType.AntDesignGridRow),
-    },
-    tags: [],
-    allowedChildren: [],
-  },
+const atomTypes = [
+  IAtomType.AntDesignButton,
+  IAtomType.AntDesignTypographyText,
+  IAtomType.AntDesignGridCol,
+  IAtomType.AntDesignGridRow,
+  IAtomType.AntDesignSpace,
+  IAtomType.AntDesignCard,
+  IAtomType.AntDesignInput,
 ]
+
+export const createAtomsData = (owner: IAuth0Owner): Array<IAtomDTO> =>
+  atomTypes.map((atomType) => ({
+    api: {
+      id: v4(),
+    },
+    id: v4(),
+    name: atomType,
+    owner,
+    requiredParents: [],
+    suggestedChildren: [],
+    tags: [],
+    type: atomType,
+  }))
+
+export const createAtomsApiData = (
+  atomsData: Array<IAtomDTO>,
+): Array<IInterfaceTypeDTO> =>
+  atomsData.map((atom) => ({
+    fields: [],
+    id: atom.api.id,
+    kind: ITypeKind.InterfaceType,
+    name: `${atom.name} API`,
+    owner: atom.owner,
+  }))

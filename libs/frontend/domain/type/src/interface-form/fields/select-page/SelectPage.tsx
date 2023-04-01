@@ -1,27 +1,23 @@
 import type { UniformSelectFieldProps } from '@codelab/shared/abstract/types'
+import { useAsync, useMountEffect } from '@react-hookz/web'
 import { useRouter } from 'next/router'
 import React from 'react'
-import { useAsync } from 'react-use'
 import { SelectField } from 'uniforms-antd'
 import { interfaceFormApi } from '../../../store'
 
 export type SelectPageProps = UniformSelectFieldProps
 
-export const SelectPage = ({ name, error }: SelectPageProps) => {
+export const SelectPage = ({ error, name }: SelectPageProps) => {
   const router = useRouter()
   const appId = router.query.appId
 
-  const {
-    value,
-    loading,
-    error: queryError,
-  } = useAsync(
-    () =>
-      interfaceFormApi.InterfaceForm_GetPages({
-        where: { appConnection: { node: { id: appId as string } } },
-      }),
-    [],
+  const [{ error: queryError, result, status }, getPages] = useAsync(() =>
+    interfaceFormApi.InterfaceForm_GetPages({
+      where: { appConnection: { node: { id: appId as string } } },
+    }),
   )
+
+  useMountEffect(getPages.execute)
 
   if (!appId) {
     console.warn('SelectPage: appId is not defined')
@@ -30,7 +26,7 @@ export const SelectPage = ({ name, error }: SelectPageProps) => {
   }
 
   const pageOptions =
-    value?.pages.map((page) => ({
+    result?.pages.map((page) => ({
       label: page.name,
       value: page.id,
     })) ?? []
@@ -40,7 +36,7 @@ export const SelectPage = ({ name, error }: SelectPageProps) => {
       error={error || queryError}
       getPopupContainer={(triggerNode) => triggerNode.parentElement}
       label="Page"
-      loading={loading}
+      loading={status === 'loading'}
       name={name}
       optionFilterProp="label"
       options={pageOptions}

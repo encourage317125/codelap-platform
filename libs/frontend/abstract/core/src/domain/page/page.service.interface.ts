@@ -1,5 +1,4 @@
 import type {
-  GetRenderedPageAndCommonAppDataQuery,
   GetRenderedPageQuery,
   PageOptions,
   PageWhere,
@@ -7,33 +6,34 @@ import type {
 import type { Maybe } from '@codelab/shared/abstract/types'
 import type { ObjectMap, Ref } from 'mobx-keystone'
 import type {
-  ICacheService,
   ICRUDModalService,
   ICRUDService,
   IQueryService,
 } from '../../service'
+import type { IApp } from '../app'
 import type {
-  ICreatePageDTO,
+  ICreatePageData,
   IPageDTO,
-  IUpdatePageDTO,
+  IUpdatePageData,
 } from './page.dto.interface'
 import type { IPage } from './page.model.interface'
+import type { IPageRepository } from './page.repo.interface'
+
+export interface IPageFactory {
+  addSystemPages(app: Pick<IApp, 'id' | 'owner'>): Array<IPage>
+}
 
 export interface IPageService
-  extends ICRUDService<IPage, ICreatePageDTO, IUpdatePageDTO>,
+  extends ICRUDService<IPage, ICreatePageData, IUpdatePageData>,
     IQueryService<IPage, PageWhere, PageOptions>,
-    ICRUDModalService<Ref<IPage>, { page: Maybe<IPage> }>,
-    ICacheService<IPageDTO, IPage> {
-  /**
-   * Properties
-   */
+    ICRUDModalService<Ref<IPage>, { page: Maybe<IPage> }> {
+  pageFactory: IPageFactory
+  pageRepository: IPageRepository
   pages: ObjectMap<IPage>
   pagesList: Array<IPage>
+
+  add(pageDTO: IPageDTO): IPage
+  getRenderedPage(pageId: string): Promise<GetRenderedPageQuery>
   page(id: string): Maybe<IPage>
   pagesByApp(appId: string): Array<IPage>
-  getRenderedPage(pageId: string): Promise<GetRenderedPageQuery>
-  getRenderedPageAndCommonAppData(
-    appId: string,
-    pageId: string,
-  ): Promise<GetRenderedPageAndCommonAppDataQuery>
 }

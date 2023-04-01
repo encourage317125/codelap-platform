@@ -3,25 +3,25 @@ import { getPopover, hidePopover, showPopover } from './popover.command'
 
 export interface AntPopoverCommands {
   getPopover: typeof getPopover
-  showPopover: typeof showPopover
   hidePopover: typeof hidePopover
+  showPopover: typeof showPopover
 }
 
 export const antPopoverCommands: Array<CypressCommand> = [
   {
-    name: 'getPopover',
     fn: getPopover,
+    name: 'getPopover',
   },
   {
-    name: 'showPopover',
     fn: showPopover,
+    name: 'showPopover',
     options: {
       prevSubject: 'element' as any,
     },
   },
   {
-    name: 'hidePopover',
     fn: hidePopover,
+    name: 'hidePopover',
     options: {
       prevSubject: 'element' as any,
     },

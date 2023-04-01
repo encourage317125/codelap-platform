@@ -7,27 +7,27 @@ import {
 } from './popconfirm.command'
 
 export interface AntPopconfirmCommands {
-  getPopconfirm: typeof getPopconfirm
-  expectPopconfirm: typeof expectPopconfirm
-  confirmPopconfirm: typeof confirmPopconfirm
   cancelPopconfirm: typeof cancelPopconfirm
+  confirmPopconfirm: typeof confirmPopconfirm
+  expectPopconfirm: typeof expectPopconfirm
+  getPopconfirm: typeof getPopconfirm
 }
 
 export const antPopconfirmCommands: Array<CypressCommand> = [
   {
-    name: 'getPopconfirm',
     fn: getPopconfirm,
+    name: 'getPopconfirm',
   },
   {
-    name: 'expectPopconfirm',
     fn: expectPopconfirm,
+    name: 'expectPopconfirm',
   },
   {
-    name: 'confirmPopconfirm',
     fn: confirmPopconfirm,
+    name: 'confirmPopconfirm',
   },
   {
-    name: 'cancelPopconfirm',
     fn: cancelPopconfirm,
+    name: 'cancelPopconfirm',
   },
 ]

@@ -1,21 +1,28 @@
-import type { IEntity, Nullable } from '@codelab/shared/abstract/types'
+import type { Nullable } from '@codelab/shared/abstract/types'
 import type { ObjectMap } from 'mobx-keystone'
 import type { IElementTree } from '../element'
-import type { IStore } from '../store'
 import type { IBuilderService } from './builder.service.interface'
 import type { IRenderer, RendererType } from './renderer.model.interface'
 
 export interface RendererProps {
-  pageTree: IElementTree
-  appStore: IStore
-  appTree?: Nullable<IElementTree>
+  /**
+   * This is the elementTree we are rendering, could be a page tree or a component tree
+   */
+  elementTree: IElementTree
+  // Renderer id, could be page id or component id etc
+  id: string
+  /**
+   * Optional provider tree to wrap the element tree. If we render a page we'll need this provider tree.
+   *
+   * But if we render a component, we don't need it
+   */
+  providerTree?: Nullable<IElementTree>
   rendererType: RendererType
-  set_selectedNode?: IBuilderService['set_selectedNode']
+  setSelectedNode?: IBuilderService['setSelectedNode']
 }
 
 export interface IRenderService {
   renderers: ObjectMap<IRenderer>
-  addRenderer(props: RendererProps & IEntity): Promise<IRenderer>
-  // componentService: IComponentService
-  // elementService: IElementService
+
+  addRenderer(props: RendererProps): Promise<IRenderer>
 }

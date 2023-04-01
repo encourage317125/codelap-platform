@@ -1,1 +1,1 @@
-export * from './repository.interface'
+export * from './neo4j.repo.interface'

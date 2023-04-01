@@ -13,22 +13,23 @@ import { containerStyles, editorStyles, ExpandButton } from './styles'
 
 export interface CodeMirrorInputProps
   extends Omit<ReactCodeMirrorProps, 'title'> {
-  value?: string
-  onChange: (value: string) => void
-  onSave?: (value: string) => void
   expandable?: boolean
-  singleLine?: boolean
   overrideStyles?: SerializedStyles
+  singleLine?: boolean
   title?: Nullish<string>
+  value?: string
+
+  onChange(value: string): void
+  onSave?(value: string): void
 }
 
 export const CodeMirrorInput = ({
-  value = '',
+  expandable,
   onChange,
   onSave,
-  expandable,
-  title,
   overrideStyles,
+  title,
+  value = '',
   ...props
 }: CodeMirrorInputProps) => {
   const editor = useRef<HTMLDivElement | null>(null)
@@ -50,13 +51,13 @@ export const CodeMirrorInput = ({
     merge(
       {
         ...props,
-        container: editorRef.current,
         basicSetup: false,
-        value,
-        onUpdate,
+        container: editorRef.current,
         onChange: (_value: string, view: ViewUpdate) => {
           onChange(_value)
         },
+        onUpdate,
+        value,
       },
       overWriteOpts,
     )

@@ -1,12 +1,9 @@
-import type {
-  IBuilderService,
-  IElementService,
-  INode,
-} from '@codelab/frontend/abstract/core'
+import type { IPageNode } from '@codelab/frontend/abstract/core'
 import {
-  COMPONENT_NODE_TYPE,
-  ELEMENT_NODE_TYPE,
+  isComponentPageNode,
+  isElementPageNode,
 } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presenter/container'
 import type { Nullable } from '@codelab/shared/abstract/types'
 import { Dropdown } from 'antd'
 import type { DataNode } from 'antd/lib/tree'
@@ -23,28 +20,24 @@ import { BuilderTreeItemOverlay } from './BuilderTreeItem-Overlay'
 import { ItemTitleStyle } from './ItemTitleStyle'
 
 interface BuilderTreeItemTitleProps {
-  node: INode | undefined
-  data: DataNode
-  elementContextMenuProps: Omit<ElementContextMenuProps, 'element'>
   componentContextMenuProps: Omit<ComponentContextMenuProps, 'component'>
-  elementService: IElementService
-  builderService: IBuilderService
+  data: DataNode
+  elementContextMenuProps: Omit<
+    ElementContextMenuProps,
+    'element' | 'elementTree'
+  >
+  node: IPageNode | null
 }
 
 export const BuilderTreeItemTitle = observer<BuilderTreeItemTitleProps>(
-  ({
-    node,
-    data,
-    elementContextMenuProps,
-    componentContextMenuProps,
-    elementService,
-    builderService,
-  }) => {
+  ({ componentContextMenuProps, data, elementContextMenuProps, node }) => {
+    const { builderService, elementService } = useStore()
+
     const [contextMenuItemId, setContextMenuNodeId] =
       useState<Nullable<string>>(null)
 
-    // Add CSS to disable hover if node is unselectable
-    if (node?.__nodeType === ELEMENT_NODE_TYPE) {
+    // Add CSS to disable hover if node is un-selectable
+    if (isElementPageNode(node)) {
       const element = node
 
       return (
@@ -62,8 +55,8 @@ export const BuilderTreeItemTitle = observer<BuilderTreeItemTitleProps>(
                     ...elementContextMenuProps,
                     element,
                   }}
+                  node={node}
                   setContextMenuNodeId={setContextMenuNodeId}
-                  type={ELEMENT_NODE_TYPE}
                 />
               }
               trigger={['contextMenu']}
@@ -77,7 +70,7 @@ export const BuilderTreeItemTitle = observer<BuilderTreeItemTitleProps>(
       )
     }
 
-    if (node?.__nodeType === COMPONENT_NODE_TYPE) {
+    if (isComponentPageNode(node)) {
       const component = node
 
       return (
@@ -94,8 +87,8 @@ export const BuilderTreeItemTitle = observer<BuilderTreeItemTitleProps>(
                   ...componentContextMenuProps,
                   component,
                 }}
+                node={node}
                 setContextMenuNodeId={setContextMenuNodeId}
-                type={COMPONENT_NODE_TYPE}
               />
             }
             trigger={['contextMenu']}

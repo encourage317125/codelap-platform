@@ -18,11 +18,11 @@ export const getRootElement = (
     return null
   }
 
-  const component = id ? componentService.component(id) : undefined
+  const component = componentService.components.get(id)
 
   if (!component) {
     return null
   }
 
-  return elementService.element(component.rootElementId)
+  return elementService.element(component.rootElement.id)
 }

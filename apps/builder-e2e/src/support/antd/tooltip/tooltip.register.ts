@@ -2,23 +2,23 @@ import type { CypressCommand } from '../../types'
 import { expectTooltip, getTooltip, shouldHaveTooltip } from './tooltip.command'
 
 export interface AntTooltipCommands {
-  getTooltip: typeof getTooltip
   expectTooltip: typeof expectTooltip
+  getTooltip: typeof getTooltip
   shouldHaveTooltip: typeof shouldHaveTooltip
 }
 
 export const antTooltipCommands: Array<CypressCommand> = [
   {
-    name: 'getTooltip',
     fn: getTooltip,
+    name: 'getTooltip',
   },
   {
-    name: 'expectTooltip',
     fn: expectTooltip,
+    name: 'expectTooltip',
   },
   {
-    name: 'shouldHaveTooltip',
     fn: shouldHaveTooltip,
+    name: 'shouldHaveTooltip',
     options: {
       prevSubject: 'element',
     },

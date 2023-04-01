@@ -19,8 +19,8 @@ const NX_TEST = 'npx env-cmd -f .env.test nx'
 export const execCommand = (command: string) => {
   try {
     execa.commandSync(command, {
-      stdio: 'inherit',
       shell: true,
+      stdio: 'inherit',
     })
   } catch (error) {
     console.error(error)
@@ -29,8 +29,6 @@ export const execCommand = (command: string) => {
 }
 
 export const tasksCommand: CommandModule<unknown, unknown> = {
-  command: 'tasks',
-  describe: 'Run tasks',
   builder: (yargv) =>
     yargv
       .options(getStageOptions([Stage.Dev, Stage.Test, Stage.CI]))
@@ -111,15 +109,15 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
             const runSpecs = `npx wait-on 'http://127.0.0.1:3000' && yarn graphql-codegen && exit 0`
 
             const runSpecsChildProcess = spawn(runSpecs, {
-              stdio: 'inherit',
-              shell: true,
               detached: true,
+              shell: true,
+              stdio: 'inherit',
             })
 
             const startServerChildProcess = spawn(startServer, {
-              stdio: 'inherit',
-              shell: true,
               detached: true,
+              shell: true,
+              stdio: 'inherit',
             })
 
             runSpecsChildProcess.on('exit', async (code: number) => {
@@ -144,7 +142,7 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
                   return (
                     _matches ||
                     filename.includes('.gen.ts') ||
-                    filename === 'schema.api.graphql'
+                    filename === 'schema.graphql'
                   )
                 },
                 false,
@@ -168,10 +166,12 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
             execCommand(`${NX_TEST} run builder-e2e:e2e:test --verbose`)
           }
 
+          if (stage === Stage.Dev) {
+            execCommand(`${NX_TEST} e2e builder-e2e -c dev`)
+          }
+
           if (stage === Stage.CI) {
-            // Currents getting error
             execCommand(`npx nx run builder-e2e:e2e:ci --verbose`)
-            // execCommand(`npx nx run builder-e2e:currents:ci --verbose`)
           }
         },
       )
@@ -201,7 +201,7 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
         `${Tasks.Commitlint} [edit]`,
         'Commitlint projects',
         (argv) => argv,
-        ({ stage, edit }) => {
+        ({ edit, stage }) => {
           if (stage === Stage.Test) {
             execCommand(`npx --no-install commitlint --edit ${edit}`)
           }
@@ -213,6 +213,8 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
       )
 
       .demandCommand(1, 'Please provide a task'),
+  command: 'tasks',
+  describe: 'Run tasks',
   handler: () => {
     //
   },

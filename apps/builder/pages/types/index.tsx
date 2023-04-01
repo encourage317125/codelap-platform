@@ -5,7 +5,7 @@ import {
   CreateTypeModal,
   DeleteFieldModal,
   DeleteTypeModal,
-  GetTypesTable,
+  TypesTable,
   UpdateFieldModal,
   UpdateTypeModal,
 } from '@codelab/frontend/domain/type'
@@ -24,7 +24,6 @@ import { auth0Instance } from '@codelab/shared/adapter/auth0'
 import { PageHeader } from 'antd'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
-import { useRouter } from 'next/router'
 import React from 'react'
 import tw from 'twin.macro'
 
@@ -48,31 +47,20 @@ const Header = observer(() => {
 })
 
 const TypesPage: CodelabPage<DashboardTemplateProps> = observer(() => {
-  const {
-    query: { page, pageSize },
-  } = useRouter()
-
-  const { userService, typeService, fieldService } = useStore()
-
   return (
     <>
       <Head>
         <title>Types | Codelab</title>
       </Head>
 
-      <CreateFieldModal fieldService={fieldService} typeService={typeService} />
-      <UpdateFieldModal fieldService={fieldService} typeService={typeService} />
-      <DeleteFieldModal fieldService={fieldService} />
-      <CreateTypeModal typeService={typeService} userService={userService} />
-      <DeleteTypeModal typeService={typeService} />
-      <UpdateTypeModal typeService={typeService} />
+      <CreateFieldModal />
+      <UpdateFieldModal />
+      <DeleteFieldModal />
+      <CreateTypeModal />
+      <DeleteTypeModal />
+      <UpdateTypeModal />
       <ContentSection>
-        <GetTypesTable
-          fieldService={fieldService}
-          page={page ? parseInt(page as string) : undefined}
-          pageSize={pageSize ? parseInt(pageSize as string) : undefined}
-          typeService={typeService}
-        />
+        <TypesTable />
       </ContentSection>
     </>
   )
@@ -82,7 +70,7 @@ export default TypesPage
 
 export const getServerSideProps = auth0Instance.withPageAuthRequired()
 
-TypesPage.Layout = observer((page) => {
+TypesPage.Layout = observer(({ children }) => {
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
 
@@ -91,7 +79,7 @@ TypesPage.Layout = observer((page) => {
       Header={Header}
       sidebarNavigation={sidebarNavigation({ appId, pageId })}
     >
-      {page.children}
+      {children()}
     </DashboardTemplate>
   )
 })

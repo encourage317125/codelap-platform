@@ -1,17 +1,10 @@
 import { ApartmentOutlined, DatabaseOutlined } from '@ant-design/icons'
-import type {
-  IActionService,
-  IBuilderService,
-  IComponentService,
-  IElementService,
-  IFieldService,
-  IRenderService,
-  IResourceService,
-  IStore,
-  ITypeService,
-  IUserService,
+import type { IPageNode } from '@codelab/frontend/abstract/core'
+import {
+  isComponentPageNode,
+  isElementPageNode,
+  RendererTab,
 } from '@codelab/frontend/abstract/core'
-import { RendererTab } from '@codelab/frontend/abstract/core'
 import {
   CreateComponentButton,
   CreateComponentModal,
@@ -22,10 +15,10 @@ import {
   DeleteElementModal,
 } from '@codelab/frontend/domain/element'
 import {
+  ActionsList,
   CreateActionButton,
   CreateActionModal,
   DeleteActionsModal,
-  GetActionsList,
   GetStateList,
   UpdateActionModal,
 } from '@codelab/frontend/domain/store'
@@ -35,6 +28,7 @@ import {
   DeleteFieldModal,
   UpdateFieldModal,
 } from '@codelab/frontend/domain/type'
+import { useStore } from '@codelab/frontend/presenter/container'
 import { CodeMirrorEditor } from '@codelab/frontend/view/components'
 import { ExplorerPaneTemplate } from '@codelab/frontend/view/templates'
 import { CodeMirrorLanguage } from '@codelab/shared/abstract/codegen'
@@ -55,18 +49,7 @@ type StoreHeaderProps = PropsWithChildren<{
 }>
 
 interface BuilderMainPaneProps {
-  componentService: IComponentService
-  elementService: IElementService
-  actionService: IActionService
-  builderService: IBuilderService
-  userService: IUserService
-  renderService: IRenderService
   pageId: string
-  storeId: string
-  fieldService: IFieldService
-  appStore?: IStore
-  typeService: ITypeService
-  resourceService: IResourceService
 }
 
 export const StoreHeader = ({ children, extra }: StoreHeaderProps) => (
@@ -77,53 +60,40 @@ export const StoreHeader = ({ children, extra }: StoreHeaderProps) => (
 )
 
 export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
-  ({
-    builderService,
-    elementService,
-    componentService,
-    actionService,
-    userService,
-    pageId,
-    storeId,
-    renderService,
-    appStore,
-    fieldService,
-    typeService,
-    resourceService,
-  }) => {
-    const pageBuilderRenderer = renderService.renderers.get(pageId)
-    const root = pageBuilderRenderer?.pageTree?.current.root
-    const pageTree = pageBuilderRenderer?.pageTree?.current
-    const componentId = builderService.activeComponent?.id
+  ({ pageId }) => {
+    const {
+      actionService,
+      builderRenderService,
+      builderService,
+      componentService,
+      elementService,
+      fieldService,
+      pageService,
+    } = useStore()
 
-    const componentTree = componentId
-      ? renderService.renderers.get(componentId)?.pageTree?.current
-      : null
-
-    const antdTree = root?.antdNode
+    const page = pageService.pages.get(pageId)
+    const pageBuilderRenderer = builderRenderService.renderers.get(pageId)
+    const pageTree = pageBuilderRenderer?.elementTree.maybeCurrent
+    const root = pageTree?.rootElement
+    const antdTree = root?.current.antdNode
     const componentsAntdTree = componentService.componentAntdNode
     const isPageTree = antdTree && pageTree
+    const store = page?.store.current
 
-    const createStateFieldButton = (
-      <CreateFieldButton
-        fieldService={fieldService}
-        interfaceId={appStore?.api.current.id}
-      />
-    )
+    const selectTreeNode = (node: IPageNode) => {
+      if (isComponentPageNode(node)) {
+        return builderService.selectComponentNode(node)
+      }
 
-    const createActionButton = (
-      <CreateActionButton actionService={actionService} />
-    )
+      if (isElementPageNode(node)) {
+        return builderService.selectElementNode(node)
+      }
+
+      return
+    }
 
     const tabItems = [
       {
-        label: (
-          <div>
-            <ApartmentOutlined title="Explorer" />
-            Explorer
-          </div>
-        ),
-        key: 'explorer',
         children: (
           <ExplorerPaneTemplate
             containerProps={{
@@ -136,7 +106,7 @@ export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
                 builderService={builderService}
                 elementService={elementService}
                 elementTree={pageTree}
-                root={root ?? null}
+                root={root?.maybeCurrent}
               />
             }
             key={root?.id ?? 'main-pane-builder'}
@@ -147,13 +117,10 @@ export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
             {isPageTree && (
               <BuilderTree
                 className="page-builder"
-                elementTree={pageTree}
                 expandedNodeIds={builderService.expandedPageElementTreeNodeIds}
-                selectTreeNode={builderService.selectPageElementTreeNode.bind(
-                  builderService,
-                )}
-                setActiveTree={() =>
-                  builderService.setActiveTree(RendererTab.Page)
+                selectTreeNode={selectTreeNode}
+                setActiveTab={() =>
+                  builderService.setActiveTab(RendererTab.Page)
                 }
                 setExpandedNodeIds={builderService.setExpandedPageElementTreeNodeIds.bind(
                   builderService,
@@ -173,15 +140,13 @@ export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
                 </div>
               </>
             )}
+
             {antdTree && (
               <BuilderTree
-                elementTree={componentTree ?? null}
                 expandedNodeIds={builderService.expandedComponentTreeNodeIds}
-                selectTreeNode={builderService.selectComponentTreeNode.bind(
-                  builderService,
-                )}
-                setActiveTree={() =>
-                  builderService.setActiveTree(RendererTab.Component)
+                selectTreeNode={selectTreeNode}
+                setActiveTab={() =>
+                  builderService.setActiveTab(RendererTab.Component)
                 }
                 setExpandedNodeIds={builderService.setExpandedComponentTreeNodeIds.bind(
                   builderService,
@@ -191,40 +156,48 @@ export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
             )}
           </ExplorerPaneTemplate>
         ),
-      },
-      {
+        key: 'explorer',
         label: (
           <div>
-            <DatabaseOutlined title="Store" />
-            Store
+            <ApartmentOutlined title="Explorer" />
+            Explorer
           </div>
         ),
-        key: 'store',
+      },
+      {
         children: (
           <>
             <Collapse css={tw`w-full mb-2`} defaultActiveKey={['1']} ghost>
               <Panel
                 header={
-                  <StoreHeader extra={createStateFieldButton}>
+                  <StoreHeader
+                    extra={
+                      <CreateFieldButton
+                        fieldService={fieldService}
+                        interfaceId={store?.api.id}
+                      />
+                    }
+                  >
                     State
                   </StoreHeader>
                 }
                 key="1"
               >
-                <GetStateList fieldService={fieldService} store={appStore} />
+                <GetStateList fieldService={fieldService} store={store} />
               </Panel>
 
               <Divider />
               <Panel
                 header={
-                  <StoreHeader extra={createActionButton}>Actions</StoreHeader>
+                  <StoreHeader
+                    extra={<CreateActionButton actionService={actionService} />}
+                  >
+                    Actions
+                  </StoreHeader>
                 }
                 key="2"
               >
-                <GetActionsList
-                  actionService={actionService}
-                  store={appStore}
-                />
+                <ActionsList actionService={actionService} store={store} />
               </Panel>
             </Collapse>
             <StoreHeader>Store Inspector</StoreHeader>
@@ -236,9 +209,16 @@ export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
               `}
               singleLine={false}
               title="Current props"
-              value={appStore?.state.jsonString}
+              value={store?.jsonString}
             />
           </>
+        ),
+        key: 'store',
+        label: (
+          <div>
+            <DatabaseOutlined title="Store" />
+            Store
+          </div>
         ),
       },
     ]
@@ -259,43 +239,17 @@ export const BuilderExplorerPane = observer<BuilderMainPaneProps>(
           renderTabBar={renderStickyTabBar}
           size="small"
         />
-        <CreateElementModal
-          actionService={actionService}
-          builderService={builderService}
-          componentService={componentService}
-          elementService={elementService}
-          renderService={renderService}
-          storeId={storeId}
-          userService={userService}
-        />
-        <CreateComponentModal
-          componentService={componentService}
-          userService={userService}
-        />
-        <DeleteComponentModal componentService={componentService} />
-        <DeleteElementModal
-          builderService={builderService}
-          elementService={elementService}
-        />
-        <CreateFieldModal
-          fieldService={fieldService}
-          typeService={typeService}
-        />
-        <UpdateFieldModal
-          fieldService={fieldService}
-          typeService={typeService}
-        />
-        <DeleteFieldModal fieldService={fieldService} />
-        <CreateActionModal
-          actionService={actionService}
-          resourceService={resourceService}
-          store={appStore}
-        />
-        <UpdateActionModal
-          actionService={actionService}
-          resourceService={resourceService}
-        />
-        <DeleteActionsModal actionService={actionService} />
+        <CreateElementModal />
+        <CreateComponentModal />
+        <DeleteComponentModal />
+        <DeleteElementModal />
+        <CreateFieldModal />
+        <UpdateFieldModal />
+        <DeleteFieldModal />
+
+        <CreateActionModal store={store} />
+        <UpdateActionModal />
+        <DeleteActionsModal />
       </>
     )
   },

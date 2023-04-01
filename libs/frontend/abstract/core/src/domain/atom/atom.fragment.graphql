@@ -3,14 +3,21 @@ fragment Atom on Atom {
   id
   name
   type
+  owner {
+    ...Owner
+  }
   tags {
     ...Tag
   }
   api {
+    ...InterfaceType
+  }
+  suggestedChildren {
     id
     name
+    type
   }
-  allowedChildren {
+  requiredParents {
     id
     name
     type
@@ -22,16 +29,4 @@ fragment RenderAtom on Atom {
   id
   name
   type
-  tags {
-    ...TagPreview
-  }
-  api {
-    id
-    name
-  }
-  allowedChildren {
-    id
-    name
-    type
-  }
 }

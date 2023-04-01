@@ -14,9 +14,9 @@ import { useCallback } from 'react'
 import { useDndDropHandler } from './useDndDropHandlers'
 
 export interface UseBuilderDnd {
-  onDragStart: (data: DragStartEvent) => void
-  onDragEnd: (data: DragEndEvent) => void
   sensors: ReturnType<typeof useSensors>
+  onDragEnd(data: DragEndEvent): void
+  onDragStart(data: DragStartEvent): void
 }
 
 export const useBuilderDnd = (
@@ -78,5 +78,5 @@ export const useBuilderDnd = (
     [builderService, elementService, elementTree],
   )
 
-  return { onDragStart, onDragEnd, sensors }
+  return { onDragEnd, onDragStart, sensors }
 }

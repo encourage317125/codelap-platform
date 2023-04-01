@@ -9,25 +9,25 @@ import { ModalFormContext } from './ModalForm.Context'
 
 export type ModalProps = Pick<
   AntModalProps,
-  | 'okButtonProps'
   | 'cancelButtonProps'
-  | 'onOk'
+  | 'className'
+  | 'okButtonProps'
   | 'okText'
   | 'onCancel'
+  | 'onOk'
   | 'open'
-  | 'className'
   | 'title'
 >
 
 export const Modal = ({
-  okButtonProps,
   cancelButtonProps,
-  onOk,
+  children,
+  className,
+  okButtonProps,
   okText,
   onCancel,
+  onOk,
   open,
-  className,
-  children,
 }: PropsWithChildren<ModalProps>) => {
   const [isLoading, setIsLoading] = useState(false)
   // This is the controller that will do the form submission, create by the modal and passed down to the form

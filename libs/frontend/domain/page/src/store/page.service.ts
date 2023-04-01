@@ -1,51 +1,55 @@
 import type {
-  ICreatePageDTO,
-  IPageService,
-  IUpdatePageDTO,
-} from '@codelab/frontend/abstract/core'
-import {
+  ICreatePageData,
+  IInterfaceType,
   IPage,
   IPageDTO,
+  IPageService,
+  IUpdatePageData,
+} from '@codelab/frontend/abstract/core'
+import {
+  elementRef,
+  getAppService,
+  getElementService,
   ROOT_ELEMENT_NAME,
 } from '@codelab/frontend/abstract/core'
-import { createUniqueName, ModalService } from '@codelab/frontend/shared/utils'
+import { getPropService } from '@codelab/frontend/domain/prop'
+import { getStoreService, Store } from '@codelab/frontend/domain/store'
+import {
+  getTypeService,
+  InterfaceType,
+  typeRef,
+} from '@codelab/frontend/domain/type'
+import { ModalService } from '@codelab/frontend/shared/utils'
 import type { PageWhere } from '@codelab/shared/abstract/codegen'
-import { IPageKind } from '@codelab/shared/abstract/core'
-import { connectNodeId, reconnectNodeId } from '@codelab/shared/domain/mapper'
+import { IPageKind, ITypeKind } from '@codelab/shared/abstract/core'
 import { computed } from 'mobx'
 import {
   _async,
   _await,
-  detach,
   Model,
   model,
   modelAction,
   modelFlow,
   objectMap,
   prop,
-  rootRef,
   transaction,
 } from 'mobx-keystone'
 import { v4 } from 'uuid'
+import { PageFactory } from '../services'
 import { pageApi } from './page.api'
 import { Page } from './page.model'
+import { PageRepository } from './page.repo'
 import { PageModalService } from './page-modal.service'
-
-export const pageRef = rootRef<IPage>('@codelab/PageRef', {
-  onResolvedValueChange: (ref, newPage, oldPage) => {
-    if (oldPage && !newPage) {
-      detach(ref)
-    }
-  },
-})
 
 @model('@codelab/PageService')
 export class PageService
   extends Model({
-    pages: prop(() => objectMap<IPage>()),
     createModal: prop(() => new ModalService({})),
-    updateModal: prop(() => new PageModalService({})),
     deleteModal: prop(() => new PageModalService({})),
+    pageFactory: prop(() => new PageFactory({})),
+    pageRepository: prop(() => new PageRepository({})),
+    pages: prop(() => objectMap<IPage>()),
+    updateModal: prop(() => new PageModalService({})),
   })
   implements IPageService
 {
@@ -58,26 +62,30 @@ export class PageService
     return yield* _await(pageApi.GetRenderedPage({ pageId }))
   })
 
-  /**
-    This function fetches the initial page and all the common data shared across all pages in the application:
-     - app data
-     - current page
-     - providers page (_app)
-     - components
-     - resources
-     - types
-   */
-  @modelFlow
-  @transaction
-  getRenderedPageAndCommonAppData = _async(function* (
-    this: PageService,
-    appId: string,
-    pageId: string,
-  ) {
-    return yield* _await(
-      pageApi.GetRenderedPageAndCommonAppData({ appId, pageId }),
-    )
-  })
+  @computed
+  private get appService() {
+    return getAppService(this)
+  }
+
+  @computed
+  private get elementService() {
+    return getElementService(this)
+  }
+
+  @computed
+  private get propService() {
+    return getPropService(this)
+  }
+
+  @computed
+  private get typeService() {
+    return getTypeService(this)
+  }
+
+  @computed
+  private get storeService() {
+    return getStoreService(this)
+  }
 
   @computed
   get pagesList() {
@@ -96,130 +104,112 @@ export class PageService
   @transaction
   update = _async(function* (
     this: PageService,
-    existingPage: IPage,
-    { name, appId, getServerSideProps, pageContainerElementId }: IUpdatePageDTO,
+    { app, id, name, pageContentContainer }: IUpdatePageData,
   ) {
-    const {
-      updatePages: { pages },
-    } = yield* _await(
-      pageApi.UpdatePages({
-        update: {
-          name: createUniqueName(name, appId),
-          app: connectNodeId(appId),
-          getServerSideProps,
-          pageContainerElement: reconnectNodeId(pageContainerElementId),
-        },
-        where: { id: existingPage.id },
-      }),
-    )
+    const page = this.pages.get(id)!
 
-    return pages.map((page) => this.writeCache(page))
+    page.writeCache({
+      app,
+      name,
+      pageContentContainer,
+    })
+
+    yield* _await(this.pageRepository.update(page))
+
+    return page!
   })
 
   @modelFlow
   @transaction
-  getAll = _async(function* (this: PageService, where?: PageWhere) {
-    const { pages } = yield* _await(pageApi.GetPages({ where }))
+  getAll = _async(function* (this: PageService, where: PageWhere) {
+    const pages = yield* _await(this.pageRepository.find(where))
 
-    return pages.map((page) => this.writeCache(page))
+    return pages.map((page) => this.add(page))
   })
 
   @modelFlow
   @transaction
   getOne = _async(function* (this: PageService, id: string) {
-    if (this.pages.has(id)) {
-      return this.pages.get(id)
-    }
+    const pages = yield* _await(this.getAll({ id }))
 
-    const all = yield* _await(this.getAll({ id }))
-
-    return all[0]
+    return pages[0]
   })
 
   @modelFlow
   @transaction
-  create = _async(function* (this: PageService, data: Array<ICreatePageDTO>) {
-    const input = data.map((page) => {
-      const pageId = page.id ?? v4()
-
-      return {
-        id: pageId,
-        name: createUniqueName(page.name, page.appId),
-        app: connectNodeId(page.appId),
-        getServerSideProps: page.getServerSideProps,
-        kind: IPageKind.Regular,
-        rootElement: {
-          create: {
-            node: {
-              id: page.rootElementId ?? v4(),
-              name: createUniqueName(ROOT_ELEMENT_NAME, pageId),
-            },
-          },
-        },
-      }
+  create = _async(function* (
+    this: PageService,
+    { app, id, name, owner }: ICreatePageData,
+  ) {
+    const rootElementProps = this.propService.add({
+      data: '{}',
+      id: v4(),
     })
 
-    const {
-      createPages: { pages },
-    } = yield* _await(
-      pageApi.CreatePages({
-        input,
-      }),
-    )
+    const rootElement = this.elementService.add({
+      id: v4(),
+      name: ROOT_ELEMENT_NAME,
+      page: { id },
+      props: rootElementProps,
+    })
 
-    return pages.map((page) => this.writeCache(page))
+    const interfaceType = this.typeService.addInterface({
+      id: v4(),
+      kind: ITypeKind.InterfaceType,
+      name: InterfaceType.createName(`${name} Store`),
+      owner: owner,
+    })
+
+    const store = this.storeService.add({
+      api: typeRef<IInterfaceType>(interfaceType.id),
+      id: v4(),
+      name: Store.createName({ name }),
+    })
+
+    const page = this.add({
+      app,
+      id,
+      kind: IPageKind.Regular,
+      name,
+      rootElement: elementRef(rootElement.id),
+      store,
+    })
+
+    this.pages.set(page.id, page)
+
+    /**
+     * Add page to current app
+     */
+    const appModel = this.appService.apps.get(app.id)
+    appModel?.writeCache({ pages: [...appModel.pages, page] })
+
+    yield* _await(this.pageRepository.add(page))
+
+    return page
   })
 
   @modelFlow
   @transaction
-  delete = _async(function* (this: PageService, ids: Array<string>) {
-    ids.forEach((id) => this.pages.delete(id))
+  delete = _async(function* (this: PageService, page: IPage) {
+    const { id } = page
+    this.pages.delete(id)
 
-    const {
-      deletePages: { nodesDeleted },
-    } = yield* _await(pageApi.DeletePages({ where: { id_IN: ids } }))
+    yield* _await(this.pageRepository.delete([page]))
 
-    return nodesDeleted
+    return page!
   })
 
   @modelAction
-  writeCache(page: IPageDTO): IPage {
-    let pageModel = this.page(page.id)
+  add = (pageDTO: IPageDTO) => {
+    let page = this.pages.get(pageDTO.id)
 
-    if (pageModel) {
-      pageModel = pageModel.writeCache(page)
+    if (page) {
+      page.writeCache(pageDTO)
     } else {
-      pageModel = Page.hydrate(page)
-      this.pages.set(page.id, pageModel)
+      page = Page.create(pageDTO)
+      this.pages.set(page.id, page)
     }
 
-    return pageModel
+    return page
   }
-
-  // @modelFlow
-  // @transaction
-  // deleteMany = _async(function* (this: PageService, ids: Array<string>) {
-  //   if (ids.length === 0) {
-  //     return []
-  //   }
-  //
-  //   const existingPages: Array<IPage> = []
-  //
-  //   for (const id of ids) {
-  //     const existing = throwIfUndefined(this.pages.get(id))
-  //     existingPages.push(existing)
-  //     this.pages.delete(id)
-  //   }
-  //
-  //   const { deletePages } = yield* _await(
-  //     pageApi.DeletePages({ where: { id_IN: ids } }),
-  //   )
-  //
-  //   if (deletePages.nodesDeleted === 0) {
-  //     // throw error so that the atomic middleware rolls back the changes
-  //     throw new Error('Page was not deleted')
-  //   }
-  //
-  //   return existingPages
-  // })
 }

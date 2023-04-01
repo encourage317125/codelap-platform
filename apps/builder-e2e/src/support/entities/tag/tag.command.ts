@@ -4,13 +4,21 @@ const modalName = 'Create Tag'
 
 export const createTagByUI = (name: string, parentName?: string) => {
   cy.findByRole('button', { name: /plus/ }).contains(modalName).click()
-  cy.getModal().findByLabelText('Name').type(name)
+
+  // wait for 100ms before typing into the input to avoid issue when first letters are skipped
+  // https://github.com/cypress-io/cypress/issues/3817
+  // eslint-disable-next-line cypress/no-unnecessary-waiting
+  cy.getModal()
+    .findByLabelText('Name')
+    .should('be.visible')
+    .wait(100)
+    .type(name)
 
   if (parentName) {
     cy.getModal().setFormFieldValue({
       label: 'Parent Tag',
-      value: parentName,
       type: FIELD_TYPE.SELECT,
+      value: parentName,
     })
   }
 

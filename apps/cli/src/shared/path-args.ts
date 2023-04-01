@@ -7,9 +7,9 @@ import { Stage } from './utils/stage'
 
 export interface ExportProps {
   seedDataPath?: string
-  userDataPath?: string
-  skipUserData?: boolean
   skipSeedData?: boolean
+  skipUserData?: boolean
+  userDataPath?: string
 }
 
 export const seedDataPathOption: { [key: string]: Options } = {
@@ -67,11 +67,11 @@ export const upsertUserMiddleware: MiddlewareFunction<unknown> = async ({
     const userRepository: UserRepository = new UserRepository()
 
     const user = new User({
-      id: v4(),
       auth0Id: v4(),
       email: EnvBuilder().auth0.cypress_username!,
-      username: 'Codelab',
+      id: v4(),
       roles: [OGM_TYPES.Role.Admin],
+      username: 'Codelab',
     })
 
     await userRepository.save(user, { email: user.email })

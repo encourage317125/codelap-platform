@@ -1,4 +1,18 @@
-import { ITag, ITagDTO } from '@codelab/frontend/abstract/core'
+import type {
+  IAuth0Owner,
+  ITag,
+  ITagDTO,
+} from '@codelab/frontend/abstract/core'
+import type {
+  TagCreateInput,
+  TagUpdateInput,
+} from '@codelab/shared/abstract/codegen'
+import type { Nullable } from '@codelab/shared/abstract/types'
+import {
+  connectAuth0Owner,
+  connectNodeId,
+  reconnectNodeId,
+} from '@codelab/shared/domain/mapper'
 import { computed } from 'mobx'
 import type { Ref } from 'mobx-keystone'
 import {
@@ -11,24 +25,34 @@ import {
   rootRef,
 } from 'mobx-keystone'
 
-const hydrate = (tag: ITagDTO) => {
+const create = ({
+  children,
+  descendants,
+  id,
+  isRoot,
+  name,
+  owner,
+}: ITagDTO) => {
   return new Tag({
-    id: tag.id,
-    name: tag.name,
-    isRoot: tag.isRoot ?? false,
-    children: tag.children?.map((child) => tagRef(child.id)),
-    descendants: tag.descendants?.map((descendant) => tagRef(descendant.id)),
+    children: children.map((child) => tagRef(child.id)),
+    descendants: descendants?.map((descendant) => tagRef(descendant.id)),
+    id,
+    isRoot,
+    name,
+    owner,
   })
 }
 
 @model('@codelab/Tag')
 export class Tag
   extends Model({
-    id: idProp,
-    name: prop<string>(),
-    isRoot: prop<boolean>(),
     children: prop<Array<Ref<ITag>>>(() => []),
     descendants: prop<Array<Ref<ITag>>>(() => []),
+    id: idProp,
+    isRoot: prop<boolean>(false),
+    name: prop<string>(),
+    owner: prop<IAuth0Owner>(),
+    parent: prop<Nullable<Ref<ITag>>>(null),
   })
   implements ITag
 {
@@ -37,15 +61,17 @@ export class Tag
     return this.name
   }
 
-  static hydrate = hydrate
+  static create = create
 
   @modelAction
-  writeCache(tag: ITagDTO): ITag {
-    this.name = tag.name
-    this.children = tag.children?.map((child) => tagRef(child.id)) ?? []
+  writeCache({ children, descendants, isRoot, name, owner }: Partial<ITagDTO>) {
+    this.name = name ?? this.name
+    this.children = children?.map((child) => tagRef(child.id)) ?? this.children
     this.descendants =
-      tag.descendants?.map((descendant) => tagRef(descendant.id)) ?? []
-    this.isRoot = tag.isRoot ?? false
+      descendants?.map((descendant) => tagRef(descendant.id)) ??
+      this.descendants
+    this.isRoot = isRoot ?? this.isRoot
+    this.owner = owner ?? this.owner
 
     return this
   }
@@ -53,9 +79,25 @@ export class Tag
   @computed
   get antdNode() {
     return {
+      children: this.children.map((child) => child.current.antdNode),
       key: this.id,
       title: this.name,
-      children: this.children.map((child) => child.current.antdNode),
+    }
+  }
+
+  toCreateInput(): TagCreateInput {
+    return {
+      id: this.id,
+      name: this.name,
+      owner: connectAuth0Owner(this.owner),
+      parent: connectNodeId(this.parent?.current.id),
+    }
+  }
+
+  toUpdateInput(): TagUpdateInput {
+    return {
+      name: this.name,
+      parent: reconnectNodeId(this.parent?.current.id),
     }
   }
 }

@@ -2,19 +2,18 @@ import type {
   IPrimitiveType,
   IPrimitiveTypeDTO,
 } from '@codelab/frontend/abstract/core'
-import { ITypeDTO } from '@codelab/frontend/abstract/core'
 import type { PrimitiveTypeKind } from '@codelab/shared/abstract/codegen'
 import { assertIsTypeKind, ITypeKind } from '@codelab/shared/abstract/core'
+import merge from 'lodash/merge'
 import { ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
-import { updateBaseTypeCache } from '../base-type'
 import { createBaseType } from './base-type.model'
 
-const hydrate = ({
+const create = ({
   id,
   kind,
   name,
-  primitiveKind,
   owner,
+  primitiveKind,
 }: IPrimitiveTypeDTO) => {
   assertIsTypeKind(kind, ITypeKind.PrimitiveType)
 
@@ -22,8 +21,8 @@ const hydrate = ({
     id,
     kind,
     name,
+    owner,
     primitiveKind,
-    ownerId: owner.id,
   })
 }
 
@@ -35,28 +34,28 @@ export class PrimitiveType
   implements IPrimitiveType
 {
   @modelAction
-  writeCache(fragment: ITypeDTO) {
-    updateBaseTypeCache(this, fragment)
+  writeCache(primitiveTypeDTO: Partial<IPrimitiveTypeDTO>) {
+    super.writeCache(primitiveTypeDTO)
 
-    if (fragment.__typename !== ITypeKind.PrimitiveType) {
-      throw new Error('PrimitiveType')
-    }
-
-    this.primitiveKind = fragment.primitiveKind
+    this.primitiveKind = primitiveTypeDTO.primitiveKind ?? this.primitiveKind
 
     return this
   }
 
-  // @modelAction
-  // override applyUpdateData(input: IUpdateTypeDTO) {
-  //   super.applyUpdateData(input)
-  //
-  //   if (!input.primitiveKind) {
-  //     throw new Error('PrimitiveType must have a primitiveKind')
-  //   }
-  //
-  //   this.primitiveKind = input.primitiveKind
-  // }
+  toCreateInput() {
+    return {
+      ...super.toCreateInput(),
+      primitiveKind: this.primitiveKind,
+    }
+  }
 
-  public static hydrate = hydrate
+  toUpdateInput() {
+    return merge(super.toUpdateInput(), {
+      update: {
+        primitiveKind: this.primitiveKind,
+      },
+    })
+  }
+
+  public static create = create
 }

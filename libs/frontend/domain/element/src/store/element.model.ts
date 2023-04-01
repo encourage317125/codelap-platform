@@ -1,163 +1,139 @@
 import type {
   IAtom,
+  IAuth0Owner,
   IComponent,
   IElementDTO,
-  IElementTree,
+  IElementRenderType,
   IHook,
-  IInterfaceType,
+  IPage,
   IProp,
   IPropData,
   RenderingError,
   RenderingMetadata,
 } from '@codelab/frontend/abstract/core'
 import {
+  componentRef,
   CssMap,
   DATA_ELEMENT_ID,
-  ELEMENT_NODE_TYPE,
+  elementRef,
+  getElementService,
   IBuilderDataNode,
   IElement,
+  isComponentInstance,
 } from '@codelab/frontend/abstract/core'
-import { atomRef } from '@codelab/frontend/domain/atom'
-import { Prop } from '@codelab/frontend/domain/prop'
-import { typeRef } from '@codelab/frontend/domain/type'
+import { isAtomInstance } from '@codelab/frontend/domain/atom'
+import { pageRef } from '@codelab/frontend/domain/page'
+import { getPropService, propRef } from '@codelab/frontend/domain/prop'
 import {
-  componentRef,
-  getElementService,
-} from '@codelab/frontend/presenter/container'
-import { extractName } from '@codelab/frontend/shared/utils'
-import type { ElementUpdateInput } from '@codelab/shared/abstract/codegen'
-import type { Nullable } from '@codelab/shared/abstract/types'
-import { Maybe, Nullish } from '@codelab/shared/abstract/types'
-import { connectNodeId, disconnectNodeId } from '@codelab/shared/domain/mapper'
+  ElementCreateInput,
+  ElementUpdateInput,
+} from '@codelab/shared/abstract/codegen'
+import type { IEntity } from '@codelab/shared/abstract/types'
+import { Maybe, Nullable, Nullish } from '@codelab/shared/abstract/types'
+import {
+  connectNodeId,
+  disconnectNodeId,
+  reconnectNodeId,
+} from '@codelab/shared/domain/mapper'
 import { compoundCaseToTitleCase, mergeProps } from '@codelab/shared/utils'
 import attempt from 'lodash/attempt'
 import isError from 'lodash/isError'
 import { computed } from 'mobx'
-import type { AnyModel, Ref } from 'mobx-keystone'
 import {
   clone,
-  findParent,
-  getRefsResolvingTo,
   idProp,
   Model,
   model,
   modelAction,
-  modelTypeKey,
   prop,
+  Ref,
 } from 'mobx-keystone'
-import { makeUpdateElementInput } from './api.utils'
-import { elementRef } from './element.ref'
+import { getRenderType } from './utils'
 
 type TransformFn = (props: IPropData) => IPropData
 
-/**
- * Creates a new element from a GraphQL fragment object. Doesn't attach any children or parent
- */
-export const hydrate = ({
+const create = ({
+  customCss,
+  firstChild,
+  guiCss,
   id,
   name,
-  customCss,
-  guiCss,
-  renderAtomType,
-  parent,
-  slug,
-  page,
-  parentComponent,
-  renderComponentType,
   nextSibling,
+  page,
+  parent,
+  parentComponent,
   prevSibling,
-  firstChild,
-  preRenderActionId,
-  postRenderActionId,
-  // TODO Integrate hooks if their usage is not made obsolete by the mobx platform
-  hooks,
   props,
   propTransformationJs,
-  renderIfExpression,
   renderForEachPropKey,
-}: Omit<IElementDTO, '__typename'>) => {
-  const apiRef = renderAtomType
-    ? (typeRef(renderAtomType.api.id) as Ref<IInterfaceType>)
-    : undefined
+  renderIfExpression,
+  renderType,
+}: IElementDTO) => {
+  const elementRenderType = getRenderType(renderType)
 
   return new Element({
-    id,
-    name: extractName(name),
+    _page: page ? pageRef(page.id) : null,
+    _parentComponent: parentComponent ? componentRef(parentComponent.id) : null,
     customCss,
+    firstChild: firstChild?.id ? elementRef(firstChild.id) : undefined,
     guiCss,
+    id,
+    name,
+    nextSibling: nextSibling?.id ? elementRef(nextSibling.id) : undefined,
+
     // parent of first child
-    parentId: parent?.id,
-    pageId: page?.id,
-    slug: slug,
-    nextSiblingId: nextSibling?.id,
-    prevSiblingId: prevSibling?.id,
-    firstChildId: firstChild?.id,
-    atom: renderAtomType ? atomRef(renderAtomType.id) : null,
-    preRenderActionId,
-    postRenderActionId,
-    props: props ? Prop.hydrate({ ...props, apiRef }) : null,
+    parent: parent?.id ? elementRef(parent.id) : undefined,
+    prevSibling: prevSibling?.id ? elementRef(prevSibling.id) : undefined,
+    props: propRef(props.id),
     propTransformationJs,
-    renderIfExpression,
     renderForEachPropKey,
+    renderIfExpression,
     renderingMetadata: null,
-    parentComponent: parentComponent ? componentRef(parentComponent.id) : null,
-    renderComponentType: renderComponentType
-      ? componentRef(renderComponentType.id)
-      : null,
+    renderType: elementRenderType,
   })
-}
-
-export const getElementTree = (element: IElement): Maybe<IElementTree> => {
-  const refs = getRefsResolvingTo<IElement>(element, elementRef)
-
-  return [...refs.values()].reduce((prev, node) => {
-    const elementTree = findParent(node, (parent) => {
-      return (parent as AnyModel)[modelTypeKey] === '@codelab/ElementTree'
-    })
-
-    return elementTree ? elementTree : prev
-  }, undefined)
 }
 
 @model('@codelab/Element')
 export class Element
   extends Model({
-    id: idProp.withSetter(),
-    __nodeType: prop<ELEMENT_NODE_TYPE>(ELEMENT_NODE_TYPE),
-    // parent: prop<Nullish<Element>>(null).withSetter(),
-
-    // Data used for tree initializing, before our Element model is ready
-    parentId: prop<Nullable<string>>(null).withSetter(),
-    nextSiblingId: prop<Nullable<string>>(null).withSetter(),
-    prevSiblingId: prop<Nullable<string>>(null).withSetter(),
-    firstChildId: prop<Nullable<string>>(null).withSetter(),
-    owner: prop<Nullable<string>>(null),
-    orderInParent: prop<Nullable<number>>(null).withSetter(),
-
-    name: prop<string>().withSetter(),
-    slug: prop<string>(),
-    customCss: prop<Nullable<string>>(null).withSetter(),
-    guiCss: prop<Nullable<string>>(null),
-    atom: prop<Nullable<Ref<IAtom>>>(null).withSetter(),
-    props: prop<Nullable<IProp>>(null).withSetter(),
-    preRenderActionId: prop<Nullish<string>>(null),
-    postRenderActionId: prop<Nullish<string>>(null),
-    propTransformationJs: prop<Nullable<string>>(null).withSetter(),
-    renderIfExpression: prop<Nullable<string>>(null).withSetter(),
-    renderForEachPropKey: prop<Nullable<string>>(null).withSetter(),
-    renderingMetadata: prop<Nullable<RenderingMetadata>>(null),
+    // page which has this element as rootElement
+    _page: prop<Nullable<Ref<IPage>>>(null),
 
     // component which has this element as rootElement
-    parentComponent: prop<Nullable<Ref<IComponent>>>(null).withSetter(),
-    // page which has this element as rootElement
-    pageId: prop<Nullable<string>>(null),
+    _parentComponent: prop<Nullable<Ref<IComponent>>>(null).withSetter(),
+
+    customCss: prop<Nullable<string>>(null).withSetter(),
+
+    firstChild: prop<Nullable<Ref<IElement>>>(null).withSetter(),
+
+    guiCss: prop<Nullable<string>>(null),
 
     // Marks the element as an instance of a specific component
-    renderComponentType: prop<Nullable<Ref<IComponent>>>(null).withSetter(),
+    // renderComponentType: prop<Nullable<Ref<IComponent>>>(null).withSetter(),
     hooks: prop<Array<IHook>>(() => []),
 
+    id: idProp.withSetter(),
+
+    name: prop<string>().withSetter(),
+
+    nextSibling: prop<Nullable<Ref<IElement>>>(null).withSetter(),
+
+    orderInParent: prop<Nullable<number>>(null).withSetter(),
+
+    owner: prop<Nullable<IAuth0Owner>>(null),
+
+    // Data used for tree initializing, before our Element model is ready
+    parent: prop<Nullable<Ref<IElement>>>(null).withSetter(),
+    prevSibling: prop<Nullable<Ref<IElement>>>(null).withSetter(),
+    props: prop<Ref<IProp>>().withSetter(),
+    propTransformationJs: prop<Nullable<string>>(null).withSetter(),
+    renderForEachPropKey: prop<Nullable<string>>(null).withSetter(),
+    renderIfExpression: prop<Nullable<string>>(null).withSetter(),
+    renderingMetadata: prop<Nullable<RenderingMetadata>>(null),
+    // atom: prop<Nullable<Ref<IAtom>>>(null).withSetter(),
+    renderType: prop<IElementRenderType | null>(null).withSetter(),
     // if this is a duplicate, trace source element id else null
-    sourceElementId: prop<Nullable<string>>(null).withSetter(),
+    sourceElement: prop<Nullable<IEntity>>(null).withSetter(),
   })
   implements IElement
 {
@@ -167,23 +143,41 @@ export class Element
   }
 
   @computed
-  get rootElement(): IElement {
-    return this.parentElement ? this.parentElement.rootElement : this
+  get propService() {
+    return getPropService(this)
   }
 
   @computed
-  get baseId() {
-    if (this.parentElement) {
-      return this.parentElement.baseId
+  get closestRootElement(): IElement {
+    return this.closestParent
+      ? this.closestParent.closestRootElement
+      : (this as IElement)
+  }
+
+  @computed
+  get parentComponent(): Nullable<Ref<IComponent>> {
+    return this.closestParent?.parentComponent ?? this._parentComponent
+  }
+
+  @computed
+  get page(): Nullable<Ref<IPage>> {
+    return this.closestParent?.page ?? this._page
+  }
+
+  @computed
+  get closestContainerNode(): IComponent | IPage {
+    const closestNode = this.page || this.parentComponent
+
+    if (!closestNode) {
+      throw new Error('Element has no node attached to')
     }
 
-    const baseId = this.pageId || this.parentComponent?.id
+    return closestNode.current
+  }
 
-    if (!baseId) {
-      throw new Error('Element has no baseId')
-    }
-
-    return baseId
+  @computed
+  get store() {
+    return this.closestContainerNode.store.current
   }
 
   @computed
@@ -195,58 +189,63 @@ export class Element
     }
 
     const results = []
-    let currentTraveledNode: Maybe<IElement> = firstChild
+    let currentTraveledNode: Maybe<IElement> = firstChild.current
 
     // parent = el1 -> el2 -> el3 -> end
     // given el1, travel next using next sibling until next = no more next sibling
     while (currentTraveledNode) {
       results.push(currentTraveledNode)
-      currentTraveledNode = currentTraveledNode.nextSibling
+      currentTraveledNode = currentTraveledNode.nextSibling?.current
     }
 
     return results
   }
 
+  /**
+   * Only the root doesn't have a closestParent
+   */
   @computed
   get isRoot() {
-    // check no parent by
-    // travel first child
-    // travel siblng -> first child
-    return !this.parentElement?.id
+    return !this.closestParent?.id
   }
 
+  /**
+   * We have the concept of `parent` and `closestParent`.
+   *
+   * `parent` has an edge connection like `siblings` in the database.
+   *
+   * `closestParent` is a conceptual value, we traverse up the sibling chain until we find the first parent
+   *
+   * (parentA)
+   * \
+   * (firstChild)-(nextSibling)
+   *
+   * `nextSibling` has no `parent`, but has a `closestParent` of `parentA`
+   */
   @computed
-  get parentElement() {
-    // parent - first child (this)
-    const getParentElement = (element: IElement) => {
-      if (element.parentId) {
-        return this.elementService.element(element.parentId)
-      }
+  private get closestParent(): IElement | null {
+    const parent = this.parent
 
-      return
+    if (parent) {
+      return parent.current
     }
 
-    const thisParentElementFromId = getParentElement(this)
-
-    if (thisParentElementFromId) {
-      return thisParentElementFromId
-    }
-
-    // parent - first child - prev sibling 1 ... prev sibling n - element (this)
-    let traveledNode = this.prevSibling
+    let traveledNode = this.prevSibling?.maybeCurrent
 
     while (traveledNode) {
-      const traveledNodeParentElement = getParentElement(traveledNode)
+      const currentParent = traveledNode.parent
 
-      if (traveledNodeParentElement) {
-        return traveledNodeParentElement
+      if (currentParent) {
+        return currentParent.current
       }
 
-      // keep traversing backward
-      traveledNode = traveledNode.prevSibling
+      /**
+       * If we don't find a parent, traverse up the sibling chain
+       */
+      traveledNode = traveledNode.prevSibling?.current
     }
 
-    return
+    return null
   }
 
   @modelAction
@@ -270,6 +269,16 @@ export class Element
   }
 
   @modelAction
+  setParentComponent(component: Ref<IComponent>) {
+    this._parentComponent = component
+  }
+
+  @modelAction
+  setPage(page: Ref<IPage>) {
+    this._page = page
+  }
+
+  @modelAction
   setRenderingError(error: Nullish<RenderingError>) {
     this.renderingMetadata = {
       error,
@@ -278,7 +287,7 @@ export class Element
 
   @computed
   get ancestorError() {
-    const parent = this.parentElement
+    const parent = this.closestParent
 
     if (!parent) {
       return null
@@ -292,98 +301,33 @@ export class Element
   }
 
   /**
-   * Check to see if this element is part of a component tree
+   * We could fetch descendantElements for each element, but that would require too much GraphQL data, instead we can compute it from children.
+   *
+   * We reserve descendantElements for rootElements only
    */
-  // @computed
-  // get isComponentElement() {
-  //   const foundParent = findParent(this, (parent: any) => {
-  //     return parent?.$modelType === '@codelab/ComponentService'
-  //   })
-  //
-  //   return Boolean(foundParent)
-  // }
-
   @computed
-  get descendants(): Array<IElement> {
+  get descendantElements(): Array<IElement> {
     const descendants: Array<IElement> = []
 
     for (const child of this.children) {
       descendants.push(child)
-      descendants.push(...child.descendants)
+      descendants.push(...child.descendantElements)
     }
 
     return descendants
   }
 
-  /** All descendants that are the first child of their parent */
-  @computed
-  get leftHandDescendants(): Array<IElement> {
-    const firstChild = this.children[0]
-
-    if (!firstChild) {
-      return []
-    }
-
-    return [firstChild, ...firstChild.leftHandDescendants]
-  }
-
-  // TODO: this function isn't used anywhere, update implementation if requires
-  // @computed
-  // get deepestDescendant(): IElement | null {
-  //   let deepest: IElement | null = null
-  //   let deepestDepth = 0
-
-  //   const visitChildren = (child: IElement, depth: number): void => {
-  //     if (child.children.size) {
-  //       for (const subChild of child.children) {
-  //         visitChildren(subChild, depth + 1)
-  //       }
-  //     } else {
-  //       if (depth > deepestDepth) {
-  //         deepest = child
-  //         deepestDepth = depth
-  //       }
-  //     }
-  //   }
-
-  //   visitChildren(this, 0)
-
-  //   return deepest
-  // }
-
   @computed
   get label() {
     return (
       this.name ||
-      this.atom?.current.name ||
-      (this.atom?.current
-        ? compoundCaseToTitleCase(this.atom.current.type)
+      this.renderType?.current.name ||
+      (isAtomInstance(this.renderType)
+        ? compoundCaseToTitleCase((this.renderType.current as IAtom).type)
         : undefined) ||
       this.parentComponent?.current.name ||
-      this.renderComponentType?.current.name ||
       ''
     )
-  }
-
-  @computed
-  get firstChild() {
-    return this.firstChildId
-      ? this.elementService.element(this.firstChildId)
-      : undefined
-  }
-
-  @computed
-  get nextSibling() {
-    return this.nextSiblingId
-      ? this.elementService.element(this.nextSiblingId)
-      : undefined
-  }
-
-  @computed
-  get prevSibling() {
-    return this.prevSiblingId
-      ? this.elementService.element(this.prevSiblingId)
-      : undefined
   }
 
   /**
@@ -397,39 +341,22 @@ export class Element
   @computed
   get antdNode(): IBuilderDataNode {
     return {
-      key: this.id,
-      title: this.label,
-      type: ELEMENT_NODE_TYPE as ELEMENT_NODE_TYPE,
       children: this.children.map((child) => child.antdNode),
-      rootKey: getElementTree(this)?._root?.id ?? null,
+      key: this.id,
+      node: this,
+      rootKey: this.closestRootElement.id,
+      title: this.label,
     }
   }
 
   @computed
   get atomName() {
-    return this.atom?.maybeCurrent?.name || this.atom?.maybeCurrent?.type || ''
+    if (isAtomInstance(this.renderType)) {
+      return this.renderType.current.name || this.renderType.current.type
+    }
+
+    return ''
   }
-
-  // TODO: this function isn't used anywhere, update implementation if requires
-  // findDescendant(id: string): Maybe<IElement> {
-  //   if (this.id === id) {
-  //     return this as IElement
-  //   }
-
-  //   if (this.children.has(id)) {
-  //     return this.children.get(id)?.current
-  //   }
-
-  //   for (const child of this.childrenSorted) {
-  //     const descendant = child.findDescendant(id)
-
-  //     if (descendant) {
-  //       return descendant
-  //     }
-  //   }
-
-  //   return undefined
-  // }
 
   /**
    * Parses and materializes the propTransformationJs
@@ -459,6 +386,70 @@ export class Element
     return result
   }
 
+  static create = create
+
+  @modelAction
+  toCreateInput(): ElementCreateInput {
+    /**
+     * Here we'll want to set default value based on the interface
+     */
+    const renderAtomType = isAtomInstance(this.renderType)
+      ? connectNodeId(this.renderType.id)
+      : undefined
+
+    const renderComponentType = isComponentInstance(this.renderType)
+      ? connectNodeId(this.renderType.id)
+      : undefined
+
+    return {
+      id: this.id,
+      name: this.name,
+      props: {
+        create: {
+          node: this.props.current.toCreateInput(),
+        },
+      },
+      renderAtomType,
+      renderComponentType,
+    }
+  }
+
+  @modelAction
+  toUpdateInput(): ElementUpdateInput {
+    // We need to disconnect the atom if render type changed to component or empty
+    const renderAtomType = isAtomInstance(this.renderType)
+      ? reconnectNodeId(this.renderType.id)
+      : disconnectNodeId(undefined)
+
+    // We need to disconnect the component if render type changed to atom or empty
+    const renderComponentType = isComponentInstance(this.renderType)
+      ? reconnectNodeId(this.renderType.id)
+      : disconnectNodeId(undefined)
+
+    return {
+      customCss: this.customCss,
+      guiCss: this.guiCss,
+      name: this.name,
+      renderAtomType,
+      renderComponentType,
+      renderForEachPropKey: this.renderForEachPropKey,
+      renderIfExpression: this.renderIfExpression,
+    }
+  }
+
+  @modelAction
+  toUpdateNodesInput(): Pick<
+    ElementUpdateInput,
+    'firstChild' | 'nextSibling' | 'parent' | 'prevSibling'
+  > {
+    return {
+      firstChild: reconnectNodeId(this.firstChild?.id),
+      nextSibling: reconnectNodeId(this.nextSibling?.id),
+      parent: reconnectNodeId(this.parent?.id),
+      prevSibling: reconnectNodeId(this.prevSibling?.id),
+    }
+  }
+
   @modelAction
   clone(cloneIndex: number) {
     const clonedElement: IElement = clone<IElement>(this, {
@@ -466,36 +457,12 @@ export class Element
     })
 
     clonedElement.setName(`${this.name} ${cloneIndex}`)
-    clonedElement.setSourceElementId(this.id)
-
-    if (this.atom) {
-      clonedElement.setAtom(atomRef(this.atom.id))
-    }
-
-    if (this.props) {
-      clonedElement.setProps(this.props.clone())
-    }
+    clonedElement.setSourceElement(elementRef(this.id))
 
     // store elements in elementService
     this.elementService.clonedElements.set(clonedElement.id, clonedElement)
 
     return clonedElement
-  }
-
-  @modelAction
-  updateCloneIds(elementMap: Map<string, string>) {
-    this.parentId = (this.parentId && elementMap.get(this.parentId)) || null
-
-    this.nextSiblingId =
-      (this.nextSiblingId && elementMap.get(this.nextSiblingId)) || null
-
-    this.prevSiblingId =
-      (this.prevSiblingId && elementMap.get(this.prevSiblingId)) || null
-
-    this.firstChildId =
-      (this.firstChildId && elementMap.get(this.firstChildId)) || null
-
-    return this
   }
 
   /**
@@ -521,295 +488,159 @@ export class Element
     return mergeProps(props, result)
   }
 
+  /**
+   * This removes the `element` and attaches the siblings together
+   *
+   * (prevSibling)-[element]-(nextSibling)
+   *
+   * (prevSibling)-(nextSibling)
+   */
   @modelAction
-  detachNextSibling() {
-    return () => {
-      if (!this.nextSibling) {
-        return
-      }
-
-      this.nextSiblingId = null
+  connectPrevToNextSibling() {
+    if (this.nextSibling) {
+      this.nextSibling.current.prevSibling = this.prevSibling
+        ? elementRef(this.prevSibling.current)
+        : null
     }
+
+    if (this.prevSibling) {
+      this.prevSibling.current.nextSibling = this.nextSibling
+        ? elementRef(this.nextSibling.current)
+        : null
+    }
+
+    this.nextSibling = null
+    this.prevSibling = null
   }
 
+  /**
+   * This will connect any siblings to the current element's parent
+   *
+   * (parent)
+   * \
+   *  [element]-(nextSibling)
+   */
   @modelAction
-  attachPrevToNextSibling() {
-    return () => {
-      if (this.nextSibling) {
-        this.nextSibling.prevSiblingId = this.prevSiblingId
-      }
-
-      if (this.prevSibling) {
-        this.prevSibling.nextSiblingId = this.nextSiblingId
-      }
+  detachFromParent() {
+    if (!this.parent) {
+      return
     }
-  }
 
-  @modelAction
-  detachPrevSibling() {
-    return () => {
-      if (!this.prevSibling) {
-        return
-      }
+    /**
+     * Connect nextSibling to the parent
+     */
+    if (this.nextSibling) {
+      // Connect parent to nextSibling
+      this.parent.current.firstChild = elementRef(this.nextSibling.current)
 
-      this.prevSiblingId = null
+      // Connect nextSibling to parent
+      this.nextSibling.current.setParent(elementRef(this.parent.id))
+    } else {
+      this.parent.current.firstChild = null
     }
-  }
 
-  @modelAction
-  detachParent() {
-    return () => {
-      if (!this.parentElement) {
-        return
-      }
-
-      // parent = [element] - next sibling
-      // element is first child
-      if (this.parentElement.firstChildId === this.id) {
-        this.parentElement.firstChildId = this.nextSiblingId
-
-        // We need to set the parent of the next sibling here, because
-        // when we compute the parentElement, we traverse up the tree until the
-        // first child, hence, the first child should always have parentId set
-        if (this.nextSibling) {
-          this.nextSibling.parentId = this.parentElement.id
-        }
-      }
-
-      this.parentId = null
-    }
+    this.parent = null
   }
 
   @modelAction
-  attachToParent(parentElementId: string) {
-    return () => {
-      const parentElement = this.elementService.element(parentElementId)
+  detachAsFirstChild() {
+    this.parent = null
+  }
 
-      if (!parentElement) {
-        throw new Error(`parent element id ${parentElementId} not found`)
-      }
+  /**
+   * This function will replace the current `firstChild` with our new element. You'll need to call other function to handle attaching firstChild
+   *
+   * (parent)
+   * \
+   * (firstChild)
+   *
+   *    (parent)
+   *       \   \
+   * [element]  x
+   *             \
+   *             (firstChild)
+   */
+  @modelAction
+  attachToParentAsFirstChild(parentElement: IElement) {
+    parentElement.firstChild?.current.detachAsFirstChild()
+    this.parent = elementRef(parentElement)
+    parentElement.firstChild = elementRef(this.id)
+  }
 
-      this.parentId = parentElementId
-    }
+  /**
+   * Attach the new element as prevSibling. Leaves `prevSibling` still connected to `sibling`.
+   *
+   * (prevSibling)-(sibling)
+   * (prevSibling)-x-[element]-(sibling)
+   *
+   * @param sibling
+   * @returns
+   */
+  @modelAction
+  attachAsPrevSibling(sibling: IElement) {
+    // Add element as as prevSibling
+    sibling.prevSibling = elementRef(this)
+    this.nextSibling = elementRef(sibling)
+  }
+
+  /**
+   * Attach the new element as as nextSibling. Leaves `nextSibling` still connected to `sibling`.
+   *
+   * (sibling)-(nextSibling)
+   * (sibling)-[element]-x-(nextSibling)
+   *
+   * @param sibling
+   * @returns
+   */
+  @modelAction
+  attachAsNextSibling(sibling: IElement) {
+    sibling.nextSibling = elementRef(this.id)
+    this.prevSibling = elementRef(sibling.id)
   }
 
   @modelAction
-  attachToParentAsFirstChild(parentElementId: string) {
-    return () => {
-      const parentElement = this.elementService.element(parentElementId)
-      this.attachToParent(parentElementId)()
-
-      if (!parentElement) {
-        throw new Error(`parent element id ${parentElementId} not found`)
-      }
-
-      parentElement.firstChildId = this.id
-      this.parentId = parentElement.id
-    }
-  }
-
-  makeAttachToParentAsFirstChildInput(parentElementId: string) {
-    const parentElement = this.elementService.element(parentElementId)
-
-    if (!parentElement) {
-      throw new Error(`parent element id ${parentElementId} not found`)
-    }
-
-    return makeUpdateElementInput(parentElement, {
-      firstChild: {
-        ...connectNodeId(this.id),
-        ...disconnectNodeId(parentElement.firstChild?.id),
-      },
-    })
-  }
-
-  makeDetachParentInput() {
-    if (!this.parentElement) {
-      return null
-    }
-
-    const parentElementChanges: ElementUpdateInput = {}
-
-    if (this.parentElement.firstChildId === this.id) {
-      parentElementChanges.firstChild = {
-        ...disconnectNodeId(this.id),
-        ...connectNodeId(this.nextSibling?.id),
-      }
-    }
-
-    return makeUpdateElementInput(this.parentElement, parentElementChanges)
-  }
-
-  makeDetachPrevSiblingInput() {
-    if (!this.prevSibling) {
-      return null
-    }
-
-    // prev Sibling - [element] - next sbiling
-    return makeUpdateElementInput(this.prevSibling, {
-      nextSibling: {
-        // disconnect element
-        ...disconnectNodeId(this.id),
-        // connect next sibling
-        ...connectNodeId(this.nextSibling?.id),
-      },
-    })
-  }
-
-  makeDetachNextSiblingInput() {
-    if (!this.nextSibling) {
-      return null
-    }
-
-    // prev Sibling - [element] - next sbiling
-    return makeUpdateElementInput(this.nextSibling, {
-      prevSibling: {
-        // detach element
-        ...disconnectNodeId(this.id),
-        // attach prev sibling
-        ...connectNodeId(this.prevSibling?.id),
-      },
-    })
-  }
-
-  makePrependSiblingInput(siblingId: string) {
-    const sibling = this.elementService.element(siblingId)
-
-    if (!sibling) {
-      throw new Error(`sibling element ${siblingId} not found`)
-    }
-
-    // sibling - next sibling
-    // sibling - [element]
-    return makeUpdateElementInput(sibling, {
-      nextSibling: {
-        // sibling detaches
-        ...disconnectNodeId(sibling.nextSibling?.id),
-        // appends element
-        ...connectNodeId(this.id),
-      },
-    })
-  }
-
-  makeAppendSiblingInput(siblingId: string) {
-    const sibling = this.elementService.element(siblingId)
-
-    if (!sibling) {
-      throw new Error(`sibling element ${siblingId} not found`)
-    }
-
-    // sibling.prevSibling - sibling
-    // [element] - sibling
-    return makeUpdateElementInput(sibling, {
-      prevSibling: {
-        // sibling detaches its prev sibling
-        ...disconnectNodeId(sibling.prevSibling?.id),
-        // sibling prepends element
-        ...connectNodeId(this.id),
-      },
-    })
-  }
-
-  @modelAction
-  appendSibling(siblingId: string) {
-    // update both element and sibling in cache
-    return () => {
-      const sibling = this.elementService.element(siblingId)
-
-      if (!sibling) {
-        throw new Error(`sibling element ${siblingId} not found`)
-      }
-
-      // sibling - next sibling
-      // sibling - [element]
-      // sibling prepends element
-      sibling.prevSiblingId = this.id
-      // element appends sibling
-      this.nextSiblingId = sibling.id
-    }
-  }
-
-  @modelAction
-  prependSibling(siblingId: string) {
-    return () => {
-      const sibling = this.elementService.element(siblingId)
-
-      if (!sibling) {
-        throw new Error(`sibling element ${siblingId} not found`)
-      }
-
-      // sibling - next sibling
-      // sibling - [element]
-      // sibling appends element
-      sibling.nextSiblingId = this.id
-      // prepend element sibling
-      this.prevSiblingId = sibling.id
-    }
-  }
-
   @modelAction
   writeCache({
+    customCss,
+    firstChild,
+    guiCss,
     id,
     name,
-    customCss,
-    guiCss,
-    slug,
-    renderAtomType,
-    renderComponentType,
+    nextSibling,
+    parent,
     parentComponent,
-    hooks,
+    prevSibling,
     props,
     propTransformationJs,
-    renderIfExpression,
-    postRenderActionId,
-    preRenderActionId,
     renderForEachPropKey,
-    parent,
-    nextSibling,
-    prevSibling,
-    firstChild,
-  }: Omit<IElementDTO, '__typename'>) {
-    const apiRef = renderAtomType
-      ? (typeRef(renderAtomType.api.id) as Ref<IInterfaceType>)
-      : undefined
+    renderIfExpression,
+    renderType,
+  }: Partial<IElementDTO>) {
+    const elementRenderType = getRenderType(renderType)
 
-    this.id = id
-    this.name = extractName(name)
-    this.customCss = customCss ?? null
-    this.guiCss = guiCss ?? null
-    this.propTransformationJs = propTransformationJs ?? null
+    this.name = name ?? this.name
+    this.customCss = customCss ?? this.customCss
+    this.guiCss = guiCss ?? this.guiCss
+    this.propTransformationJs =
+      propTransformationJs ?? this.propTransformationJs
     this.renderIfExpression = renderIfExpression ?? null
     this.renderForEachPropKey = renderForEachPropKey ?? null
-    this.atom = renderAtomType ? atomRef(renderAtomType.id) : null
-
-    this.preRenderActionId = preRenderActionId
-    this.postRenderActionId = postRenderActionId
-    this.props = props ? new Prop({ id: props.id, apiRef }) : null
-    this.parentId = parent?.id ?? null
-
-    this.nextSiblingId = nextSibling?.id ?? null
-    this.prevSiblingId = prevSibling?.id ?? null
-    this.firstChildId = firstChild?.id ?? null
-    this.slug = slug
-
-    if (props) {
-      this.props?.writeCache({ ...props, apiRef })
-    } else {
-      this.props = null
-    }
-
-    this.parentComponent = parentComponent
+    this.renderType = elementRenderType ?? this.renderType
+    this.props = props?.id ? propRef(props.id) : this.props
+    this.parent = parent?.id ? elementRef(parent.id) : this.parent
+    this.nextSibling = nextSibling?.id
+      ? elementRef(nextSibling.id)
+      : this.nextSibling
+    this.prevSibling = prevSibling?.id
+      ? elementRef(prevSibling.id)
+      : this.prevSibling
+    this.firstChild = firstChild?.id
+      ? elementRef(firstChild.id)
+      : this.firstChild
+    this._parentComponent = parentComponent
       ? componentRef(parentComponent.id)
-      : null
-    this.renderComponentType = renderComponentType
-      ? componentRef(renderComponentType.id)
       : null
 
     return this
   }
-
-  // This must be defined outside the class or weird things happen https://github.com/xaviergonz/mobx-keystone/issues/173
-  public static hydrate = hydrate
-
-  public static getElementTree = getElementTree
 }

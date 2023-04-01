@@ -1,17 +1,15 @@
 import type {
-  IAtom,
-  ICreateEnumType,
-  IEnumType,
-  IEnumTypeValue,
-  IField,
-  IUserRef,
-} from '@codelab/backend/abstract/core'
+  IAtomDTO,
+  IAuth0Owner,
+  IEnumTypeDTO,
+  IEnumTypeValueDTO,
+  IFieldDTO,
+} from '@codelab/frontend/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { compoundCaseToTitleCase } from '@codelab/shared/utils'
-import { v4 } from 'uuid'
 import { BaseType } from './base-type.model'
 
-export class EnumType extends BaseType implements IEnumType {
+export class EnumType extends BaseType implements IEnumTypeDTO {
   declare id: string
 
   declare name: string
@@ -20,29 +18,19 @@ export class EnumType extends BaseType implements IEnumType {
 
   declare __typename: `${ITypeKind.EnumType}`
 
-  declare owner: IUserRef
+  declare owner: IAuth0Owner
 
-  allowedValues: Array<IEnumTypeValue>
+  allowedValues: Array<IEnumTypeValueDTO>
 
-  private constructor({ id, name, kind, allowedValues, owner }: IEnumType) {
-    super({ id, name, kind, __typename: ITypeKind.EnumType, owner })
+  constructor({ allowedValues, id, name, owner }: IEnumTypeDTO) {
+    super({ id, kind: ITypeKind.EnumType, name, owner })
+
     this.allowedValues = allowedValues
   }
 
-  static init({ name, owner, allowedValues }: ICreateEnumType) {
-    return new EnumType({
-      id: v4(),
-      __typename: ITypeKind.EnumType,
-      kind: ITypeKind.EnumType,
-      name,
-      owner,
-      allowedValues,
-    })
-  }
-
   static getCompositeName(
-    atom: Pick<IAtom, 'name'>,
-    field: Pick<IField, 'key'>,
+    atom: Pick<IAtomDTO, 'name'>,
+    field: Pick<IFieldDTO, 'key'>,
   ) {
     return `${atom.name} ${compoundCaseToTitleCase(field.key)} Enum`
   }

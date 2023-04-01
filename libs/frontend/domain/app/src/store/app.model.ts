@@ -1,46 +1,90 @@
-import type { IApp, IPage, IStore } from '@codelab/frontend/abstract/core'
-import { IAppDTO } from '@codelab/frontend/abstract/core'
+import type {
+  IApp,
+  IAppDTO,
+  IAuth0Owner,
+  IDomain,
+  IPage,
+} from '@codelab/frontend/abstract/core'
+import { domainRef } from '@codelab/frontend/domain/domain'
 import { pageRef } from '@codelab/frontend/domain/page'
-import { storeRef } from '@codelab/frontend/domain/store'
+import type {
+  AppCreateInput,
+  AppDeleteInput,
+  AppUpdateInput,
+} from '@codelab/shared/abstract/codegen'
+import { IPageKind } from '@codelab/shared/abstract/core'
+import { connectAuth0Owner } from '@codelab/shared/domain/mapper'
+import { createUniqueName } from '@codelab/shared/utils'
 import merge from 'lodash/merge'
 import { computed } from 'mobx'
 import type { Ref } from 'mobx-keystone'
-import {
-  detach,
-  idProp,
-  Model,
-  model,
-  modelAction,
-  prop,
-  rootRef,
-} from 'mobx-keystone'
+import { idProp, Model, model, modelAction, prop } from 'mobx-keystone'
+import slugify from 'voca/slugify'
 
-const hydrate = (app: IAppDTO) => {
-  const store = storeRef(app.store.id)
-
-  return new App({
-    id: app.id,
-    name: app.name,
-    slug: app.slug,
-    ownerId: app.owner.id,
-    store,
-    pages: app.pages.map((page) => pageRef(page.id)),
+const create = ({ domains, id, name, owner, pages }: IAppDTO) => {
+  const app = new App({
+    domains: domains?.map((domain) => domainRef(domain.id)),
+    id,
+    name,
+    owner,
+    pages: pages?.map((page) => pageRef(page.id)),
   })
+
+  return app
 }
 
 @model('@codelab/App')
 export class App
   extends Model({
+    domains: prop<Array<Ref<IDomain>>>(() => []),
     id: idProp,
-    ownerId: prop<string>(),
     name: prop<string>().withSetter(),
-    slug: prop<string>(),
-    store: prop<Ref<IStore>>(),
+    owner: prop<IAuth0Owner>(),
     pages: prop<Array<Ref<IPage>>>(() => []),
+    // slug: prop<string>().withSetter(),
   })
   implements IApp
 {
-  static hydrate = hydrate
+  @computed
+  get slug() {
+    return slugify(this.name)
+  }
+
+  @modelAction
+  static create = create
+
+  /**
+   * For cache writing, we don't write dto for nested models. We only write the ref. The top most use case calling function is responsible for properly hydrating the data.
+   */
+  @modelAction
+  writeCache({ domains, id, name, pages }: Partial<IAppDTO>) {
+    this.id = id ?? this.id
+    this.name = name ?? this.name
+    this.pages = pages ? pages.map((page) => pageRef(page.id)) : this.pages
+    this.domains = domains
+      ? domains.map((domain) => domainRef(domain.id))
+      : this.domains
+
+    return this
+  }
+
+  @computed
+  get pageRootElements() {
+    return this.pages.map((page) => page.current.rootElement)
+  }
+
+  @computed
+  get providerPage() {
+    const providerPage = this.pages.find(
+      (page) => page.current.kind === IPageKind.Provider,
+    )?.current
+
+    if (!providerPage) {
+      throw new Error('ProviderPage is required')
+    }
+
+    return providerPage
+  }
 
   @computed
   get toJson() {
@@ -48,29 +92,51 @@ export class App
       [this.slug]: {
         id: this.id,
         name: this.name,
-        slug: this.slug,
         pages: this.pages.map((page) => page.current.toJson).reduce(merge, {}),
       },
     }
   }
 
   @modelAction
-  public writeCache(data: IAppDTO) {
-    this.id = data.id
-    this.ownerId = data.owner.id
-    this.setName(data.name)
-    this.slug = data.slug
-    this.store = storeRef(data.store.id)
-    this.pages = data.pages.map((page) => pageRef(page.id))
+  page(id: string) {
+    const currentPage = this.pages.find(
+      (page) => page.current.id === id,
+    )?.maybeCurrent
 
-    return this
+    if (!currentPage) {
+      throw new Error('Missing page')
+    }
+
+    return currentPage
+  }
+
+  toCreateInput(): AppCreateInput {
+    return {
+      _compoundName: createUniqueName(this.name, this.owner.auth0Id),
+      id: this.id,
+      owner: connectAuth0Owner(this.owner),
+      pages: {
+        create: this.pages.map((page) => ({
+          node: page.current.toCreateInput(),
+        })),
+      },
+    }
+  }
+
+  toUpdateInput(): AppUpdateInput {
+    return {
+      _compoundName: createUniqueName(this.name, this.owner.auth0Id),
+    }
+  }
+
+  toDeleteInput(): AppDeleteInput {
+    return {
+      pages: [
+        {
+          delete: {},
+          where: {},
+        },
+      ],
+    }
   }
 }
-
-export const appRef = rootRef<IApp>('@codelab/AppRef', {
-  onResolvedValueChange: (ref, newApp, oldApp) => {
-    if (oldApp && !newApp) {
-      detach(ref)
-    }
-  },
-})

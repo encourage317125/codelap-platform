@@ -1,32 +1,8 @@
-import { IRole } from '@codelab/shared/abstract/core'
-import { EntitySchema } from '@codelab/shared/abstract/types'
-import { z } from 'zod'
+import type { IAppExport } from './app.interface'
+import type { IResourceExport } from './resource.interface'
+import type { ITypesExport } from './type'
 
-/**
- * We use auth0Id since that is passed from frontend
- */
-export const UserRefSchema = z.object({
-  auth0Id: z.string(),
-})
-
-export const OwnerSchema = z.object({
-  owner: UserRefSchema,
-})
-
-export type IUserRef = z.infer<typeof UserRefSchema>
-
-export const UserSchema = UserRefSchema.extend({
-  id: z.string(),
-  username: z.string(),
-  email: z.string(),
-  roles: z.array(z.nativeEnum(IRole)).optional().nullable(),
-})
-
-export type IUser = z.infer<typeof UserSchema>
-
-export const UserExportSchema = EntitySchema.extend({
-  username: z.string(),
-  roles: z.array(z.nativeEnum(IRole)).optional().nullable(),
-})
-
-export type IUserExport = z.infer<typeof UserSchema>
+export type IUserDataExport = ITypesExport & {
+  apps: Array<IAppExport>
+  resources: Array<IResourceExport>
+}
