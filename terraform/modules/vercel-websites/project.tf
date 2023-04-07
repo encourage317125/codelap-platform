@@ -20,8 +20,8 @@ resource "vercel_project" "websites" {
   environment = [
     {
       target = ["production", "preview"]
-      key    = "NEXT_PUBLIC_BUILDER_HOST"
-      value  = var.next_public_builder_host
+      key    = "NEXT_PUBLIC_PLATFORM_HOST"
+      value  = var.next_public_platform_host
     },
     # Auth0
     {
@@ -39,14 +39,14 @@ resource "vercel_project" "websites" {
       key    = "AUTH0_CLIENT_SECRET"
       # This isn't working
       # value = data.auth0_client.web_client.client_secret
-      value = var.auth0_client_secret
+      value = var.auth0_web_client_secret
     },
     {
       target = ["production", "preview"]
       key    = "AUTH0_CLIENT_ID"
       # This isn't working
       # value = data.auth0_client.web_client.id
-      value = var.auth0_client_id
+      value = var.auth0_web_client_id
     },
     {
       target = ["production", "preview"]

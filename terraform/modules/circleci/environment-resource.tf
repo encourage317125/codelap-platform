@@ -6,27 +6,27 @@ provider "circleci" {
 }
 
 locals {
-  project_name = "builder"
+  project_name = "platform"
   organization = "codelab-app"
 }
 
-resource "circleci_environment_variable" "NEXT_PUBLIC_BUILDER_HOST" {
-  name         = "NEXT_PUBLIC_BUILDER_HOST"
-  value        = var.next_public_builder_host
+resource "circleci_environment_variable" "NEXT_PUBLIC_PLATFORM_HOST" {
+  name         = "NEXT_PUBLIC_PLATFORM_HOST"
+  value        = var.next_public_platform_host
   project      = local.project_name
   organization = local.organization
 }
 
 resource "circleci_environment_variable" "AUTH0_CLIENT_ID" {
   name         = "AUTH0_CLIENT_ID"
-  value        = var.auth0_client_id
+  value        = var.auth0_web_client_id
   project      = local.project_name
   organization = local.organization
 }
 
 resource "circleci_environment_variable" "AUTH0_CLIENT_SECRET" {
   name         = "AUTH0_CLIENT_SECRET"
-  value        = var.auth0_client_secret
+  value        = var.auth0_web_client_secret
   project      = local.project_name
   organization = local.organization
 }
@@ -48,6 +48,13 @@ resource "circleci_environment_variable" "AUTH0_CYPRESS_PASSWORD" {
 resource "circleci_environment_variable" "AUTH0_ISSUER_BASE_URL" {
   name         = "AUTH0_ISSUER_BASE_URL"
   value        = var.auth0_issuer_base_url
+  project      = local.project_name
+  organization = local.organization
+}
+
+resource "circleci_environment_variable" "AUTH0_AUDIENCE" {
+  name         = "AUTH0_AUDIENCE"
+  value        = "${var.auth0_issuer_base_url}api/v2/"
   project      = local.project_name
   organization = local.organization
 }

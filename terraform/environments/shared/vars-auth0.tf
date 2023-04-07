@@ -1,4 +1,4 @@
-variable "NEXT_PUBLIC_BUILDER_HOST" {
+variable "NEXT_PUBLIC_PLATFORM_HOST" {
   type = string
 }
 
@@ -25,3 +25,4 @@ variable "AUTH0_CYPRESS_USERNAME" {
 variable "AUTH0_CYPRESS_PASSWORD" {
   type = string
 }
+

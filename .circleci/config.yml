@@ -145,21 +145,6 @@ commands:
             sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
             sudo apt update
             sudo apt install terraform
-
-      #          command: |
-      #            sudo apt-get update && sudo apt-get install -y gnupg software-properties-common
-      #
-      #            wget -O- https://apt.releases.hashicorp.com/gpg | \
-      #            gpg --dearmor | \
-      #            sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-      #
-      #            gpg --no-default-keyring \
-      #            --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg \
-      #            --fingerprint
-      #
-      #            sudo apt-get update
-      #
-      #            sudo apt-get install terraform
       - run:
           name: 'Set Node Version'
           command: |
@@ -221,14 +206,14 @@ jobs:
       - run:
           name: 'Build CI'
           # Can't use `yarn cli` doesn't exist yet
-          command: npx nx run-many --target=build --projects=builder,cli,landing,websites --parallel=4 --verbose -c ci
+          command: npx nx run-many --target=build --projects=platform,cli,landing,websites --parallel=4 --verbose -c ci
       - save_cache:
           name: 'Save Cache'
           key: dep-cache-bust-{{ checksum "yarn.lock" }}
           paths:
             - ~/.yarn
             - ~/.cache
-            - ~/project/dist/apps/builder/.next/cache
+            - ~/project/dist/apps/platform/.next/cache
             - ~/project/dist/apps/landing/.next/cache
             - ~/project/dist/apps/websites/.next/cache
             - ~/project/node_modules
@@ -310,30 +295,22 @@ jobs:
     # Cypress requires record for parallel to work according to https://github.com/cypress-io/cypress/issues/2520
     parallelism: 4
     steps:
-      #      - queue/until_front_of_line:
-      #          consider-branch: false
       - setup-workspace
       - setup_remote_docker:
           version: 20.10.14
-      - run:
-          name: 'Check Docker Processes'
-          command: |
-            docker ps
-            echo ${DOCKER_HOST}
-            curl http://127.0.0.1:7474/db/data/
       - run: npx cypress install
       - run: npx cypress verify
       - run:
           name: 'Run E2E Tests'
           command: yarn cli tasks e2e --stage ci
       - store_artifacts:
-          path: ~/project/apps/builder-e2e/src/videos
+          path: ~/project/apps/platform-e2e/src/videos
           destination: cypress/videos
       - store_artifacts:
-          path: ~/project/apps/builder-e2e/src/screenshots
+          path: ~/project/apps/platform-e2e/src/screenshots
           destination: cypress/screenshots
       - store_artifacts:
-          path: ~/project/apps/builder-e2e/src/data
+          path: ~/project/apps/platform-e2e/src/data
           destination: cypress/data
 
   plan:
