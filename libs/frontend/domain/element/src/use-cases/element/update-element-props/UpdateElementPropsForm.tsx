@@ -43,7 +43,7 @@ const withCustomTextSchema: JSONSchemaType<{
 
 export const UpdateElementPropsForm = observer<UpdateElementPropsFormProps>(
   ({ element, trackPromises }) => {
-    const { elementService, propService, typeService } = useStore()
+    const { propService, typeService } = useStore()
     const { trackPromise } = trackPromises ?? {}
     const currentElement = element.current
     const apiId = currentElement.renderType?.current.api.id
@@ -81,7 +81,7 @@ export const UpdateElementPropsForm = observer<UpdateElementPropsFormProps>(
     // but should prioritize the element props
     const propsModel = mergeProps(
       isComponentInstance(currentElement.renderType)
-        ? currentElement.renderType.maybeCurrent?.props?.current.values
+        ? currentElement.renderType.maybeCurrent?.props.current.values
         : {},
       currentElement.props.current.values,
     )
