@@ -8,16 +8,17 @@ import {
   IType,
   ITypeDTO,
 } from '@codelab/frontend/abstract/core'
-import { ModalService } from '@codelab/frontend/shared/utils'
+import { ModalService, PaginationService } from '@codelab/frontend/shared/utils'
 import { TypeKind } from '@codelab/shared/abstract/codegen'
 import type { IPrimitiveTypeKind } from '@codelab/shared/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { Nullable } from '@codelab/shared/abstract/types'
+import compact from 'lodash/compact'
+import sortBy from 'lodash/sortBy'
 import { computed } from 'mobx'
 import {
   _async,
   _await,
-  arraySet,
   idProp,
   Model,
   model,
@@ -33,19 +34,20 @@ import { getFieldService } from './field.service.context'
 import { InterfaceType } from './models'
 import { TypeFactory } from './type.factory'
 import { TypeModalService } from './type-modal.service'
-import { TypePaginationService } from './type-pagination.service'
 
 @model('@codelab/TypeService')
 export class TypeService
   extends Model({
+    allTypesLoaded: prop(() => false),
     createModal: prop(() => new ModalService({})),
     /**
      * Used to show current paginated types
      */
     deleteModal: prop(() => new TypeModalService({})),
     id: idProp,
-    pagination: prop(() => new TypePaginationService({})),
-    selectedIds: prop(() => arraySet<string>()).withSetter(),
+    paginationService: prop(
+      () => new PaginationService<IType, { name?: string }>({}),
+    ),
     typeRepository: prop(() => new TypeRepository({})),
     /**
      * This holds all types
@@ -58,6 +60,22 @@ export class TypeService
   @computed
   private get fieldService() {
     return getFieldService(this)
+  }
+
+  onAttachedToRootStore() {
+    this.paginationService.getDataFn = async (page, pageSize, filter) => {
+      const { items: baseTypes, totalCount: totalItems } =
+        await this.typeRepository.findBaseTypes({
+          limit: pageSize,
+          offset: (page - 1) * pageSize,
+          where: filter,
+        })
+
+      const typeIds = baseTypes.map(({ id }) => id)
+      const items = await this.getAll(typeIds)
+
+      return { items, totalItems }
+    }
   }
 
   @computed
@@ -127,6 +145,12 @@ export class TypeService
 
   @modelAction
   add(typeDTO: ITypeDTO) {
+    const existingType = this.types.get(typeDTO.id)
+
+    if (existingType) {
+      return existingType
+    }
+
     const type = TypeFactory.create(typeDTO)
 
     this.types.set(type.id, type)
@@ -153,41 +177,70 @@ export class TypeService
    */
   @modelFlow
   @transaction
-  getAll = _async(function* (this: TypeService, ids: Array<string>) {
-    const typeFragments = yield* _await(
-      this.typeRepository.find({ id_IN: ids }),
-    )
-
-    const parentIds = typeFragments.map((typeFragment) => typeFragment.id)
-
-    // load the descendants of the requested types
-    const descendantTypeFragments = yield* _await(
-      this.typeRepository.findDescendants(parentIds),
-    )
-
-    const allFragments = [...typeFragments, ...descendantTypeFragments]
-
-    // initialize fields
-    allFragments.forEach((typeFragment) => {
-      if (typeFragment.__typename === TypeKind.InterfaceType) {
-        typeFragment.fields.forEach((fieldFragment) => {
-          this.fieldService.add(fieldFragment)
-        })
+  getAll = _async(function* (this: TypeService, ids?: Array<string>) {
+    // If `getAll` is called without `ids`, all types should be cached already
+    // New created types should be added to the cache so it should be included in the list
+    if (this.allTypesLoaded) {
+      if (!ids) {
+        return this.typesList
       }
-    })
 
-    return (
-      allFragments
-        .map((typeFragment) => {
-          return this.add(typeFragment)
-        })
-        // return only the requested types
-        .filter((type) => ids.includes(type.id))
-        // Sort the most recently fetched types
-        .sort((typeA, typeB) =>
-          typeA.name.toLowerCase() < typeB.name.toLowerCase() ? -1 : 1,
-        )
-    )
+      const storedTypes = compact(ids.map((id) => this.types.get(id)))
+
+      if (storedTypes.length !== ids.length) {
+        throw new Error('Some types are not found.')
+      }
+
+      return storedTypes
+    }
+
+    const existingTypes = compact(ids?.map((id) => this.types.get(id)) ?? [])
+    const newIds = ids?.filter((id) => !this.types.has(id))
+    let newTypes: Array<IType> = []
+
+    // Undefined `ids` should get to this point one time only
+    // We also dont need to include types already in the cache
+    if (newIds?.length || !ids) {
+      const typeFragments = yield* _await(
+        this.typeRepository.find({ id_IN: newIds }),
+      )
+
+      const parentIds = typeFragments.map((typeFragment) => typeFragment.id)
+
+      // load the descendants of the requested types
+      // we dont need to get the descendants if all types are requested i.e. no `ids` provided
+      const descendantTypeFragments = ids
+        ? yield* _await(this.typeRepository.findDescendants(parentIds))
+        : []
+
+      const newFragments = [...typeFragments, ...descendantTypeFragments]
+
+      // dont include descendant types and return only requested types unless all is requested i.e. no `ids`
+      newTypes = compact(
+        newFragments.map((typeFragment) => {
+          if (typeFragment.__typename === TypeKind.InterfaceType) {
+            typeFragment.fields.forEach((fieldFragment) => {
+              this.fieldService.add(fieldFragment)
+            })
+          }
+
+          const newType = this.add(typeFragment)
+
+          return newIds?.includes(typeFragment.id) || !ids ? newType : undefined
+        }),
+      )
+    }
+
+    const allTypes = [...existingTypes, ...newTypes]
+    const result = sortBy(allTypes, ({ name }) => name.toLowerCase())
+
+    // This means all types has been fetched and stored in the cache
+    // so there is no need to run the whole function anymore
+    if (!ids) {
+      this.allTypesLoaded = true
+    }
+
+    return result
   })
 
   getType(id: string) {
