@@ -18,6 +18,11 @@ export const createPageSchema: JSONSchemaType<ICreatePageData> = {
       ...nonEmptyString,
       ...titleCaseValidation,
     },
+    url: {
+      type: 'string',
+      label: 'Deployed Page URL',
+      help: 'Leave blank to autogenerate value',
+    },
   },
   required: ['name'],
   title: 'Create Page Input',
