@@ -10,6 +10,7 @@ import type { CommandModule } from 'yargs'
 import { getStageOptions } from '../../shared/command'
 import { Stage } from '../../shared/utils/stage'
 import { Tasks } from '../../shared/utils/tasks'
+//
 
 /**
  * We require this since execCommand creates a new process and any env set before that doesn't apply
@@ -64,7 +65,7 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
 
           if (stage === Stage.CI) {
             execCommand(
-              'npx nx affected --target=test --testPathPattern="[^i].spec.ts" --color --verbose',
+              'npx nx affected --target=test --testPathPattern="[^i].spec.ts" --color --verbose --parallel=4 --runInBand',
             )
           }
         },
