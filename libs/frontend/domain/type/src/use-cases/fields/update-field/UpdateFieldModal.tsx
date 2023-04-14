@@ -10,11 +10,12 @@ import { AutoFields } from 'uniforms-antd'
 import { SelectDefaultValue } from '../../../interface-form'
 import { TypeSelect } from '../../../shared'
 import {
+  canSetDefaultValue,
   createFieldSchema,
   filterValidationRules,
+  isBoolean,
   isFloat,
   isInteger,
-  isInterfaceType,
   isPrimitive,
   isString,
 } from '../create-field'
@@ -56,6 +57,26 @@ export const UpdateFieldModal = observer(() => {
           name: field?.name,
           validationRules: field?.validationRules,
         }}
+        modelTransform={(mode, model) => {
+          // This automatically sets the `defaultValue` to be nullable for types
+          // where we dont set a default value like ReactNodeType, InterfaceType
+          if (
+            mode === 'form' &&
+            model.fieldType &&
+            !canSetDefaultValue(typeService, model.fieldType)
+          ) {
+            return {
+              ...model,
+              validationRules: {
+                general: {
+                  nullable: true,
+                },
+              },
+            }
+          }
+
+          return model
+        }}
         onSubmit={onSubmit}
         onSubmitError={createNotificationHandler({
           title: 'Error while updating field',
@@ -66,7 +87,14 @@ export const UpdateFieldModal = observer(() => {
       >
         <AutoFields fields={['key', 'name', 'description']} />
         <TypeSelect label="Type" name="fieldType" />
-        <AutoFields fields={['validationRules.general']} />
+        <DisplayIfField<IUpdateFieldData>
+          condition={({ model }) =>
+            !isBoolean(typeService, model.fieldType) &&
+            canSetDefaultValue(typeService, model.fieldType)
+          }
+        >
+          <AutoFields fields={['validationRules.general']} />
+        </DisplayIfField>
         <DisplayIfField<IUpdateFieldData>
           condition={({ model }) => isPrimitive(typeService, model.fieldType)}
         >
@@ -95,7 +123,7 @@ export const UpdateFieldModal = observer(() => {
 
         <DisplayIfField<IUpdateFieldData>
           condition={({ model }) =>
-            !isInterfaceType(typeService, model.fieldType)
+            canSetDefaultValue(typeService, model.fieldType)
           }
         >
           <SelectDefaultValue typeService={typeService} />

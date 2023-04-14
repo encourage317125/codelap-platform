@@ -1,45 +1,85 @@
-import type { IType } from '@codelab/frontend/abstract/core'
+import type { IType, ITypeRecord } from '@codelab/frontend/abstract/core'
+import { PageType } from '@codelab/frontend/abstract/types'
 import { useStore } from '@codelab/frontend/presenter/container'
-import { Spin, Table } from 'antd'
+import { useTablePagination } from '@codelab/frontend/shared/utils'
+import { useColumnSearchProps } from '@codelab/frontend/view/components'
+import { headerCellProps } from '@codelab/frontend/view/style'
+import { Skeleton, Spin, Table } from 'antd'
+import type { ColumnsType } from 'antd/lib/table/interface'
 import { observer } from 'mobx-react-lite'
-import { useRouter } from 'next/router'
 import React from 'react'
+import { ActionColumn } from './columns'
 import { TypeDetailsTable } from './tables/TypeDetailsTable'
-import { useTypesTable } from './useTypesTable'
 
 export const TypesTable = observer(() => {
-  const { typeService } = useStore()
+  const { fieldService, typeService } = useStore()
 
-  const {
-    query: { page, pageSize, searchName },
-  } = useRouter()
-
-  const { columns, handlePageChange, isLoadingTypes, rowSelection } =
-    useTypesTable({
-      page: page ? parseInt(page.toString()) : undefined,
-      pageSize: pageSize ? parseInt(pageSize.toString()) : undefined,
-      searchName: searchName ? searchName.toString() : undefined,
+  const { data, filter, handleChange, isLoading, pagination } =
+    useTablePagination<IType, { name: string }>({
+      filterTypes: { name: 'string' },
+      pathname: PageType.Type,
+      service: typeService,
     })
 
+  const nameColumnSearchProps = useColumnSearchProps<ITypeRecord>({
+    dataIndex: 'name',
+    onSearch: (name) =>
+      handleChange({ newFilter: { name: name || undefined } }),
+    text: filter.name,
+  })
+
+  const columns: ColumnsType<ITypeRecord> = [
+    {
+      dataIndex: 'name',
+      key: 'name',
+      onHeaderCell: headerCellProps,
+      title: 'Name',
+      ...nameColumnSearchProps,
+    },
+    {
+      dataIndex: 'kind',
+      key: 'kind',
+      onHeaderCell: headerCellProps,
+      title: 'Kind',
+    },
+    {
+      key: 'action',
+      onHeaderCell: headerCellProps,
+      render: (record) => {
+        if (isLoading) {
+          return <Skeleton paragraph={false} />
+        }
+
+        return (
+          <ActionColumn
+            fieldService={fieldService}
+            type={record}
+            typeService={typeService}
+          />
+        )
+      },
+      title: 'Action',
+      width: 100,
+    },
+  ]
+
+  const dataSource: Array<ITypeRecord> = data.map(({ id, kind, name }) => ({
+    id,
+    kind,
+    name,
+  }))
+
   return (
-    <Table<IType>
+    <Table<ITypeRecord>
       columns={columns}
-      dataSource={typeService.pagination.types}
+      dataSource={dataSource}
       expandable={{
         expandedRowRender: (type) =>
-          isLoadingTypes ? <Spin /> : <TypeDetailsTable typeId={type.id} />,
-        // onExpand: (expanded, record) => {},
+          isLoading ? <Spin /> : <TypeDetailsTable typeId={type.id} />,
       }}
-      loading={isLoadingTypes}
-      pagination={{
-        current: typeService.pagination.currentPage,
-        onChange: handlePageChange,
-        pageSize: typeService.pagination.pageSize,
-        position: ['bottomCenter'],
-        total: typeService.pagination.total,
-      }}
+      loading={isLoading}
+      pagination={pagination}
       rowKey={(type) => type.id}
-      rowSelection={rowSelection}
       scroll={{ x: 'max-content', y: '80vh' }}
       size="small"
     />

@@ -1,10 +1,11 @@
 import type { AtomOptions, AtomWhere } from '@codelab/shared/abstract/codegen'
 import type { Maybe } from '@codelab/shared/abstract/types'
-import type { ArraySet, ObjectMap, Ref } from 'mobx-keystone'
+import type { ObjectMap, Ref } from 'mobx-keystone'
 import type {
   ICRUDModalService,
   ICRUDService,
   IEntityModalService,
+  IPaginationService,
   IQueryService,
 } from '../../service'
 import type {
@@ -30,9 +31,8 @@ export interface IAtomService
     Array<Ref<IAtom>>,
     { atoms: Array<IAtom> }
   >
-  selectedIds: ArraySet<string>
+  paginationService: IPaginationService<IAtom, { name?: string }>
 
   add(atomDTO: IAtomDTO): IAtom
   delete(ids: Array<string>): Promise<number>
-  setSelectedIds(arraySet: ArraySet<string>): void
 }
