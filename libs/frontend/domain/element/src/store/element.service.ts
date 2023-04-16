@@ -24,7 +24,6 @@ import {
 } from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import type { IEntity } from '@codelab/shared/abstract/types'
-import { createUniqueName } from '@codelab/shared/utils'
 import compact from 'lodash/compact'
 import uniq from 'lodash/uniq'
 import { computed } from 'mobx'
@@ -638,7 +637,7 @@ export class ElementService
       customCss: element.customCss,
       guiCss: element.guiCss,
       id: v4(),
-      name: createUniqueName(duplicateName, element.closestContainerNode.id),
+      name: duplicateName,
       props,
       propTransformationJs: element.propTransformationJs,
       renderForEachPropKey: element.renderForEachPropKey,
