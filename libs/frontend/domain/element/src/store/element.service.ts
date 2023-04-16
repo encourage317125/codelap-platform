@@ -1,5 +1,6 @@
 import type {
   IAuth0Owner,
+  IComponent,
   ICreateElementData,
   IElement,
   IElementDTO,
@@ -14,6 +15,7 @@ import {
   isComponentInstance,
 } from '@codelab/frontend/abstract/core'
 import { getAtomService } from '@codelab/frontend/domain/atom'
+import { Component } from '@codelab/frontend/domain/component'
 import { getPropService } from '@codelab/frontend/domain/prop'
 import { getTypeService, InterfaceType } from '@codelab/frontend/domain/type'
 import {
@@ -22,7 +24,6 @@ import {
 } from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import type { IEntity } from '@codelab/shared/abstract/types'
-import { createUniqueName } from '@codelab/shared/utils'
 import compact from 'lodash/compact'
 import uniq from 'lodash/uniq'
 import { computed } from 'mobx'
@@ -466,59 +467,17 @@ export class ElementService
     return element
   })
 
-  @modelFlow
-  @transaction
-  moveElementToAnotherTree = _async(function* (
-    this: ElementService,
-    {
-      dropPosition,
-      element: { id: elementId },
-      targetElement: { id: targetElementId },
-    }: Parameters<IElementService['moveElementToAnotherTree']>[0],
-  ) {
-    const targetElement = this.element(targetElementId)
-    let element = this.maybeElement(elementId)
-
-    if (!element) {
-      const elementTree = targetElement.closestContainerNode
-
-      const existingInstances = elementTree.elements.filter(
-        ({ renderType }) => renderType?.id === elementId,
-      )
-
-      const component = this.componentService.components.get(elementId)
-
-      if (!component) {
-        throw new Error('Missing component')
-      }
-
-      const componentInstanceCounter = existingInstances.length
-        ? ` ${existingInstances.length}`
-        : ''
-
-      const name = `${component.name}${componentInstanceCounter}`
-
-      const renderType: RenderType = {
-        id: component.id,
-        kind: IRenderTypeKind.Component,
-      }
-
-      const parentElementId = targetElement.id
-      const data = { id: v4(), name, parentElementId, renderType }
-
-      element = yield* _await(this.create(data))
-    } else {
-      const oldConnectedNodeIds = this.detachElementFromElementTree(element.id)
-
-      yield* _await(
-        Promise.all(
-          oldConnectedNodeIds.map((id) =>
-            this.elementRepository.updateNodes(this.element(id)),
-          ),
-        ),
-      )
-    }
-
+  @modelAction
+  moveElementToAnotherTree = ({
+    dropPosition,
+    element,
+    targetElement,
+  }: {
+    dropPosition: number
+    element: IElement
+    targetElement: IElement
+  }) => {
+    const oldConnectedNodeIds = this.detachElementFromElementTree(element.id)
     const insertAfterId = targetElement.children[dropPosition]?.id
     let newConnectedNodeIds: Array<string> = []
 
@@ -534,9 +493,127 @@ export class ElementService
       })
     }
 
+    const affectedNodeIds = [...oldConnectedNodeIds, ...newConnectedNodeIds]
+
+    return affectedNodeIds
+  }
+
+  @modelFlow
+  @transaction
+  moveComponentToAnotherTree = _async(function* (
+    this: ElementService,
+    {
+      component,
+      dropPosition,
+      targetElement,
+    }: {
+      dropPosition: number
+      component: IComponent
+      targetElement: IElement
+    },
+  ) {
+    const elementTree = targetElement.closestContainerNode
+
+    const existingInstances = elementTree.elements.filter(
+      ({ renderType }) => renderType?.id === component.id,
+    )
+
+    /**
+     * Check if there is circular referance
+     */
+    const componentDescendants = component.descendantComponents
+
+    if (
+      elementTree instanceof Component &&
+      componentDescendants.includes(elementTree)
+    ) {
+      throw new Error(
+        `Cannot move ${component.name} into ${targetElement.name} because of a circular reference between ${component.name} and ${elementTree.name}
+        `,
+      )
+    }
+
+    /**
+     * Create a new element as an instance of the component
+     */
+    const componentInstanceCounter = existingInstances.length
+      ? ` ${existingInstances.length}`
+      : ''
+
+    const name = `${component.name}${componentInstanceCounter}`
+
+    const renderType: RenderType = {
+      id: component.id,
+      kind: IRenderTypeKind.Component,
+    }
+
+    const parentElementId = targetElement.id
+    const data = { id: v4(), name, parentElementId, renderType }
+    const element = yield* _await(this.create(data))
+    /**
+     * Attach the new element to the target position
+     */
+    const insertAfterId = targetElement.children[dropPosition]?.id
+    let newConnectedNodeIds: Array<string> = []
+
+    if (!insertAfterId || dropPosition === 0) {
+      newConnectedNodeIds = this.attachElementAsFirstChild({
+        element,
+        parentElement: targetElement,
+      })
+    } else {
+      newConnectedNodeIds = this.attachElementAsNextSibling({
+        element,
+        targetElement: { id: insertAfterId },
+      })
+    }
+
+    return newConnectedNodeIds
+  })
+
+  @modelFlow
+  @transaction
+  moveNodeToAnotherTree = _async(function* (
+    this: ElementService,
+    {
+      dropPosition,
+      object: { id: objectId },
+      targetElement: { id: targetElementId },
+    }: Parameters<IElementService['moveNodeToAnotherTree']>[0],
+  ) {
+    const targetElement = this.element(targetElementId)
+    const element = this.maybeElement(objectId)
+    const affectedNodeIds: Array<string> = []
+
+    if (!element) {
+      const component = this.componentService.components.get(objectId)
+
+      if (!component) {
+        throw new Error('Missing component')
+      }
+
+      affectedNodeIds.push(
+        ...(yield* _await(
+          this.moveComponentToAnotherTree({
+            component,
+            dropPosition,
+            targetElement,
+          }),
+        )),
+      )
+    } else {
+      affectedNodeIds.push(
+        ...this.moveElementToAnotherTree({
+          dropPosition,
+          element,
+          targetElement,
+        }),
+      )
+    }
+
     yield* _await(
       Promise.all(
-        newConnectedNodeIds.map((id) =>
+        affectedNodeIds.map((id) =>
           this.elementRepository.updateNodes(this.element(id)),
         ),
       ),
@@ -560,7 +637,7 @@ export class ElementService
       customCss: element.customCss,
       guiCss: element.guiCss,
       id: v4(),
-      name: createUniqueName(duplicateName, element.closestContainerNode.id),
+      name: duplicateName,
       props,
       propTransformationJs: element.propTransformationJs,
       renderForEachPropKey: element.renderForEachPropKey,
