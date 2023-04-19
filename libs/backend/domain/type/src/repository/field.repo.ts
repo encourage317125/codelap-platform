@@ -32,6 +32,8 @@ export class FieldRepository extends AbstractRepository<
           ...field,
           api: connectNodeId(api.id),
           fieldType: connectNodeId(fieldType.id),
+          nextSibling: connectNodeId(field.nextSibling?.id),
+          prevSibling: connectNodeId(field.prevSibling?.id),
         })),
       })
     ).fields
@@ -54,6 +56,8 @@ export class FieldRepository extends AbstractRepository<
           ...field,
           api: reconnectNodeId(api.id),
           fieldType: reconnectNodeId(fieldType.id),
+          nextSibling: reconnectNodeId(field.nextSibling?.id),
+          prevSibling: reconnectNodeId(field.prevSibling?.id),
         },
         where,
       })

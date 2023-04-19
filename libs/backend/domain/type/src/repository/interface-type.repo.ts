@@ -80,12 +80,16 @@ export class InterfaceTypeRepository extends AbstractRepository<
     fields: Array<IFieldDTO>,
   ): OGM_TYPES.InterfaceTypeFieldsFieldInput {
     return {
-      create: fields.map(({ api, fieldType, ...field }) => ({
-        node: {
-          ...field,
-          fieldType: connectNodeId(fieldType.id),
-        },
-      })),
+      create: fields.map(
+        ({ api, fieldType, nextSibling, prevSibling, ...field }) => ({
+          node: {
+            ...field,
+            fieldType: connectNodeId(fieldType.id),
+            nextSibling: connectNodeId(nextSibling?.id),
+            prevSibling: connectNodeId(prevSibling?.id),
+          },
+        }),
+      ),
     }
   }
 
