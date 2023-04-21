@@ -21,6 +21,7 @@ import {
 import { IPageKind, ITypeKind } from '@codelab/shared/abstract/core'
 import type { Nullable } from '@codelab/shared/abstract/types'
 import { mapDeep, mergeProps } from '@codelab/shared/utils'
+import isObject from 'lodash/isObject'
 import type { Ref } from 'mobx-keystone'
 import { detach, idProp, Model, model, prop, rootRef } from 'mobx-keystone'
 import { createTransformer } from 'mobx-utils'
@@ -303,6 +304,8 @@ export class Renderer
    */
   private applyPropTypeTransformers = (props: IPropData) =>
     mapDeep(props, (value) => {
+      value = preTransformPropTypeValue(value)
+
       if (!isTypedValue(value)) {
         return value
       }
@@ -355,3 +358,20 @@ export const renderServiceRef = rootRef<IRenderer>(
     },
   },
 )
+
+/**
+ * Use for getting the actual value if the prop data is a UnionType
+ * @param value the prop data
+ * @returns the actual typed value if prop is a UnionType
+ */
+const preTransformPropTypeValue = (value: IPropData) => {
+  if (
+    isTypedValue(value) &&
+    isObject(value.value) &&
+    isTypedValue(value.value)
+  ) {
+    return value.value
+  }
+
+  return value
+}
