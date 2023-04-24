@@ -100,7 +100,7 @@ executors:
       - *executor-config
       - *resource-class
     docker:
-      - image: cimg/node:16.15.1-browsers
+      - image: cimg/node:18.16.0-browsers
   docker-node-neo4j:
     <<:
       - *executor-config
@@ -108,7 +108,7 @@ executors:
     # Docker containers work on a merged networking stack, the second container should make it available in localhost
     # https://discuss.circleci.com/t/whats-the-docker-hostname-for-the-second-container/20101
     docker:
-      - image: cimg/node:16.15.1-browsers
+      - image: cimg/node:18.16.0-browsers
       # https://circleci.com/docs/using-docker#using-multiple-docker-images
       # The `command` key is the command issued to the image
       - image: neo4j:5.4.0
@@ -142,14 +142,14 @@ commands:
           command: |
             sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DA418C88A3219F7B
             curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-            sudo apt-add-repository "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+            sudo apt-add-repository --yes "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
             sudo apt update
             sudo apt install terraform
       - run:
           name: 'Set Node Version'
           command: |
-            nvm install 16.16.0
-            nvm alias default 16.16.0
+            nvm install 18.16.0
+            nvm alias default 18.16.0
             node -v
       - run:
           name: 'Setup Env'
