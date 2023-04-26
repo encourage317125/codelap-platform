@@ -11,7 +11,7 @@ import type {
   IPageType,
   IPrimitiveType,
   IReactNodeType,
-  IRenderPropsType,
+  IRenderPropType,
   IType,
   IUnionType,
 } from '@codelab/frontend/abstract/core'
@@ -55,8 +55,8 @@ export class TypeSchemaFactory {
         return this.fromLambdaType(type)
       case ITypeKind.PageType:
         return this.fromPageType(type)
-      case ITypeKind.RenderPropsType:
-        return this.fromRenderPropsType(type, context)
+      case ITypeKind.RenderPropType:
+        return this.fromRenderPropType(type, context)
       case ITypeKind.PrimitiveType:
         return this.fromPrimitiveType(type, context)
       case ITypeKind.ReactNodeType:
@@ -93,6 +93,7 @@ export class TypeSchemaFactory {
       label: field.name || compoundCaseToTitleCase(field.key),
       ...(field.description ? fieldDescription(field.description) : {}),
       ...this.transform(field.type.current, {
+        defaultValues: field.defaultValues,
         fieldName: field.name,
         validationRules: field.validationRules ?? undefined,
       }),
@@ -169,8 +170,8 @@ export class TypeSchemaFactory {
     return this.simpleReferenceType(type)
   }
 
-  fromRenderPropsType(
-    type: IRenderPropsType,
+  fromRenderPropType(
+    type: IRenderPropType,
     context?: UiPropertiesContext,
   ): JsonSchema {
     return this.transformTypedValueType(type, context)
@@ -230,9 +231,10 @@ export class TypeSchemaFactory {
         }
         break
       case PrimitiveTypeKind.Boolean:
-        rulesSchema = {
-          default: false,
-        }
+        rulesSchema =
+          typeof context?.defaultValues === 'boolean'
+            ? { default: context.defaultValues }
+            : {}
         break
     }
 
@@ -292,7 +294,7 @@ export class TypeSchemaFactory {
    * Produces a {@link TypedValue} shaped schema
    */
   private transformTypedValueType(
-    type: IActionType | IReactNodeType | IRenderPropsType,
+    type: IActionType | IReactNodeType | IRenderPropType,
     context?: UiPropertiesContext,
   ): JsonSchema {
     const extra = this.getExtraProperties(type)
