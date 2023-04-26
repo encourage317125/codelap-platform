@@ -124,6 +124,10 @@ commands:
       - checkout
       - attach_workspace:
           at: ..
+      - restore_cache:
+          name: 'Restore NPM Cache'
+          keys:
+            - dep-cache-{{ checksum "yarn.lock" }}
       - run:
           name: 'Install NVM'
           command: |
@@ -135,16 +139,7 @@ commands:
             echo 'source $NVM_DIR/nvm.sh' >> $BASH_ENV
 
             wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-      - run:
-          # Manually install because we can't add `yarn` to terraform orb
-          # https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
-          name: 'Install Terraform'
-          command: |
-            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DA418C88A3219F7B
-            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
-            sudo apt-add-repository --yes "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
-            sudo apt update
-            sudo apt install terraform
+
       - run:
           name: 'Set Node Version'
           command: |
@@ -179,13 +174,27 @@ commands:
       - nx/set-shas:
           main-branch-name: master
 
+  setup-infra-workspace:
+    description: 'Setup Infra Workspace'
+    steps:
+      - run:
+          # Manually install because we can't add `yarn` to terraform orb
+          # https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli
+          name: 'Install Terraform'
+          command: |
+            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DA418C88A3219F7B
+            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+            sudo apt-add-repository --yes "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+            sudo apt update
+            sudo apt install terraform
+
   install-package:
     steps:
-      - restore_cache:
-          name: 'Restore Cache'
-          keys:
-            - dep-cache-bust-v2-{{ checksum "yarn.lock" }}
-          # https://discuss.circleci.com/t/circle-2-0-caching-is-too-limited-to-be-very-useful/11694
+      # - restore_cache:
+      #     name: 'Restore Cache'
+      #     keys:
+      #       - dep-cache-{{ checksum "yarn.lock" }}
+      #     # https://discuss.circleci.com/t/circle-2-0-caching-is-too-limited-to-be-very-useful/11694
       - run:
           name: 'Install NPM Packages'
           command: yarn install --immutable
@@ -196,31 +205,32 @@ jobs:
     steps:
       - setup-workspace
       - install-package
-      - run:
-          name: 'Clear Cache'
-          # clear cache here because NX cache can get quite large, we rely on remote cache instead
-          command: |
-            rm -rf ~/project/node_modules/nx/.cache
-      #            npx cypress cache clear
-      #            npx jest --clearCache
+      # - run:
+      #     name: 'Clear Cache'
+      #     # clear cache here because NX cache can get quite large, we rely on remote cache instead
+      #     command: |
+      #       rm -rf ~/project/node_modules/nx/.cache
+      # #            npx cypress cache clear
+      # #            npx jest --clearCache
       - run:
           name: 'Build CI'
           # Can't use `yarn cli` doesn't exist yet
           command: npx nx run-many --target=build --projects=platform,cli,landing,websites --parallel=4 --verbose -c ci
       - save_cache:
           name: 'Save Cache'
-          key: dep-cache-bust-{{ checksum "yarn.lock" }}
+          key: dep-cache-{{ checksum "yarn.lock" }}
           paths:
             - ~/.yarn
-            - ~/.cache
-            - ~/project/dist/apps/platform/.next/cache
-            - ~/project/dist/apps/landing/.next/cache
-            - ~/project/dist/apps/websites/.next/cache
+            # - ~/.cache
+            # - ~/project/dist/apps/platform/.next/cache
+            # - ~/project/dist/apps/landing/.next/cache
+            # - ~/project/dist/apps/websites/.next/cache
             - ~/project/node_modules
       - persist_to_workspace:
           root: ~/
           paths:
-            - project/node_modules
+            # Using too much workspace storage, eating up credits
+            # - project/node_modules
             - project/dist
 
   install-and-build-cli:
@@ -228,16 +238,16 @@ jobs:
     steps:
       - setup-workspace
       - install-package
-      - run:
-          name: 'Clear Cache'
-          command: |
-            rm -rf ~/project/node_modules/nx/.cache
+      # - run:
+      #     name: 'Clear Cache'
+      #     command: |
+      #       rm -rf ~/project/node_modules/nx/.cache
       - run:
           name: 'Build CI'
           command: npx nx build cli --verbose -c ci
       - save_cache:
           name: 'Save Cache'
-          key: dep-cache-bust-{{ checksum "yarn.lock" }}
+          key: dep-cache-{{ checksum "yarn.lock" }}
           paths:
             - ~/.yarn
             - ~/project/node_modules
@@ -298,6 +308,7 @@ jobs:
       - setup-workspace
       - setup_remote_docker:
           version: 20.10.14
+          docker_layer_caching: true
       - run: npx cypress install
       - run: npx cypress verify
       - run:
@@ -344,8 +355,6 @@ jobs:
     <<: *executor-params
     steps:
       - setup-workspace
-      #      - attach_workspace:
-      #          at: ..
       - run:
           name: 'Terraform Apply'
           command: yarn cli terraform --stage=prod apply

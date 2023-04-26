@@ -1,4 +1,5 @@
-import { IUseCase } from '@codelab/backend/abstract/types'
+import type { AtomSeedRecord } from '@codelab/backend/abstract/core'
+import { IAuthUseCase, IUseCase } from '@codelab/backend/abstract/types'
 import { AtomRepository } from '@codelab/backend/domain/atom'
 import { TagRepository } from '@codelab/backend/domain/tag'
 import {
@@ -9,10 +10,11 @@ import type { IAtomDTO, IAuth0Owner } from '@codelab/frontend/abstract/core'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import { ObjectTyped } from 'object-typed'
 import { v4 } from 'uuid'
-import type { AtomSeedData } from './atom'
-import { atomsData } from './atom'
 
-export class SeedAtomsService extends IUseCase<IAuth0Owner, void> {
+export class SeedAtomsService extends IAuthUseCase<
+  AtomSeedRecord,
+  Array<IAtomDTO>
+> {
   atomRepository: AtomRepository = new AtomRepository()
 
   interfaceTypeRepository: InterfaceTypeRepository =
@@ -20,17 +22,8 @@ export class SeedAtomsService extends IUseCase<IAuth0Owner, void> {
 
   tagRepository: TagRepository = new TagRepository()
 
-  /**
-   * Allow subset to be seeded for testing
-   */
-  constructor(
-    private readonly data: Partial<Record<IAtomType, AtomSeedData>> = atomsData,
-  ) {
-    super()
-  }
-
-  async _execute(owner: IAuth0Owner) {
-    const atoms = await this.createAtomsData(owner)
+  async _execute(data: AtomSeedRecord) {
+    const atoms = await this.createAtomsData(data)
 
     /**
      * Create all atoms but omit `suggestedChildren`, since that is required
@@ -52,12 +45,14 @@ export class SeedAtomsService extends IUseCase<IAuth0Owner, void> {
           await this.atomRepository.save(atom, { name: atom.name }),
       ),
     )
+
+    return atoms
   }
 
   /**
    * Assume all tags have already been created
    */
-  async createAtomsData(owner: IAuth0Owner): Promise<Array<IAtomDTO>> {
+  async createAtomsData(data: AtomSeedRecord): Promise<Array<IAtomDTO>> {
     const existingInterfaceTypes = new Map(
       (await this.interfaceTypeRepository.find()).map((interfaceType) => [
         interfaceType.name,
@@ -66,15 +61,16 @@ export class SeedAtomsService extends IUseCase<IAuth0Owner, void> {
     )
 
     return await Promise.all(
-      ObjectTyped.entries(this.data).map(async ([atomType, atomData]) => {
+      ObjectTyped.entries(data).map(async ([atomType, atomData]) => {
         // Search api by name
         const existingApi = existingInterfaceTypes.get(
           InterfaceType.getApiName({ name: atomType }),
         )
 
-        const api = existingApi
-          ? existingApi
-          : InterfaceType.createFromAtomName(atomType, owner)
+        if (!existingApi) {
+          console.log(atomData)
+          throw new Error('Atom API should exist already')
+        }
 
         // Get tags by name, they always match up
         const existingTag = await this.tagRepository.findOne({
@@ -82,16 +78,16 @@ export class SeedAtomsService extends IUseCase<IAuth0Owner, void> {
         })
 
         if (!existingTag) {
-          console.log(atomData?.tag)
+          console.log(atomData)
           throw new Error('Tag should exist already')
         }
 
         return {
-          api,
+          api: existingApi,
           icon: atomData?.icon,
           id: v4(),
           name: atomType,
-          owner,
+          owner: this.owner,
           tags: [existingTag],
           type: IAtomType[atomType],
         }
