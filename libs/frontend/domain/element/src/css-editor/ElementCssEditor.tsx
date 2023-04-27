@@ -4,8 +4,8 @@ import type {
   IElement,
   IElementService,
 } from '@codelab/frontend/abstract/core'
-import { useDebouncedState } from '@codelab/frontend/shared/utils'
 import { CodeMirrorEditor } from '@codelab/frontend/presentation/view'
+import { useDebouncedState } from '@codelab/frontend/shared/utils'
 import { CodeMirrorLanguage } from '@codelab/shared/abstract/codegen'
 import { Col, Collapse, Row } from 'antd'
 import isString from 'lodash/isString'
@@ -45,6 +45,11 @@ export const ElementCssEditor = observer<ElementCssEditorInternalProps>(
       element.customCss || '',
     )
 
+    const cssChangeHandler = useCallback(
+      (value: string) => setCustomCssString(value),
+      [],
+    )
+
     const [guiCssString, setGuiCssString] = useState(element.guiCss || '{}')
     // Keep the css string value in a ref so we can access it when unmounting the component
     const customCssStringRef = useRef(customCssString)
@@ -56,6 +61,11 @@ export const ElementCssEditor = observer<ElementCssEditorInternalProps>(
     const updateCustomCss = useCallback(
       (newCustomCss: string) => {
         const elementModel = getElementModel(element)
+
+        // do not send request if value was not changed
+        if (element.customCss === newCustomCss) {
+          return
+        }
 
         return elementService.update({
           ...elementModel,
@@ -71,7 +81,7 @@ export const ElementCssEditor = observer<ElementCssEditorInternalProps>(
        * because if the panel is closed too quickly, the autosave won't catch the latest changes
        */
       return () => {
-        void updateCustomCss(customCssStringRef.current).then()
+        void updateCustomCss(customCssStringRef.current)
       }
     }, [updateCustomCss])
 
@@ -94,6 +104,11 @@ export const ElementCssEditor = observer<ElementCssEditorInternalProps>(
       (newGuiCss: string) => {
         const elementModel = getElementModel(element)
 
+        // do not send request if value was not changed
+        if (element.guiCss === newGuiCss) {
+          return
+        }
+
         return elementService.update({
           ...elementModel,
           guiCss: newGuiCss,
@@ -108,7 +123,10 @@ export const ElementCssEditor = observer<ElementCssEditorInternalProps>(
        * because if the panel is closed too quickly, the autosave won't catch the latest changes
        */
       return () => {
-        void updateGuiCss(guiCssStringRef.current).then()
+        // do not send request if value was not changed
+        if (element.guiCss !== guiCssStringRef.current) {
+          void updateGuiCss(guiCssStringRef.current)
+        }
       }
     }, [updateGuiCss])
 
@@ -141,7 +159,7 @@ export const ElementCssEditor = observer<ElementCssEditorInternalProps>(
           <CodeMirrorEditor
             height="100%"
             language={CodeMirrorLanguage.Css}
-            onChange={(value) => setCustomCssString(value)}
+            onChange={cssChangeHandler}
             title="CSS Editor"
             value={customCssString}
           />
