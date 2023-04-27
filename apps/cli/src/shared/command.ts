@@ -2,14 +2,14 @@ import dotenv from 'dotenv'
 import type { MiddlewareFunction, Options } from 'yargs'
 import { Stage } from './utils/stage'
 
-type GetEnvOptions = (environments: Array<Stage>) => {
+type GetStageOptions = (stages: Array<Stage>) => {
   stage: Options
 }
 
 /**
  * Options used locally
  */
-export const getStageOptions: GetEnvOptions = (stages) => ({
+export const getStageOptions: GetStageOptions = (stages) => ({
   stage: {
     choices: stages,
     default: Stage.Dev,
@@ -22,9 +22,7 @@ export const getStageOptions: GetEnvOptions = (stages) => ({
 /**
  * Used locally to load env for other stages
  */
-export const loadStageMiddleware: MiddlewareFunction<{
-  stage: unknown
-}> = async ({ stage }) => {
+export const loadStageMiddleware: MiddlewareFunction = async ({ stage }) => {
   if (process.env.CI) {
     return
   }

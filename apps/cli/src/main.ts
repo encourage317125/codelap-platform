@@ -6,7 +6,6 @@ import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import { exportCommand } from './commands/export/export.command'
 import { importCommand } from './commands/import/import.command'
-import { parseHtmlCommand } from './commands/parse/parse-html.command'
 import { resetCommand } from './commands/reset/reset.command'
 import { scrapeAntdCommand } from './commands/scrape/scrape-antd.command'
 import { scrapeHtmlCommand } from './commands/scrape/scrape-html.command'
@@ -24,15 +23,11 @@ config({})
  */
 void yargs(hideBin(process.argv))
   .scriptName('cli')
-  // Moved this to subcommand
-  // .options({ ...getStageOptions([Stage.Dev, Stage.Test, Stage.Prod]) })
-  // .middleware([loadStageMiddleware])
   /**
    * These scripts could act on different deployment environment, so we group under `data`
    */
   .command('data', 'Import / export / reset', (argv) =>
     argv
-      // Deprecate seed as we rely on import now
       .command(seedCommand)
       .command(resetCommand)
       .command(importCommand)
@@ -62,13 +57,6 @@ void yargs(hideBin(process.argv))
    * Terraform
    */
   .command(terraformCommand)
-
-  /**
-   * TS Parser
-   */
-  .command('parse', 'Parse Typescript interface to JSON Schema', (argv) =>
-    argv.command(parseHtmlCommand).demandCommand(1, 'Please provide a target'),
-  )
 
   .demandCommand(1, 'Please provide a command')
   // Must add this to throw error for unknown arguments
