@@ -2,7 +2,9 @@ import type {
   IAtomDTO,
   IInterfaceTypeDTO,
 } from '@codelab/frontend/abstract/core'
-import type { IAtomType } from '@codelab/shared/abstract/core'
+import type { IAtomBaseRecords } from '@codelab/shared/abstract/core'
+import { IAtomType } from '@codelab/shared/abstract/core'
+import { ObjectTyped } from 'object-typed'
 import type { ITypesExport } from './type'
 
 /**
@@ -13,9 +15,19 @@ export type IAtomExport = ITypesExport & {
   atom: IAtomDTO
 }
 
-export type AtomSeedRecord = Partial<Record<IAtomType, AtomSeedData>>
+export type IAtomRecords = IAtomBaseRecords<IAtomData>
 
-export interface AtomSeedData {
+export type IAntdAtomRecords = IAtomBaseRecords<IAtomData, 'AntDesign'>
+
+export const antdAtoms = ObjectTyped.entries(IAtomType)
+  .filter(([keys, values]) => keys.includes('AntDesign'))
+  .map(([keys, values]) => values)
+
+export type IHtmlAtomRecords = IAtomBaseRecords<IAtomData, 'Html'>
+
+export type IReactAtomRecords = IAtomBaseRecords<IAtomData, 'React'>
+
+export interface IAtomData {
   /**
    * File name of the CSV file containing the scraped API data for the Ant Design component
    */

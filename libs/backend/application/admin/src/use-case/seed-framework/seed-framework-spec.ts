@@ -1,14 +1,13 @@
-import type { TagNode } from '@codelab/backend/abstract/core'
-import { AntdTag } from '@codelab/backend/abstract/core'
-import { antdTagTree } from '@codelab/backend/infra/data/seed'
+import { IAntdCategoryTag } from '@codelab/backend/abstract/core'
+import { antdTagTree } from '@codelab/backend/data/seed'
 import type { ITagDTO, IUserDTO } from '@codelab/frontend/abstract/core'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import difference from 'lodash/difference'
 import { ExportAdminDataService } from '../export-admin-data.service'
 import { ImportAdminDataService } from '../import-admin-data'
 
-export const importData = async ({ auth0Id }: IUserDTO, exportPath: string) =>
-  new ImportAdminDataService(exportPath).execute({
+export const importData = async ({ auth0Id }: IUserDTO, path: string) =>
+  new ImportAdminDataService(path).execute({
     auth0Id,
   })
 
@@ -43,13 +42,13 @@ export const exportAndAssert = async (exportPath: string) => {
    */
   const unassignedTags = difference(
     // All tags
-    Object.values(AntdTag),
+    Object.values(IAntdCategoryTag),
     // Minus assigned tags
     assignedTagNames,
     // Minus root level category tags
     Object.keys(antdTagTree),
     // Minus other non-root, non-atom tags
-    [AntdTag.Typography, AntdTag.Grid],
+    [IAntdCategoryTag.Typography, IAntdCategoryTag.Grid],
   )
 
   /**
