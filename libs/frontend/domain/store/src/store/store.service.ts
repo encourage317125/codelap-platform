@@ -2,10 +2,10 @@ import type {
   ICreateStoreData,
   IInterfaceType,
   IStore,
+  IStoreDTO,
   IStoreService,
   IUpdateStoreData,
 } from '@codelab/frontend/abstract/core'
-import { IStoreDTO } from '@codelab/frontend/abstract/core'
 import { getTypeService, typeRef } from '@codelab/frontend/domain/type'
 import { ModalService } from '@codelab/frontend/shared/utils'
 import type {
@@ -62,7 +62,7 @@ export class StoreService
   }
 
   @modelAction
-  add({ actions, api, id, name }: IStoreDTO) {
+  add = ({ actions, api, id, name }: IStoreDTO) => {
     const store = new Store({
       actions: actions?.map((action) => actionRef(action.id)),
       api: typeRef(api.id) as Ref<IInterfaceType>,
@@ -76,7 +76,7 @@ export class StoreService
   }
 
   @modelAction
-  load(stores: Array<StoreFragment>) {
+  load = (stores: Array<StoreFragment>) => {
     this.actionService.load(stores.flatMap((store) => store.actions))
     this.typeService.loadTypes({
       interfaceTypes: stores.map((store) => store.api),
@@ -88,7 +88,7 @@ export class StoreService
   @modelFlow
   @transaction
   getAll = _async(function* (this: StoreService, where: StoreWhere) {
-    const stores = yield* _await(this.storeRepository.find(where))
+    const { items: stores } = yield* _await(this.storeRepository.find(where))
 
     return this.load(stores)
   })
