@@ -125,7 +125,7 @@ commands:
       - attach_workspace:
           at: ..
       - restore_cache:
-          name: 'Restore NPM Cache'
+          name: 'Restore Cache'
           keys:
             - dep-cache-{{ checksum "yarn.lock" }}
       - run:
@@ -205,6 +205,10 @@ jobs:
     steps:
       - setup-workspace
       - install-package
+      - run:
+          command: |
+            cd ~/
+            du -hd1
       # - run:
       #     name: 'Clear Cache'
       #     # clear cache here because NX cache can get quite large, we rely on remote cache instead
@@ -215,17 +219,18 @@ jobs:
       - run:
           name: 'Build CI'
           # Can't use `yarn cli` doesn't exist yet
-          command: npx nx run-many --target=build --projects=platform,cli,landing,websites --parallel=4 --verbose -c ci
+          command: npx nx run-many --target=build --projects=platform,cli,landing,websites --parallel=4 --verbose -c ci --nx-bail
       - save_cache:
           name: 'Save Cache'
           key: dep-cache-{{ checksum "yarn.lock" }}
           paths:
             - ~/.yarn
-            # - ~/.cache
-            # - ~/project/dist/apps/platform/.next/cache
-            # - ~/project/dist/apps/landing/.next/cache
-            # - ~/project/dist/apps/websites/.next/cache
+            - ~/.cache
+            - ~/project/dist/apps/platform/.next/cache
+            - ~/project/dist/apps/landing/.next/cache
+            - ~/project/dist/apps/websites/.next/cache
             - ~/project/node_modules
+      # This is required since dist depends on code other than yarn.lock
       - persist_to_workspace:
           root: ~/
           paths:
@@ -237,6 +242,7 @@ jobs:
     <<: *executor-params
     steps:
       - setup-workspace
+      - setup-infra-workspace
       - install-package
       # - run:
       #     name: 'Clear Cache'

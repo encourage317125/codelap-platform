@@ -6,6 +6,7 @@ import type {
 } from '@codelab/frontend/abstract/core'
 import {
   COMPONENT_TREE_CONTAINER,
+  componentRef,
   getBuilderRenderService,
   getElementService,
   IBuilderDataNode,
@@ -20,8 +21,11 @@ import {
   InterfaceType,
   typeRef,
 } from '@codelab/frontend/domain/type'
-import { ModalService } from '@codelab/frontend/shared/utils'
-import type { ComponentWhere } from '@codelab/shared/abstract/codegen'
+import { ModalService, PaginationService } from '@codelab/frontend/shared/utils'
+import type {
+  ComponentOptions,
+  ComponentWhere,
+} from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { computed } from 'mobx'
 import {
@@ -53,10 +57,27 @@ export class ComponentService
     createModal: prop(() => new ModalService({})),
     deleteModal: prop(() => new ComponentModalService({})),
     id: idProp,
+    paginationService: prop(
+      () => new PaginationService<IComponent, { name?: string }>({}),
+    ),
     updateModal: prop(() => new ComponentModalService({})),
   })
   implements IComponentService
 {
+  onAttachedToRootStore() {
+    this.paginationService.getDataFn = async (page, pageSize, filter) => {
+      const items = await this.getAll(
+        { name_MATCHES: `(?i).*${filter.name ?? ''}.*` },
+        {
+          limit: pageSize,
+          offset: (page - 1) * pageSize,
+        },
+      )
+
+      return { items, totalItems: this.paginationService.totalItems }
+    }
+  }
+
   @computed
   get elementService() {
     return getElementService(this)
@@ -155,6 +176,8 @@ export class ComponentService
 
     yield* _await(this.componentRepository.add(component))
 
+    this.paginationService.dataRefs.set(component.id, componentRef(component))
+
     return component
   })
 
@@ -177,14 +200,15 @@ export class ComponentService
   @modelFlow
   @transaction
   delete = _async(function* (this: ComponentService, component: IComponent) {
-    const { id, rootElement, store } = component
-    const storeCurrent = store.current
+    const { id } = component
+    const store = component.store.current
+    const rootElement = component.rootElement.current
 
     this.components.delete(id)
     this.removeClones(id)
 
-    yield* _await(this.storeService.delete(storeCurrent))
-    yield* _await(this.elementService.delete({ id: rootElement.id }))
+    yield* _await(this.storeService.delete(store))
+    yield* _await(this.elementService.delete(rootElement))
     yield* _await(this.componentRepository.delete([component]))
 
     return component
@@ -219,12 +243,20 @@ export class ComponentService
 
   @modelFlow
   @transaction
-  getAll = _async(function* (this: ComponentService, where: ComponentWhere) {
-    const components = yield* _await(this.componentRepository.find(where))
+  getAll = _async(function* (
+    this: ComponentService,
+    where: ComponentWhere = {},
+    options?: ComponentOptions,
+  ) {
+    const { items: components } = yield* _await(
+      this.componentRepository.find(where, options),
+    )
 
-    return components
-      .map((component) => this.add(component))
-      .filter((component): component is Component => Boolean(component))
+    return components.map((component) => {
+      this.storeService.load([component.store])
+
+      return this.add(component)
+    })
   })
 
   @modelFlow

@@ -1,7 +1,7 @@
+import type { IAtomRendererRecord } from '@codelab/frontend/abstract/core'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import React from 'react'
-import type { AtomsRecord } from '../types'
 
-export const reactAtoms: AtomsRecord = {
+export const reactAtoms: IAtomRendererRecord = {
   [IAtomType.ReactFragment]: React.Fragment,
 }

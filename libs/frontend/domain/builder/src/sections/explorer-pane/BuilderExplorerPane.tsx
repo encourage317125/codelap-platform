@@ -138,10 +138,7 @@ export const BuilderExplorerPane = observer<BuilderExplorerPaneProps>(
                 <>
                   <Divider />
                   <div css={tw`flex justify-end`}>
-                    <CreateComponentButton
-                      componentService={componentService}
-                      title="Component"
-                    />
+                    <CreateComponentButton title="Component" />
                   </div>
                 </>
               )}
@@ -238,6 +235,14 @@ export const BuilderExplorerPane = observer<BuilderExplorerPaneProps>(
             .ant-collapse-header,
             .ant-page-header-heading {
               ${tw`px-0! mt-0!`}
+            }
+
+            .ant-tabs-tabpane {
+              height: 100%;
+            }
+
+            .ant-tabs-content-holder {
+              display: flex;
             }
           `}
           defaultActiveKey="1"

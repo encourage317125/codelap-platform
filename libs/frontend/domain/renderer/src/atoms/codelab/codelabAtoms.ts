@@ -1,10 +1,10 @@
+import type { IAtomRendererRecord } from '@codelab/frontend/abstract/core'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import { dynamicLoader } from '../dynamicLoader'
-import type { AtomsRecord } from '../types'
 
 // Custom atom components
 // Note: some of those are obsolete and replaced by hooks (or mobx platform when implemented)
-export const codelabAtoms: AtomsRecord = {
+export const codelabAtoms: IAtomRendererRecord = {
   [IAtomType.GridLayout]: dynamicLoader(() =>
     import('@codelab/frontend/application/atoms').then((mod) => mod.GridLayout),
   ),

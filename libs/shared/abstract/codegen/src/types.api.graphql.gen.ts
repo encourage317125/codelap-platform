@@ -3466,7 +3466,6 @@ export enum AtomType {
   AntDesignForm = 'AntDesignForm',
   AntDesignFormErrorList = 'AntDesignFormErrorList',
   AntDesignFormItem = 'AntDesignFormItem',
-  AntDesignFormItemHook = 'AntDesignFormItemHook',
   AntDesignFormList = 'AntDesignFormList',
   AntDesignFormProvider = 'AntDesignFormProvider',
   AntDesignGridCol = 'AntDesignGridCol',
@@ -3483,32 +3482,20 @@ export enum AtomType {
   AntDesignList = 'AntDesignList',
   AntDesignListItem = 'AntDesignListItem',
   AntDesignListItemMeta = 'AntDesignListItemMeta',
-  AntDesignMapper = 'AntDesignMapper',
   AntDesignMentions = 'AntDesignMentions',
   AntDesignMentionsOption = 'AntDesignMentionsOption',
   AntDesignMenu = 'AntDesignMenu',
-  AntDesignMenuItem = 'AntDesignMenuItem',
-  AntDesignMenuItemGroup = 'AntDesignMenuItemGroup',
-  AntDesignMenuSubMenu = 'AntDesignMenuSubMenu',
   AntDesignMessage = 'AntDesignMessage',
   AntDesignModal = 'AntDesignModal',
   AntDesignNotification = 'AntDesignNotification',
-  AntDesignPageContainer = 'AntDesignPageContainer',
-  AntDesignPageHeader = 'AntDesignPageHeader',
   AntDesignPagination = 'AntDesignPagination',
   AntDesignPopconfirm = 'AntDesignPopconfirm',
   AntDesignPopover = 'AntDesignPopover',
   AntDesignProgress = 'AntDesignProgress',
-  AntDesignProvider = 'AntDesignProvider',
   AntDesignRadio = 'AntDesignRadio',
   AntDesignRadioGroup = 'AntDesignRadioGroup',
   AntDesignRate = 'AntDesignRate',
-  AntDesignRenderComponent = 'AntDesignRenderComponent',
-  AntDesignRenderContainer = 'AntDesignRenderContainer',
   AntDesignResult = 'AntDesignResult',
-  AntDesignRglContainer = 'AntDesignRglContainer',
-  AntDesignRglItem = 'AntDesignRglItem',
-  AntDesignRglResponsiveContainer = 'AntDesignRglResponsiveContainer',
   AntDesignSegmented = 'AntDesignSegmented',
   AntDesignSelect = 'AntDesignSelect',
   AntDesignSelectOption = 'AntDesignSelectOption',
@@ -3530,9 +3517,7 @@ export enum AtomType {
   AntDesignTooltip = 'AntDesignTooltip',
   AntDesignTransfer = 'AntDesignTransfer',
   AntDesignTree = 'AntDesignTree',
-  AntDesignTreeNode = 'AntDesignTreeNode',
   AntDesignTreeSelect = 'AntDesignTreeSelect',
-  AntDesignTypography = 'AntDesignTypography',
   AntDesignTypographyParagraph = 'AntDesignTypographyParagraph',
   AntDesignTypographyText = 'AntDesignTypographyText',
   AntDesignTypographyTitle = 'AntDesignTypographyTitle',
@@ -21203,7 +21188,8 @@ export type GetAppsQueryVariables = Exact<{
 
 export type GetAppsQuery = {
   __typename?: 'Query'
-  apps: Array<{ __typename?: 'App' } & AppFragment>
+  aggregate: { __typename?: 'AppAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'App' } & AppFragment>
 }
 
 export type CreateAtomsMutationVariables = Exact<{
@@ -21243,8 +21229,8 @@ export type GetAtomsQueryVariables = Exact<{
 
 export type GetAtomsQuery = {
   __typename?: 'Query'
-  atomsAggregate: { __typename?: 'AtomAggregateSelection'; count: number }
-  atoms: Array<{ __typename?: 'Atom' } & AtomFragment>
+  aggregate: { __typename?: 'AtomAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Atom' } & AtomFragment>
 }
 
 export type GetAtomOptionsQueryVariables = Exact<{ [key: string]: never }>
@@ -21314,7 +21300,8 @@ export type GetComponentsQueryVariables = Exact<{
 
 export type GetComponentsQuery = {
   __typename?: 'Query'
-  components: Array<{ __typename?: 'Component' } & ComponentFragment>
+  aggregate: { __typename?: 'ComponentAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Component' } & ComponentFragment>
 }
 
 export type GetDomainsQueryVariables = Exact<{
@@ -21324,7 +21311,8 @@ export type GetDomainsQueryVariables = Exact<{
 
 export type GetDomainsQuery = {
   __typename?: 'Query'
-  domains: Array<{ __typename?: 'Domain' } & DomainFragment>
+  aggregate: { __typename?: 'DomainAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Domain' } & DomainFragment>
 }
 
 export type CreateDomainsMutationVariables = Exact<{
@@ -21403,7 +21391,8 @@ export type GetElementsQueryVariables = Exact<{
 
 export type GetElementsQuery = {
   __typename?: 'Query'
-  elements: Array<{ __typename?: 'Element' } & ElementFragment>
+  aggregate: { __typename?: 'ElementAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Element' } & ElementFragment>
 }
 
 export type CreateHooksMutationVariables = Exact<{
@@ -21469,7 +21458,8 @@ export type GetPagesQueryVariables = Exact<{
 
 export type GetPagesQuery = {
   __typename?: 'Query'
-  pages: Array<{ __typename?: 'Page' } & PageFragment>
+  aggregate: { __typename?: 'PageAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Page' } & PageFragment>
 }
 
 export type GetRenderedPageAndCommonAppDataQueryVariables = Exact<{
@@ -21560,7 +21550,8 @@ export type GetPropsQueryVariables = Exact<{
 
 export type GetPropsQuery = {
   __typename?: 'Query'
-  props: Array<{ __typename?: 'Prop' } & PropFragment>
+  aggregate: { __typename?: 'PropAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Prop' } & PropFragment>
 }
 
 export type GetResourcesQueryVariables = Exact<{
@@ -21570,7 +21561,8 @@ export type GetResourcesQueryVariables = Exact<{
 
 export type GetResourcesQuery = {
   __typename?: 'Query'
-  resources: Array<{ __typename?: 'Resource' } & ResourceFragment>
+  aggregate: { __typename?: 'ResourceAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Resource' } & ResourceFragment>
 }
 
 export type CreateResourcesMutationVariables = Exact<{
@@ -21704,7 +21696,8 @@ export type GetStoresQueryVariables = Exact<{
 
 export type GetStoresQuery = {
   __typename?: 'Query'
-  stores: Array<{ __typename?: 'Store' } & StoreFragment>
+  aggregate: { __typename?: 'StoreAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Store' } & StoreFragment>
 }
 
 export type UpdateStoresMutationVariables = Exact<{
@@ -21795,7 +21788,8 @@ export type GetTagsQueryVariables = Exact<{
 
 export type GetTagsQuery = {
   __typename?: 'Query'
-  tags: Array<{ __typename?: 'Tag' } & TagFragment>
+  aggregate: { __typename?: 'TagAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Tag' } & TagFragment>
 }
 
 export type CreatePrimitiveTypesMutationVariables = Exact<{
@@ -22169,6 +22163,17 @@ export type DeleteFieldsMutationVariables = Exact<{
 export type DeleteFieldsMutation = {
   __typename?: 'Mutation'
   deleteFields: { __typename?: 'DeleteInfo'; nodesDeleted: number }
+}
+
+export type GetFieldsQueryVariables = Exact<{
+  where?: InputMaybe<FieldWhere>
+  options?: InputMaybe<FieldOptions>
+}>
+
+export type GetFieldsQuery = {
+  __typename?: 'Query'
+  aggregate: { __typename?: 'FieldAggregateSelection'; count: number }
+  items: Array<{ __typename?: 'Field' } & FieldFragment>
 }
 
 export type GetBaseTypesQueryVariables = Exact<{

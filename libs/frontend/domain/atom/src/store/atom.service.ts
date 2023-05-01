@@ -27,6 +27,7 @@ import {
 import { v4 } from 'uuid'
 import { atomApi } from './atom.api'
 import { Atom } from './atom.model'
+import { atomRef } from './atom.ref'
 import { AtomRepository } from './atom.repo'
 import { AtomModalService, AtomsModalService } from './atom-modal.service'
 
@@ -36,7 +37,6 @@ export class AtomService
     allAtomsLoaded: prop(() => false),
     atomRepository: prop(() => new AtomRepository({})),
     atoms: prop(() => objectMap<IAtom>()),
-    count: prop(() => 1),
     createModal: prop(() => new ModalService({})),
     deleteManyModal: prop(() => new AtomsModalService({})),
     id: idProp,
@@ -57,7 +57,7 @@ export class AtomService
         },
       )
 
-      return { items, totalItems: this.count }
+      return { items, totalItems: this.paginationService.totalItems }
     }
   }
 
@@ -140,15 +140,16 @@ export class AtomService
     where?: AtomWhere,
     options?: AtomOptions,
   ) {
-    const { atoms, atomsAggregate } = yield* _await(
-      atomApi.GetAtoms({ options, where }),
-    )
+    const {
+      aggregate: { count },
+      items: atoms,
+    } = yield* _await(this.atomRepository.find(where, options))
 
     if (!where) {
       this.allAtomsLoaded = true
     }
 
-    this.count = atomsAggregate.count
+    this.paginationService.totalItems = count
 
     return atoms.map((atom) => {
       this.typeService.loadTypes({ interfaceTypes: [atom.api] })
@@ -204,6 +205,8 @@ export class AtomService
     this.atoms.set(atom.id, atom)
 
     yield* _await(this.atomRepository.add(atom))
+
+    this.paginationService.dataRefs.set(atom.id, atomRef(atom))
 
     return atom
   })

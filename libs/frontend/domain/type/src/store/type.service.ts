@@ -31,7 +31,7 @@ import {
 import type { GetTypesQuery } from '../graphql/get-type.endpoints.graphql.gen'
 import { TypeRepository } from '../services'
 import { getFieldService } from './field.service.context'
-import { InterfaceType } from './models'
+import { InterfaceType, typeRef } from './models'
 import { TypeFactory } from './type.factory'
 import { TypeModalService } from './type-modal.service'
 
@@ -201,7 +201,7 @@ export class TypeService
     // Undefined `ids` should get to this point one time only
     // We also dont need to include types already in the cache
     if (newIds?.length || !ids) {
-      const typeFragments = yield* _await(
+      const { items: typeFragments } = yield* _await(
         this.typeRepository.find({ id_IN: newIds }),
       )
 
@@ -304,6 +304,8 @@ export class TypeService
     const type = this.add(TypeFactory.mapDataToDTO(data))
 
     yield* _await(this.typeRepository.add(type))
+
+    this.paginationService.dataRefs.set(type.id, typeRef(type))
 
     return type
   })

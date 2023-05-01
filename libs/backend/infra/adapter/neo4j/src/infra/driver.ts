@@ -1,4 +1,4 @@
-import { EnvPlatform } from '@codelab/shared/infra/config'
+import { EnvPlatform } from '@codelab/shared/config'
 import type { Driver } from 'neo4j-driver'
 import neo4j from 'neo4j-driver'
 
@@ -9,7 +9,7 @@ const defaultOptions = () => ({
 })
 
 // Keep a single driver instance if possible
-let driver: Driver
+let driver: Driver | undefined
 
 export const getDriver = () => {
   const { password, uri, username } = defaultOptions()

@@ -5,7 +5,6 @@ import type {
   IElement,
   IElementDTO,
   IElementService,
-  IUpdateElementData,
   RenderType,
 } from '@codelab/frontend/abstract/core'
 import {
@@ -13,6 +12,7 @@ import {
   getComponentService,
   IRenderTypeKind,
   isComponentInstance,
+  IUpdateElementData,
 } from '@codelab/frontend/abstract/core'
 import { getAtomService } from '@codelab/frontend/domain/atom'
 import { Component } from '@codelab/frontend/domain/component'
@@ -152,21 +152,27 @@ export class ElementService
   ) {
     const element = this.element(id)
 
-    element.writeCache({
-      ...elementData,
-    })
+    element.writeCache({ ...elementData })
+    this.writeCloneCache({ id, ...elementData })
 
     yield* _await(this.elementRepository.update(element))
 
     return element
   })
 
+  @modelAction
+  private writeCloneCache({ id, ...elementData }: IUpdateElementData) {
+    return [...this.clonedElements.values()]
+      .filter((clonedElement) => clonedElement.sourceElement?.id === id)
+      .map((clone) => clone.writeCache({ ...elementData }))
+  }
+
   /**
    * Need to take care of reconnecting parent/sibling nodes
    */
   @modelFlow
   @transaction
-  delete = _async(function* (this: ElementService, subRoot: IEntity) {
+  delete = _async(function* (this: ElementService, subRoot: IElement) {
     console.debug('deleteElementSubgraph', subRoot)
 
     const subRootElement = this.element(subRoot.id)
@@ -442,6 +448,27 @@ export class ElementService
       element,
       parentElement: data.parentElement,
     })
+
+    const parentElementClone = [...this.clonedElements.values()].find(
+      ({ sourceElement }) => sourceElement?.id === data.parentElement?.id,
+    )
+
+    if (parentElementClone) {
+      const parentComponentId = element.parentComponent?.current.id
+      const { clonedComponents } = this.componentService
+
+      const clonesList = [...clonedComponents.values()].filter(
+        ({ sourceComponent }) => sourceComponent?.id === parentComponentId,
+      )
+
+      const cloneIndex = clonesList.length
+      const elementClone = element.clone(cloneIndex)
+
+      this.attachElementAsFirstChild({
+        element: elementClone,
+        parentElement: parentElementClone,
+      })
+    }
 
     yield* _await(
       Promise.all(
@@ -831,6 +858,9 @@ export class ElementService
   removeClones(elementId: string) {
     return [...this.clonedElements.entries()]
       .filter(([id, component]) => component.sourceElement?.id === elementId)
-      .forEach(([id]) => this.clonedElements.delete(id))
+      .forEach(([id]) => {
+        this.detachElementFromElementTree(id)
+        this.clonedElements.delete(id)
+      })
   }
 }

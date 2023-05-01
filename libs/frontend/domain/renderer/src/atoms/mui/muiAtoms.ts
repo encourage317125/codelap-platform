@@ -1,8 +1,8 @@
+import type { IAtomRendererRecord } from '@codelab/frontend/abstract/core'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import { dynamicLoader } from '../dynamicLoader'
-import type { AtomsRecord } from '../types'
 
-export const muiAtoms: AtomsRecord = {
+export const muiAtoms: IAtomRendererRecord = {
   [IAtomType.MuiAccordion]: dynamicLoader(
     () => import('@mui/material/Accordion'),
   ),

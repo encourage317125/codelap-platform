@@ -5,9 +5,15 @@
   "npmScope": "codelab",
   "tasksRunnerOptions": {
     "default": {
-      "runner": "@nrwl/nx-cloud",
+      "runner": "nx-cloud",
       "options": {
-        "cacheableOperations": ["build", "test", "lint", "e2e"],
+        "cacheableOperations": [
+          "build",
+          "test",
+          "lint",
+          "e2e",
+          "build-storybook"
+        ],
         "canTrackAnalytics": false,
         "showUsageWarnings": true,
         "parallel": 3,
@@ -17,58 +23,6 @@
   },
   "defaultProject": "platform",
   "generators": {
-    "@nrwl/workspace": {
-      "library": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/cypress": {
-      "cypress-project": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/react": {
-      "application": {
-        "style": "css",
-        "linter": "eslint",
-        "babel": true
-      },
-      "library": {
-        "style": "css",
-        "linter": "eslint",
-        "unitTestRunner": "none"
-      },
-      "storybook-configuration": {
-        "linter": "eslint"
-      },
-      "component": {
-        "style": "css"
-      }
-    },
-    "@nrwl/next": {
-      "application": {
-        "style": "@emotion/styled",
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/web": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/node": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/nx-plugin": {
-      "plugin": {
-        "linter": "eslint"
-      }
-    },
     "@nrwl/nest": {
       "application": {
         "linter": "eslint"
@@ -86,6 +40,58 @@
       "application": {
         "style": "@emotion/styled"
       }
+    },
+    "@nx/workspace": {
+      "library": {
+        "linter": "eslint"
+      }
+    },
+    "@nx/cypress": {
+      "cypress-project": {
+        "linter": "eslint"
+      }
+    },
+    "@nx/web": {
+      "application": {
+        "linter": "eslint"
+      }
+    },
+    "@nx/react": {
+      "application": {
+        "style": "css",
+        "linter": "eslint",
+        "babel": true
+      },
+      "library": {
+        "style": "css",
+        "linter": "eslint",
+        "unitTestRunner": "none"
+      },
+      "storybook-configuration": {
+        "linter": "eslint"
+      },
+      "component": {
+        "style": "css"
+      }
+    },
+    "@nx/plugin": {
+      "plugin": {
+        "linter": "eslint"
+      }
+    },
+    "@nx/node": {
+      "application": {
+        "linter": "eslint"
+      },
+      "library": {
+        "linter": "eslint"
+      }
+    },
+    "@nx/next": {
+      "application": {
+        "style": "@emotion/styled",
+        "linter": "eslint"
+      }
     }
   },
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
@@ -102,6 +108,9 @@
     },
     "lint": {
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
+    },
+    "build-storybook": {
+      "inputs": ["default", "^production", "!{projectRoot}/.storybook/**/*"]
     }
   },
   "namedInputs": {
@@ -116,7 +125,9 @@
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
       "!{projectRoot}/tsconfig.spec.json",
-      "!{projectRoot}/jest.config.[jt]s"
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
+      "!{projectRoot}/.storybook/**/*"
     ]
   }
 }
