@@ -5,6 +5,7 @@ import {
 } from '@codelab/frontend/abstract/core'
 import { compoundCaseToTitleCase } from '@codelab/shared/utils'
 import { Card } from 'antd'
+import Tooltip from 'antd/lib/tooltip'
 import React, { useMemo } from 'react'
 import tw from 'twin.macro'
 import { useCreateElementDraggable } from '../../../dnd/useCreateElementDraggable'
@@ -43,7 +44,7 @@ export const DraggableGetComponentItem = ({
       {...listeners}
       // eslint-disable-next-line react/jsx-props-no-spreading
       {...attributes}
-      css={tw`mb-6 cursor-pointer`}
+      css={tw`mb-2 cursor-pointer [max-width: 48%]`}
     >
       <GetComponentItem component={component} />
     </div>
@@ -51,30 +52,25 @@ export const DraggableGetComponentItem = ({
 }
 
 interface GetComponentItemProps {
-  className?: string
   component: Pick<IBuilderComponent, 'icon' | 'name'>
 }
 
 export const antDesignIconPrefix = 'assets/atoms/antd'
 
-export const GetComponentItem = ({
-  className = '',
-  component,
-}: GetComponentItemProps) => (
-  <Card
-    className={className}
-    css={tw`mr-16`}
-    hoverable
-    title={<b css={tw`text-sm`}>{component.name}</b>}
-  >
-    <img
-      alt=""
-      css={tw`w-full`}
-      src={
-        component.icon
-          ? `/${antDesignIconPrefix}/${component.icon}.svg`
-          : '/codelab-logo-default.svg'
-      }
-    />
-  </Card>
-)
+export const GetComponentItem = ({ component }: GetComponentItemProps) => {
+  const title = (
+    <Tooltip placement="left" title={component.name}>
+      <b css={tw`text-sm`}>{component.name}</b>
+    </Tooltip>
+  )
+
+  const src = component.icon
+    ? `/${antDesignIconPrefix}/${component.icon}.svg`
+    : '/codelab-logo-default.svg'
+
+  return (
+    <Card hoverable title={title}>
+      <img alt="" css={tw`w-full`} src={src} />
+    </Card>
+  )
+}
