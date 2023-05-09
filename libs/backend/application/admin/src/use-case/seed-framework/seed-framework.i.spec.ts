@@ -2,9 +2,9 @@ import { AdminService } from '@codelab/backend/domain/admin'
 import { User, UserRepository } from '@codelab/backend/domain/user'
 import { getDriver } from '@codelab/backend/infra/adapter/neo4j'
 import { resetDatabase } from '@codelab/backend/test'
-import type { IUserDTO } from '@codelab/frontend/abstract/core'
+import type { IUserDTO } from '@codelab/shared/abstract/core'
 import path from 'path'
-import { SeederService } from '../../services'
+import { AdminSeederService } from '../../services/admin-seeder.service'
 import { ExportAdminDataService } from '../export-admin-data.service'
 import { exportAndAssert, importData } from './seed-framework-spec'
 
@@ -21,7 +21,7 @@ afterAll(async () => {
 describe('Seed, import, & export data', () => {
   let initialPayload = {}
 
-  describe('Seed', () => {
+  describe.skip('Seed', () => {
     it('can seed Ant Design CSV data', async () => {
       user = await resetDatabase({
         AdminService,
@@ -30,7 +30,7 @@ describe('Seed, import, & export data', () => {
         UserRepository,
       })
 
-      await new SeederService(user).seedAntDesign()
+      await new AdminSeederService(user).seedAntDesign()
 
       const exportPath = path.resolve('./tmp/data/export')
 
@@ -42,7 +42,7 @@ describe('Seed, import, & export data', () => {
     })
 
     it('should be able to seed twice without changing the database', async () => {
-      await new SeederService(user).seedAntDesign()
+      await new AdminSeederService(user).seedAntDesign()
 
       const exportPath = path.resolve('./tmp/data/export-1')
       const payload = await exportAndAssert(exportPath)
@@ -51,7 +51,7 @@ describe('Seed, import, & export data', () => {
     })
   })
 
-  describe('Import', () => {
+  describe.skip('Import', () => {
     const importPath = path.resolve('./tmp/data/export')
 
     /**

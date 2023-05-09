@@ -1,7 +1,6 @@
 import { EllipsisOutlined } from '@ant-design/icons'
 import { PageHeader } from '@ant-design/pro-components/lib'
 import { useUser } from '@auth0/nextjs-auth0'
-import type { IAuth0Owner } from '@codelab/frontend/abstract/core'
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
 import {
   BuildAppModal,
@@ -23,10 +22,11 @@ import {
   DashboardTemplate,
   sidebarNavigation,
 } from '@codelab/frontend/presentation/view'
+import type { IAuth0Owner } from '@codelab/shared/abstract/core'
 import { auth0Instance } from '@codelab/shared/infra/auth0'
 import { useAsync } from '@react-hookz/web'
 import type { MenuProps } from 'antd'
-import { Button, Dropdown, Menu, Spin } from 'antd'
+import { Button, Dropdown, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
 import React, { useEffect } from 'react'

@@ -1,6 +1,9 @@
-import type { IUserDTO } from '@codelab/frontend/abstract/core'
-import { OGM_TYPES } from '@codelab/shared/abstract/codegen'
-import type { Auth0SessionUser, IRole } from '@codelab/shared/abstract/core'
+import { Role } from '@codelab/backend/abstract/codegen'
+import type {
+  Auth0SessionUser,
+  IRole,
+  IUserDTO,
+} from '@codelab/shared/abstract/core'
 import { JWT_CLAIMS } from '@codelab/shared/abstract/core'
 import { v4 } from 'uuid'
 
@@ -31,8 +34,7 @@ export class User implements IUserDTO {
       auth0Id,
       email,
       id: v4(),
-      // roles: rolesToEnum(roles),
-      roles: [OGM_TYPES.Role.Admin],
+      roles: [Role.Admin],
 
       username: nickname,
     })

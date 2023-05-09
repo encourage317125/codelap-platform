@@ -1,10 +1,13 @@
-import { AbstractRepository } from '@codelab/backend/abstract/types'
+import type {
+  UnionType,
+  UnionTypeWhere,
+} from '@codelab/backend/abstract/codegen'
 import {
   exportUnionTypeSelectionSet,
   Repository,
 } from '@codelab/backend/infra/adapter/neo4j'
-import type { IUnionTypeDTO } from '@codelab/frontend/abstract/core'
-import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
+import { AbstractRepository } from '@codelab/backend/infra/core'
+import type { IUnionTypeDTO } from '@codelab/shared/abstract/core'
 import {
   connectAuth0Owner,
   connectNodeIds,
@@ -12,12 +15,12 @@ import {
 
 export class UnionTypeRepository extends AbstractRepository<
   IUnionTypeDTO,
-  OGM_TYPES.UnionType,
-  OGM_TYPES.UnionTypeWhere
+  UnionType,
+  UnionTypeWhere
 > {
   private UnionType = Repository.instance.UnionType
 
-  async find(where: OGM_TYPES.UnionTypeWhere) {
+  async _find(where: UnionTypeWhere) {
     return await (
       await this.UnionType
     ).find({
@@ -56,7 +59,7 @@ export class UnionTypeRepository extends AbstractRepository<
 
   protected async _update(
     { id, name, typesOfUnionType }: IUnionTypeDTO,
-    where: OGM_TYPES.UnionTypeWhere,
+    where: UnionTypeWhere,
   ) {
     const connectIds = typesOfUnionType.map(({ id: typeId }) => typeId)
 

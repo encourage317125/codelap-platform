@@ -1,8 +1,6 @@
 import type { IBuilderComponent } from '@codelab/frontend/abstract/core'
-import {
-  BuilderDndType,
-  IRenderTypeKind,
-} from '@codelab/frontend/abstract/core'
+import { BuilderDndType } from '@codelab/frontend/abstract/core'
+import { IRenderTypeKind } from '@codelab/shared/abstract/core'
 import { compoundCaseToTitleCase } from '@codelab/shared/utils'
 import { Card } from 'antd'
 import Tooltip from 'antd/lib/tooltip'

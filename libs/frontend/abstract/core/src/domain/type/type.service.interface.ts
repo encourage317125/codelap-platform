@@ -4,21 +4,19 @@ import type {
   GetTypesQuery,
   IBaseType,
 } from '@codelab/shared/abstract/codegen'
-import type { IPrimitiveTypeKind } from '@codelab/shared/abstract/core'
+import type {
+  IPrimitiveTypeKind,
+  ITypeDTO,
+} from '@codelab/shared/abstract/core'
 import type { Maybe, Nullable } from '@codelab/shared/abstract/types'
 import type { ObjectMap, Ref } from 'mobx-keystone'
 import type {
   ICRUDModalService,
   ICRUDService,
   IPaginateable,
-  IPaginationService,
   IQueryService,
 } from '../../service'
-import type {
-  ICreateTypeData,
-  ITypeDTO,
-  IUpdateTypeData,
-} from './type.dto.interface'
+import type { ICreateTypeData, IUpdateTypeData } from './type.data.interface'
 import type { ITypeRepository } from './type.repo.interface'
 import type { IInterfaceType, IInterfaceTypeRef, IType } from './types'
 
