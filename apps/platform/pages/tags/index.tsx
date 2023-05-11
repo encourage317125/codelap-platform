@@ -1,5 +1,6 @@
 import { PageHeader } from '@ant-design/pro-components/lib'
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
+import { ExplorerPaneType } from '@codelab/frontend/abstract/types'
 import {
   CreateTagButton,
   CreateTagModal,
@@ -27,7 +28,7 @@ import Head from 'next/head'
 import React from 'react'
 
 const TagPage: CodelabPage<DashboardTemplateProps> = observer(() => {
-  const { tagService, userService } = useStore()
+  const { tagService } = useStore()
 
   const [{ status }, loadTagTree] = useAsync(() => {
     tagService.loadTagTree()
@@ -73,7 +74,10 @@ TagPage.Layout = observer(({ children }) => {
 
   return (
     <DashboardTemplate
-      ExplorerPane={() => <GetTagsTree />}
+      ExplorerPane={{
+        default: ExplorerPaneType.Tag,
+        items: [{ key: ExplorerPaneType.Tag, render: () => <GetTagsTree /> }],
+      }}
       Header={TagPageHeader}
       sidebarNavigation={sidebarNavigation({ appId, pageId })}
     >

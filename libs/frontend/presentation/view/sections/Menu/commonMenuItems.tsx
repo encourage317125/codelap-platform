@@ -5,7 +5,7 @@ import {
   ExpandOutlined,
   FileOutlined,
 } from '@ant-design/icons'
-import { PageType } from '@codelab/frontend/abstract/types'
+import { ExplorerPaneType, PageType } from '@codelab/frontend/abstract/types'
 import type { Nullish } from '@codelab/shared/abstract/types'
 import type { ItemType } from 'antd/lib/menu/hooks/useItems'
 import Link from 'next/link'
@@ -29,12 +29,22 @@ export const componentMenuItem: ItemType = {
   label: <Link href={PageType.Components}>Components</Link>,
 }
 
-export const allPagesMenuItem = (appId: Nullish<string>): ItemType => ({
+export const allPagesMenuItem = (
+  appId: Nullish<string>,
+  pageId: Nullish<string>,
+): ItemType => ({
   disabled: !appId,
   icon: <FileOutlined title="Pages" />,
-  key: PageType.PageList,
+  key: ExplorerPaneType.PageList,
   label: (
-    <Link href={{ pathname: PageType.PageList, query: { appId } }}>Pages</Link>
+    <Link
+      href={{
+        pathname: PageType.PageBuilder,
+        query: { appId, explorerPaneKey: ExplorerPaneType.PageList, pageId },
+      }}
+    >
+      Pages
+    </Link>
   ),
 })
 
@@ -44,9 +54,14 @@ export const pageBuilderMenuItem = (
 ): ItemType => ({
   disabled: !appId || !pageId,
   icon: <BuildOutlined title="Builder" />,
-  key: PageType.PageBuilder,
+  key: ExplorerPaneType.Explorer,
   label: (
-    <Link href={{ pathname: PageType.PageBuilder, query: { appId, pageId } }}>
+    <Link
+      href={{
+        pathname: PageType.PageBuilder,
+        query: { appId, explorerPaneKey: ExplorerPaneType.Explorer, pageId },
+      }}
+    >
       Builder
     </Link>
   ),

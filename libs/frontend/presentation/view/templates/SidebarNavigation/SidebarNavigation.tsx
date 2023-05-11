@@ -9,6 +9,7 @@ export interface SidebarNavigationProps {
   // Home icon
   // homeItem: MenuProps['items']
   // Default menu items
+  onClick?: Parameters<typeof Menu>[0]['onClick']
   primaryItems?: MenuProps['items']
   // Menu items at the bottom
   secondaryItems?: MenuProps['items']
@@ -25,10 +26,13 @@ export const transformSelectedKeys = (keys: Array<string>) => {
 }
 
 export const SidebarNavigation = ({
+  onClick,
   primaryItems,
   secondaryItems,
 }: SidebarNavigationProps) => {
   const router = useRouter()
+  const { explorerPaneKey } = router.query
+  const selectedKey = (explorerPaneKey as string) || router.pathname
 
   return (
     <div
@@ -44,7 +48,7 @@ export const SidebarNavigation = ({
         // defaultSelectedKeys={[PageType.AppList]}
         items={primaryItems}
         mode="inline"
-        selectedKeys={transformSelectedKeys([router.pathname])}
+        selectedKeys={transformSelectedKeys([selectedKey])}
       />
       <Menu
         css={tw`border-none box-border`}
@@ -52,7 +56,7 @@ export const SidebarNavigation = ({
         // defaultSelectedKeys={[PageType.AppList]}
         items={secondaryItems}
         mode="inline"
-        selectedKeys={transformSelectedKeys([router.pathname])}
+        selectedKeys={transformSelectedKeys([selectedKey])}
       />
     </div>
   )
