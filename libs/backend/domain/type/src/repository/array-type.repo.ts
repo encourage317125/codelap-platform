@@ -1,10 +1,13 @@
-import { AbstractRepository } from '@codelab/backend/abstract/types'
+import type {
+  ArrayType,
+  ArrayTypeWhere,
+} from '@codelab/backend/abstract/codegen'
 import {
   exportArrayTypeSelectionSet,
   Repository,
 } from '@codelab/backend/infra/adapter/neo4j'
-import type { IArrayTypeDTO } from '@codelab/frontend/abstract/core'
-import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
+import { AbstractRepository } from '@codelab/backend/infra/core'
+import type { IArrayTypeDTO } from '@codelab/shared/abstract/core'
 import {
   connectAuth0Owner,
   connectNodeId,
@@ -13,12 +16,12 @@ import {
 
 export class ArrayTypeRepository extends AbstractRepository<
   IArrayTypeDTO,
-  OGM_TYPES.ArrayType,
-  OGM_TYPES.ArrayTypeWhere
+  ArrayType,
+  ArrayTypeWhere
 > {
   private ArrayType = Repository.instance.ArrayType
 
-  async find(where: OGM_TYPES.ArrayTypeWhere) {
+  async _find(where: ArrayTypeWhere) {
     return await (
       await this.ArrayType
     ).find({
@@ -46,7 +49,7 @@ export class ArrayTypeRepository extends AbstractRepository<
 
   protected async _update(
     { __typename, id, itemType, name, owner, ...primitiveType }: IArrayTypeDTO,
-    where: OGM_TYPES.ArrayTypeWhere,
+    where: ArrayTypeWhere,
   ) {
     return (
       await (

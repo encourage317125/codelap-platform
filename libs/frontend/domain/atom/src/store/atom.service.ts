@@ -1,6 +1,5 @@
 import type {
   IAtom,
-  IAtomDTO,
   IAtomService,
   ICreateAtomData,
   IInterfaceType,
@@ -10,6 +9,7 @@ import { getTagService } from '@codelab/frontend/domain/tag'
 import { getTypeService, typeRef } from '@codelab/frontend/domain/type'
 import { ModalService, PaginationService } from '@codelab/frontend/shared/utils'
 import type { AtomOptions, AtomWhere } from '@codelab/shared/abstract/codegen'
+import type { IAtomDTO } from '@codelab/shared/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { computed } from 'mobx'
 import {
@@ -25,7 +25,6 @@ import {
   transaction,
 } from 'mobx-keystone'
 import { v4 } from 'uuid'
-import { atomApi } from './atom.api'
 import { Atom } from './atom.model'
 import { atomRef } from './atom.ref'
 import { AtomRepository } from './atom.repo'
@@ -107,6 +106,7 @@ export class AtomService
   @modelAction
   add = ({
     api,
+    icon,
     id,
     name,
     owner,
@@ -119,6 +119,7 @@ export class AtomService
 
     const atom = Atom.create({
       api: apiRef,
+      icon,
       id,
       name,
       owner,

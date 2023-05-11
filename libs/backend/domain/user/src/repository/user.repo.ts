@@ -1,20 +1,19 @@
-import { AbstractRepository } from '@codelab/backend/abstract/types'
+import type { User, UserWhere } from '@codelab/backend/abstract/codegen'
 import {
   Repository,
   userSelectionSet,
 } from '@codelab/backend/infra/adapter/neo4j'
-import type { IUserDTO } from '@codelab/frontend/abstract/core'
-import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
-import type { UserWhere } from '@codelab/shared/abstract/types'
+import { AbstractRepository } from '@codelab/backend/infra/core'
+import type { IUserDTO } from '@codelab/shared/abstract/core'
 
 export class UserRepository extends AbstractRepository<
   IUserDTO,
-  OGM_TYPES.User,
-  OGM_TYPES.UserWhere
+  User,
+  UserWhere
 > {
   private User = Repository.instance.User
 
-  async find(where: UserWhere) {
+  async _find(where: UserWhere) {
     return await (
       await this.User
     ).find({

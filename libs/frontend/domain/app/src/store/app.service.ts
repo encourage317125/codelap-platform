@@ -9,7 +9,6 @@ import type {
 import {
   getComponentService,
   getElementService,
-  IAppDTO,
 } from '@codelab/frontend/abstract/core'
 import { getAtomService } from '@codelab/frontend/domain/atom'
 import { getDomainService } from '@codelab/frontend/domain/domain'
@@ -29,6 +28,7 @@ import type {
   GetRenderedPageAndCommonAppDataQuery,
   PageWhere,
 } from '@codelab/shared/abstract/codegen'
+import { IAppDTO } from '@codelab/shared/abstract/core'
 import flatMap from 'lodash/flatMap'
 import merge from 'lodash/merge'
 import sortBy from 'lodash/sortBy'
@@ -252,13 +252,24 @@ export class AppService
   add({ domains, id, name, owner, pages }: IAppDTO) {
     domains?.forEach((domain) => this.domainService.add(domain as IDomainDTO))
 
-    const app = App.create({
-      domains,
-      id,
-      name,
-      owner,
-      pages,
-    })
+    let app = this.apps.get(id)
+
+    if (app) {
+      app.writeCache({
+        domains,
+        name,
+        owner,
+        pages,
+      })
+    } else {
+      app = App.create({
+        domains,
+        id,
+        name,
+        owner,
+        pages,
+      })
+    }
 
     this.apps.set(app.id, app)
 
@@ -290,13 +301,13 @@ export class AppService
   })
 
   /**
-    This function fetches the initial page and all the common data shared across all pages in the application:
-     - app data
-     - current page
-     - providers page (_app)
-     - components
-     - resources
-     - types
+   This function fetches the initial page and all the common data shared across all pages in the application:
+   - app data
+   - current page
+   - providers page (_app)
+   - components
+   - resources
+   - types
    */
   @modelFlow
   @transaction

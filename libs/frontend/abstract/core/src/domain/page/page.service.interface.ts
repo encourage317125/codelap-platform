@@ -3,19 +3,17 @@ import type {
   PageOptions,
   PageWhere,
 } from '@codelab/shared/abstract/codegen'
+import type { IPageDTO } from '@codelab/shared/abstract/core'
 import type { Maybe } from '@codelab/shared/abstract/types'
 import type { ObjectMap, Ref } from 'mobx-keystone'
 import type {
+  ICRUDFormService,
   ICRUDModalService,
   ICRUDService,
   IQueryService,
 } from '../../service'
 import type { IApp } from '../app'
-import type {
-  ICreatePageData,
-  IPageDTO,
-  IUpdatePageData,
-} from './page.dto.interface'
+import type { ICreatePageData, IUpdatePageData } from './page.dto.interface'
 import type { IPage } from './page.model.interface'
 import type { IPageRepository } from './page.repo.interface'
 
@@ -28,7 +26,8 @@ export interface IPageFactory {
 export interface IPageService
   extends ICRUDService<IPage, ICreatePageData, IUpdatePageData>,
     IQueryService<IPage, PageWhere, PageOptions>,
-    ICRUDModalService<Ref<IPage>, { page: Maybe<IPage> }> {
+    ICRUDModalService<Ref<IPage>, { page: Maybe<IPage> }>,
+    ICRUDFormService<Ref<IPage>, { page: Maybe<IPage> }> {
   pageFactory: IPageFactory
   pageRepository: IPageRepository
   pages: ObjectMap<IPage>

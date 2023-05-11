@@ -1,12 +1,16 @@
 import { RendererType } from '@codelab/frontend/abstract/core'
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
+import { ExplorerPaneType } from '@codelab/frontend/abstract/types'
 import {
   BuilderContext,
   BuilderExplorerPane,
   BuilderTabs,
   ConfigPane,
 } from '@codelab/frontend/domain/builder'
-import { PageDetailHeader } from '@codelab/frontend/domain/page'
+import {
+  ExplorerPanePage,
+  PageDetailHeader,
+} from '@codelab/frontend/domain/page'
 import {
   useCurrentAppId,
   useCurrentPageId,
@@ -21,21 +25,24 @@ import { auth0Instance } from '@codelab/shared/infra/auth0'
 import { useMountEffect } from '@react-hookz/web'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo } from 'react'
 
 const PageBuilder: CodelabPage = observer(() => {
-  const [{ error, result, status }, loadCurrentPage] = useRenderedPage({
-    rendererType: RendererType.PageBuilder,
-  })
-
   const [, lazilyLoadRemainingPages] = useRemainingPages()
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
 
+  const [{ error, result, status }, loadCurrentPage] = useRenderedPage({
+    rendererType: RendererType.PageBuilder,
+  })
+
   useMountEffect(() => {
-    void loadCurrentPage.execute()
     void lazilyLoadRemainingPages.execute()
   })
+
+  useEffect(() => {
+    void loadCurrentPage.execute()
+  }, [pageId])
 
   const isLoading = status !== 'success'
   const contentStyles = useMemo(() => ({ paddingTop: '0rem' }), [])
@@ -43,7 +50,19 @@ const PageBuilder: CodelabPage = observer(() => {
   return (
     <DashboardTemplate
       ConfigPane={() => <ConfigPane isLoading={isLoading} />}
-      ExplorerPane={() => <BuilderExplorerPane isLoading={isLoading} />}
+      ExplorerPane={{
+        default: ExplorerPaneType.Explorer,
+        items: [
+          {
+            key: ExplorerPaneType.Explorer,
+            render: () => <BuilderExplorerPane isLoading={isLoading} />,
+          },
+          {
+            key: ExplorerPaneType.PageList,
+            render: () => <ExplorerPanePage appId={appId} />,
+          },
+        ],
+      }}
       Header={PageDetailHeader}
       contentStyles={contentStyles}
       headerHeight={48}

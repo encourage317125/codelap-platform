@@ -4,7 +4,7 @@ import type {
   IEnumTypeDTO,
   IEnumTypeValueDTO,
   IFieldDTO,
-} from '@codelab/frontend/abstract/core'
+} from '@codelab/shared/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { compoundCaseToTitleCase } from '@codelab/shared/utils'
 import { BaseType } from './base-type.model'
@@ -28,7 +28,7 @@ export class EnumType extends BaseType implements IEnumTypeDTO {
     this.allowedValues = allowedValues
   }
 
-  static getCompositeName(
+  static compositeName(
     atom: Pick<IAtomDTO, 'name'>,
     field: Pick<IFieldDTO, 'key'>,
   ) {

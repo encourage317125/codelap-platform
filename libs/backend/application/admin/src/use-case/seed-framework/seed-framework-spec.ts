@@ -1,6 +1,6 @@
 import { IAntdCategoryTag } from '@codelab/backend/abstract/core'
 import { antdTagTree } from '@codelab/backend/data/seed'
-import type { ITagDTO, IUserDTO } from '@codelab/frontend/abstract/core'
+import type { ITagDTO, IUserDTO } from '@codelab/shared/abstract/core'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import difference from 'lodash/difference'
 import { ExportAdminDataService } from '../export-admin-data.service'
@@ -48,7 +48,7 @@ export const exportAndAssert = async (exportPath: string) => {
     // Minus root level category tags
     Object.keys(antdTagTree),
     // Minus other non-root, non-atom tags
-    [IAntdCategoryTag.Typography, IAntdCategoryTag.Grid],
+    [IAntdCategoryTag.AntDesignTypography, IAntdCategoryTag.AntDesignGrid],
   )
 
   /**

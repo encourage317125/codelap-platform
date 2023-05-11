@@ -1,5 +1,6 @@
 import type { IApp } from '@codelab/frontend/abstract/core'
 import type { CodelabPage } from '@codelab/frontend/abstract/types'
+import { ExplorerPaneType } from '@codelab/frontend/abstract/types'
 import { ExplorerPanePage } from '@codelab/frontend/domain/page'
 import {
   useCurrentAppId,
@@ -42,7 +43,7 @@ Pages.Layout = observer(({ children }) => {
   const pageId = useCurrentPageId()
   const { appService } = useStore()
 
-  const [{ result: apps, status }, actions] = useAsync(() =>
+  const [{ result: apps }, actions] = useAsync(() =>
     appService.loadAppsWithNestedPreviews({ id: appId }),
   )
 
@@ -50,11 +51,15 @@ Pages.Layout = observer(({ children }) => {
 
   return (
     <DashboardTemplate
-      ExplorerPane={() => (
-        <ExplorerPanePage
-          loading={status === 'loading' || status === 'not-executed'}
-        />
-      )}
+      ExplorerPane={{
+        default: ExplorerPaneType.PageList,
+        items: [
+          {
+            key: ExplorerPaneType.PageList,
+            render: () => <ExplorerPanePage appId={appId} />,
+          },
+        ],
+      }}
       sidebarNavigation={sidebarNavigation({ appId, pageId })}
     >
       {children({ app: apps?.[0] })}

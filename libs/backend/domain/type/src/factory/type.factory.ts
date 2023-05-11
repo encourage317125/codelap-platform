@@ -1,6 +1,15 @@
+import type {
+  ActionTypeWhere,
+  ArrayTypeWhere,
+  EnumTypeWhere,
+  InterfaceTypeWhere,
+  PrimitiveTypeWhere,
+  ReactNodeTypeWhere,
+  RenderPropTypeWhere,
+  UnionTypeWhere,
+} from '@codelab/backend/abstract/codegen'
 import type { IType, ITypeWhere } from '@codelab/backend/abstract/core'
-import type { ITypeDTO } from '@codelab/frontend/abstract/core'
-import type { OGM_TYPES } from '@codelab/shared/abstract/codegen'
+import type { ITypeDTO } from '@codelab/shared/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import {
   ActionType,
@@ -27,10 +36,10 @@ import {
  * Used for dynamic data when we don't know what type we are creating
  */
 export class TypeFactory {
-  static async create(
+  static async save<T extends IType>(
     type: ITypeDTO,
     where?: ITypeWhere,
-  ): Promise<IType | undefined> {
+  ): Promise<T> {
     if (!type.__typename) {
       throw new Error('__typename must be provided')
     }
@@ -42,73 +51,73 @@ export class TypeFactory {
       case ITypeKind.PrimitiveType: {
         const primitiveType = new PrimitiveType(type)
 
-        return await new PrimitiveTypeRepository().save(
+        return (await new PrimitiveTypeRepository().save(
           primitiveType,
-          where as OGM_TYPES.PrimitiveTypeWhere,
-        )
+          where as PrimitiveTypeWhere,
+        )) as T
       }
 
       case ITypeKind.EnumType: {
         const enumType = new EnumType(type)
 
-        return await new EnumTypeRepository().save(
+        return (await new EnumTypeRepository().save(
           enumType,
-          where as OGM_TYPES.EnumTypeWhere,
-        )
+          where as EnumTypeWhere,
+        )) as T
       }
 
       case ITypeKind.InterfaceType: {
         const interfaceType = new InterfaceType(type)
 
-        return await new InterfaceTypeRepository().save(
+        return (await new InterfaceTypeRepository().save(
           interfaceType,
-          where as OGM_TYPES.InterfaceTypeWhere,
-        )
+          where as InterfaceTypeWhere,
+        )) as T
       }
 
       case ITypeKind.ReactNodeType: {
         const reactNodeType = new ReactNodeType(type)
 
-        return await new ReactNodeTypeRepository().save(
+        return (await new ReactNodeTypeRepository().save(
           reactNodeType,
-          where as OGM_TYPES.ReactNodeTypeWhere,
-        )
+          where as ReactNodeTypeWhere,
+        )) as T
       }
 
       case ITypeKind.RenderPropType: {
         const renderPropType = new RenderPropType(type)
 
-        return await new RenderPropTypeRepository().save(
+        return (await new RenderPropTypeRepository().save(
           renderPropType,
-          where as OGM_TYPES.RenderPropTypeWhere,
-        )
+          where as RenderPropTypeWhere,
+        )) as T
       }
 
       case ITypeKind.ActionType: {
         const actionType = new ActionType(type)
 
-        return await new ActionTypeRepository().save(
+        return (await new ActionTypeRepository().save(
           actionType,
-          where as OGM_TYPES.ActionTypeWhere,
-        )
+          where as ActionTypeWhere,
+        )) as T
       }
 
       case ITypeKind.UnionType: {
         const unionType = new UnionType(type)
 
-        return await new UnionTypeRepository().save(
+        return (await new UnionTypeRepository().save(
           unionType,
-          where as OGM_TYPES.UnionTypeWhere,
-        )
+          where as UnionTypeWhere,
+        )) as T
       }
 
       case ITypeKind.ArrayType: {
         const arrayType = new ArrayType(type)
 
-        return await new ArrayTypeRepository().save(
+        return (await new ArrayTypeRepository().save(
           arrayType,
-          where as OGM_TYPES.ArrayTypeWhere,
-        )
+          where as ArrayTypeWhere,
+        )) as T
       }
 
       default: {

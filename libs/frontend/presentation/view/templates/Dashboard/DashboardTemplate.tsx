@@ -1,5 +1,6 @@
 import { Layout } from 'antd'
 import { observer } from 'mobx-react-lite'
+import { useRouter } from 'next/router'
 import React from 'react'
 import { Panel, PanelGroup } from 'react-resizable-panels'
 import tw from 'twin.macro'
@@ -21,6 +22,15 @@ export const DashboardTemplateSSR = observer(
     Header,
     sidebarNavigation,
   }: React.PropsWithChildren<DashboardTemplateProps>) => {
+    const { explorerPaneKey } = useRouter().query
+
+    const activeTabKey =
+      (explorerPaneKey as React.Key) || ExplorerPane?.default || null
+
+    const activeExplorerPane = ExplorerPane?.items.find(
+      (item) => item.key === activeTabKey,
+    )?.render
+
     return (
       <Layout css={tw`max-h-full min-h-full`}>
         <Sider collapsed collapsedWidth={sidebarWidth} theme="light">
@@ -41,11 +51,11 @@ export const DashboardTemplateSSR = observer(
 
           <Layout style={contentStyles}>
             <PanelGroup direction="horizontal">
-              {ExplorerPane && (
+              {activeExplorerPane && (
                 <>
                   <Panel defaultSize={20} order={1}>
                     <DashboardTemplateExplorerPane
-                      ExplorerPane={ExplorerPane}
+                      ExplorerPane={activeExplorerPane}
                     />
                   </Panel>
                   <ResizeHandle />
