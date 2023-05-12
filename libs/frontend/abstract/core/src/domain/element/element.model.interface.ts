@@ -93,7 +93,7 @@ export interface IElement
    */
   sourceElement: Nullable<IEntity>
   // store attached to closestContainerNode
-  store: IStore
+  store: Ref<IStore>
 
   appendToGuiCss(css: CssMap): void
   attachAsNextSibling(sibling: IElement): void
@@ -110,7 +110,7 @@ export interface IElement
   setName(name: string): void
   setNextSibling(nextSibling: Ref<IElement>): void
   setOrderInParent(order: number | null): void
-  setPage(component: Ref<IPage>): void
+  setPage(page: Ref<IPage>): void
   setParent(parent: Ref<IElement>): void
   setParentComponent(component: Ref<IComponent>): void
   setPrevSibling(prevSibling: Ref<IElement>): void

@@ -1,21 +1,14 @@
-import type { IPropData, TypedValue } from '@codelab/frontend/abstract/core'
+import type { IElement, TypedValue } from '@codelab/frontend/abstract/core'
 import {
   expressionTransformer,
   hasStateExpression,
 } from '@codelab/frontend/shared/utils'
 import { ITypeKind } from '@codelab/shared/abstract/core'
+import isString from 'lodash/isString'
 import { ExtendedModel, model } from 'mobx-keystone'
-import React from 'react'
 import type { ITypedValueTransformer } from '../abstract/ITypedValueTransformer'
-import {
-  antdAtoms,
-  codelabAtoms,
-  htmlAtoms,
-  muiAtoms,
-  reactAtoms,
-} from '../atoms'
 import { BaseRenderPipe } from '../renderPipes/renderPipe.base'
-import { getRootElement } from '../utils/getRootElement'
+import { cloneComponent } from '../utils'
 
 /**
  * Transforms props from the following format:
@@ -41,58 +34,48 @@ export class ReactNodeTypedValueTransformer
   }
 
   canHandleValue(value: TypedValue<unknown>): boolean {
-    return (
-      typeof value.value === 'string' &&
-      (Boolean(
-        getRootElement(value, this.componentService, this.elementService),
-      ) ||
-        hasStateExpression(value.value))
-    )
+    const isComponentId =
+      isString(value.value) && this.componentService.components.has(value.value)
+
+    const isComponentExpression = hasStateExpression(value.value)
+
+    // either when it is a componentId or a component expression
+    return isComponentId || isComponentExpression
   }
 
-  public transform(
-    value: TypedValue<string>,
-    _: ITypeKind,
-    context: IPropData,
-  ) {
-    if (hasStateExpression(value.value)) {
-      // const { values } = this.renderer.appStore.current.state
-
-      const atoms = {
-        ...htmlAtoms,
-        ...codelabAtoms,
-        ...antdAtoms,
-        ...muiAtoms,
-        ...reactAtoms,
-      }
-
-      const evaluationContext = {
-        atoms,
-        React,
-        ...context,
-        // ...values
-      }
-
+  public transform(value: TypedValue<string>, element: IElement) {
+    // value is a custom JS component
+    if (hasStateExpression(value.value) && expressionTransformer.initialized) {
       const transpiledValue =
-        expressionTransformer.transpileAndEvaluateExpression(
-          value.value,
-          evaluationContext,
-        )
+        expressionTransformer.transpileAndEvaluateExpression(value.value)
 
       return typeof transpiledValue === 'function'
-        ? transpiledValue.call(evaluationContext)
+        ? transpiledValue.call(expressionTransformer.context)
         : transpiledValue
     }
 
-    const rootElement = getRootElement(
-      value,
-      this.componentService,
-      this.elementService,
-    )
+    const { value: componentId } = value
+    const component = this.componentService.components.get(componentId)
 
-    if (!rootElement) {
+    if (!component) {
+      console.error('Component not found')
+
       return value
     }
+
+    const componentClone = cloneComponent(
+      component,
+      element,
+      component.initialState,
+    )
+
+    if (!componentClone) {
+      console.error('Failed to clone component')
+
+      return value
+    }
+
+    const rootElement = componentClone.rootElement.current
 
     return this.renderer.renderElement(rootElement)
   }

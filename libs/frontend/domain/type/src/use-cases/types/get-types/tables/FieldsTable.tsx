@@ -5,6 +5,7 @@ import type {
   IType,
   ITypeService,
 } from '@codelab/frontend/abstract/core'
+import { fieldRef, typeRef } from '@codelab/frontend/abstract/core'
 import {
   ListItemDeleteButton,
   ListItemEditButton,
@@ -19,7 +20,6 @@ import { Observer, observer } from 'mobx-react-lite'
 import React from 'react'
 import ReactDragListView from 'react-drag-listview'
 import tw from 'twin.macro'
-import { fieldRef, typeRef } from '../../../../store'
 import { CreateFieldButton } from '../../../fields/create-field'
 import { getValidationRuleTagsArray } from '../../../fields/get-fields/validation'
 import { TypeDetailsTable } from '../../index'
@@ -138,10 +138,7 @@ export const FieldsTable = observer<FieldsTableProps>(
             {() => (
               <Space size="middle">
                 {record.type?.kind === ITypeKind.InterfaceType ? (
-                  <CreateFieldButton
-                    fieldService={fieldService}
-                    interfaceId={record.type.id}
-                  />
+                  <CreateFieldButton interfaceId={record.type.id} />
                 ) : null}
                 <ListItemEditButton
                   onClick={() => {

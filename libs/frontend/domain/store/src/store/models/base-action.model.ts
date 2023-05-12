@@ -17,12 +17,4 @@ export const createBaseAction = <T extends IActionKind>(type: T) =>
       store: prop<Ref<IStore>>(),
       type: prop<T>(() => type),
     })
-    implements Omit<IBaseAction, 'createRunner'> {}
-
-// export const updateBaseAction = (self: IBaseAction, data: IActionDTO) => {
-//   self.name = data.name
-//   self.store = storeRef(data.store.id)
-//   self.type = data.type
-
-//   return self
-// }
+    implements Omit<IBaseAction, 'clone' | 'createRunner'> {}

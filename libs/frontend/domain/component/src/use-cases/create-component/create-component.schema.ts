@@ -1,46 +1,33 @@
 import type { ICreateComponentData } from '@codelab/frontend/abstract/core'
 import {
+  CodeMirrorField,
   idSchema,
   ownerSchema,
   titleCaseValidation,
 } from '@codelab/frontend/presentation/view'
+import { CodeMirrorLanguage } from '@codelab/shared/abstract/codegen'
 import type { JSONSchemaType } from 'ajv'
 
-export type CreateComponentSchema = Omit<
-  ICreateComponentData,
-  'api' | 'props' | 'rootElement' | 'store'
->
-
-export const createComponentSchema: JSONSchemaType<CreateComponentSchema> = {
+export const createComponentSchema: JSONSchemaType<ICreateComponentData> = {
   properties: {
     ...idSchema,
-    // api: {
-    //   nullable: true,
-    //   type: 'string',
-    //   uniforms: {
-    //     component: () => null,
-    //   },
-    // },
-    childrenContainerElement: {
-      properties: {
-        id: {
-          type: 'string',
-          uniforms: {
-            component: () => null,
-          },
-        },
-      },
-      required: ['id'],
-      type: 'object',
-    },
     ...ownerSchema,
     name: {
       type: 'string',
       autoFocus: true,
       ...titleCaseValidation,
     },
+    keyGenerator: {
+      type: 'string',
+      nullable: true,
+      uniforms: {
+        component: CodeMirrorField({
+          language: CodeMirrorLanguage.Typescript,
+        }),
+      },
+    },
   },
-  required: ['name', 'owner', 'childrenContainerElement'],
+  required: ['name', 'owner', 'id'],
   title: 'Create Component Input',
   type: 'object',
 }

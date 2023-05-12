@@ -8,7 +8,7 @@ describe('RenderService', () => {
 
   it('should apply typed value transformers', () => {
     const { props } = data.rootStore.renderer.renderIntermediateElement(
-      data.elementToRender,
+      data.element,
     ) as IRenderOutput
 
     expect(props).toMatchObject({
@@ -20,67 +20,79 @@ describe('RenderService', () => {
     const extraProps = {
       someNode: {
         type: data.reactNodeType.id,
-        value: data.componentToRender.id,
+        value: data.component.id,
       } as TypedValue<string>,
     }
 
+    const text = 'some text'
+
+    data.component.rootElement.current.props.current.set(
+      CUSTOM_TEXT_PROP_KEY,
+      text,
+    )
+
     const { props } = data.rootStore.renderer.renderIntermediateElement(
-      data.elementToRender,
+      data.element,
       extraProps,
     ) as IRenderOutput
 
     const { findByText } = render(props?.['someNode'])
 
-    expect(
-      await findByText(
-        data.componentToRender.rootElement.current.props.maybeCurrent
-          ?.get(CUSTOM_TEXT_PROP_KEY)
-          ?.toString() ?? '',
-      ),
-    ).toBeInTheDocument()
+    expect(await findByText(text)).toBeInTheDocument()
   })
 
-  it('should render props when kind is RenderPropType', async () => {
+  it('should render prop when kind is RenderPropType with component prop values', async () => {
     const extraProps = {
       someNode: {
         type: data.renderPropType.id,
-        value: data.componentToRender.id,
+        value: data.component.id,
       } as TypedValue<string>,
     }
 
     const { props } = data.rootStore.renderer.renderIntermediateElement(
-      data.elementToRender,
+      data.element,
       extraProps,
     ) as IRenderOutput
+
+    data.component.rootElement.current.props.current.set(
+      CUSTOM_TEXT_PROP_KEY,
+      `{{this.${data.textField.key}}}`,
+    )
+
+    const text = 'some text'
+    data.component.props.current.set(data.textField.key, text)
 
     const { findByText } = render(props?.['someNode']())
 
-    expect(
-      await findByText(
-        data.componentToRender.rootElement.current.props.maybeCurrent
-          ?.get(CUSTOM_TEXT_PROP_KEY)
-          ?.toString() ?? '',
-      ),
-    ).toBeInTheDocument()
+    expect(await findByText(text)).toBeInTheDocument()
   })
 
-  it('should render props when kind is RenderPropType with overridden props', async () => {
+  it('should render props when kind is RenderPropType with passed arguments (override component props)', async () => {
     const extraProps = {
       someNode: {
         type: data.renderPropType.id,
-        value: data.componentToRender.id,
+        value: data.component.id,
       } as TypedValue<string>,
     }
 
     const { props } = data.rootStore.renderer.renderIntermediateElement(
-      data.elementToRender,
+      data.element,
       extraProps,
     ) as IRenderOutput
 
-    const { findByText } = render(
-      props?.['someNode']({ [CUSTOM_TEXT_PROP_KEY]: 'new text' }),
+    data.component.rootElement.current.props.current.set(
+      CUSTOM_TEXT_PROP_KEY,
+      `{{this.${data.textField.key}}}`,
     )
 
-    expect(await findByText('new text')).toBeInTheDocument()
+    // component props values
+    const text = 'some text'
+    data.component.props.current.set(data.textField.key, text)
+
+    // passed arguments
+    const anotherText = 'anotherText'
+    const { findByText } = render(props?.['someNode'](anotherText))
+
+    expect(await findByText(anotherText)).toBeInTheDocument()
   })
 })

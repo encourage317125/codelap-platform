@@ -6,8 +6,6 @@ export interface ICreateElementData {
   guiCss?: Nullable<string>
   id: string
   name: string
-  page?: Nullable<IEntity>
-  parentComponent?: Nullable<IEntity>
   parentElement?: Nullable<IEntity>
   postRenderAction?: Nullable<IEntity>
   preRenderAction?: Nullable<IEntity>

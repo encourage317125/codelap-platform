@@ -4,7 +4,7 @@ import type { IEntity, Nullable, Nullish } from '@codelab/shared/abstract/types'
 import type { Ref } from 'mobx-keystone'
 import type { ICacheService } from '../../service'
 import type { IElement, IElementTree } from '../element'
-import type { IProp } from '../prop'
+import type { IProp, IPropData } from '../prop'
 import type { IStore } from '../store'
 import type { IInterfaceType } from '../type'
 import type { IComponentDTO } from './component.dto.interface'
@@ -16,7 +16,9 @@ export interface IComponent
   api: Ref<IInterfaceType>
   childrenContainerElement: Ref<IElement>
   descendantComponents: Array<IComponent>
+  initialState: IPropData
   instanceElement: Nullable<Ref<IElement>>
+  keyGenerator: Nullish<string>
   name: string
   props: Ref<IProp>
   /**
@@ -26,11 +28,12 @@ export interface IComponent
   sourceComponent?: Nullable<IEntity>
   store: Ref<IStore>
 
-  clone(instanceId: string): IComponent
+  clone(key: string, instanceId?: string): IComponent
   setChildrenContainerElement(element: Ref<IElement>): void
   setInstanceElement(elementRef: Ref<IElement>): void
   setProps(props: Nullable<Ref<IProp>>): void
   setSourceComponent(entity: IEntity): void
+  setStore(props: Nullable<Ref<IStore>>): void
   toCreateInput(): ComponentCreateInput
 }
 

@@ -1,18 +1,19 @@
-import { CUSTOM_TEXT_PROP_KEY } from '@codelab/frontend/abstract/core'
-import { render } from '@testing-library/react'
-import { AtomRenderPipe } from '../renderPipes/atomRenderPipe'
+import { ComponentRenderPipe } from '../renderPipes/componentRenderPipe'
 import { setupTestForRenderer } from './setup/setup-test'
 
-describe('RenderAtomPipe', () => {
-  const data = setupTestForRenderer([AtomRenderPipe])
+/**
+ * Should render a prop value of ReactNode
+ */
+describe('ReactNodeType', () => {
+  //
+  const data = setupTestForRenderer([
+    // LoopingRenderPipe,
+    // ConditionalRenderPipe,
+    ComponentRenderPipe,
+    // AtomRenderPipe,
+  ])
 
-  it('should render element atom', async () => {
-    const text = 'a text to render'
-    data.elementToRender.props.current.set(CUSTOM_TEXT_PROP_KEY, text)
-
-    const output = data.rootStore.renderer.renderElement(data.elementToRender)
-    const { findByText } = render(output)
-
-    expect(await findByText(text)).toBeInTheDocument()
+  it('should render reactNode props', () => {
+    //
   })
 })

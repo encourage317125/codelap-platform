@@ -172,12 +172,6 @@ export const typeSchema = gql`
   }
 
 
-  """
-  The idea is that admin create interfaces and can assign a default value to be used by the interface
-  """
-  interface OwnedBy @relationshipProperties {
-    data: String! @default(value: "{}")
-  }
 
   """
   Represents an object type with multiple fields
@@ -196,13 +190,11 @@ export const typeSchema = gql`
         direction: IN
       )
     # Fields are defined as a set of list to other types
-    # The field data is stored as relationship properties
     fields: [Field!]!
       @relationship(
-        type: "INTERFACE_FIELD"
+        type: "INTERFACE_FIELD",
         direction: OUT
-      )
-  }
+      )  }
 
   """
   Allows picking an element from the current tree
