@@ -1,6 +1,11 @@
-import type { IAdminDataExport } from '@codelab/backend/abstract/core'
+import type { ComponentWhere } from '@codelab/backend/abstract/codegen'
+import type {
+  IAdminDataExport,
+  IComponentExportData,
+} from '@codelab/backend/abstract/core'
 import { IUseCase } from '@codelab/backend/abstract/types'
 import { exportAtoms } from '@codelab/backend/application/atom'
+import { exportComponents } from '@codelab/backend/application/component'
 import { exportTags } from '@codelab/backend/application/tag'
 import {
   exportAdminTypes,
@@ -37,9 +42,11 @@ export class ExportAdminDataService extends IUseCase<
     const systemTypes = await exportSystemTypes()
     const atoms = await this.extractAtomsData()
     const tags = await exportTags()
+    const components = await this.extractComponentsData()
 
     const exportData = {
       atoms,
+      components,
       systemTypes,
       tags,
     }
@@ -82,6 +89,10 @@ export class ExportAdminDataService extends IUseCase<
       this.exportData.systemTypes,
     )
 
+    for (const componentData of this.exportData.components) {
+      this.saveComponentAsFile(componentData)
+    }
+
     return this.getData()
   }
 
@@ -116,6 +127,65 @@ export class ExportAdminDataService extends IUseCase<
           types,
         }
       }),
+    )
+  }
+
+  private async extractComponentsData(where?: ComponentWhere) {
+    const componentsData = await exportComponents(where)
+    const apis = await exportAtomApis()
+
+    return Promise.all(
+      componentsData.map(async (componentData) => {
+        const api = find(apis.types, { id: componentData.component.api.id }) as
+          | IInterfaceTypeDTO
+          | undefined
+
+        const apiFields = filter(apis.fields, {
+          api: { id: componentData.component.api.id },
+        })
+
+        const { fields = [], types } = await exportAdminTypes({
+          apiFields,
+          apiId: componentData.component.api.id,
+        })
+
+        if (!api) {
+          throw new Error('Missing api')
+        }
+
+        return {
+          api,
+          component: componentData.component,
+          descendantElements: componentData.descendantElements,
+          fields,
+          types,
+        }
+      }),
+    )
+  }
+
+  async exportComponent(id: string) {
+    const componentsData = await this.extractComponentsData({ id })
+
+    if (componentsData[0]) {
+      this.saveComponentAsFile(componentsData[0])
+    }
+  }
+
+  saveComponentAsFile(componentData: IComponentExportData) {
+    const { api, component, descendantElements, fields, types } = componentData
+    // Component name can have spaces, which can cause issues with file names
+    const name = component.name.replace(/ /g, '')
+
+    saveFormattedFile(
+      path.resolve(this.dataPaths.COMPONENTS_PATH, `${name}.json`),
+      {
+        api,
+        component,
+        descendantElements,
+        fields,
+        types,
+      },
     )
   }
 }

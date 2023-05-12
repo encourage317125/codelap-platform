@@ -1,10 +1,13 @@
 import type {
   IAdminDataExport,
   IAtomExport,
+  IComponentExportData,
   ITypesExport,
 } from '@codelab/backend/abstract/core'
 import { IUseCase } from '@codelab/backend/abstract/types'
+import { createComponents } from '@codelab/backend/domain/app'
 import { AtomRepository } from '@codelab/backend/domain/atom'
+import { importElementInitial } from '@codelab/backend/domain/element'
 import { TagRepository } from '@codelab/backend/domain/tag'
 import {
   FieldRepository,
@@ -50,6 +53,8 @@ export class ImportAdminDataService extends IUseCase<IAuth0Owner, void> {
     await this.importTags(owner)
 
     await this.importAtoms(owner)
+
+    await this.importComponents(owner)
   }
 
   private async importSystemTypes(owner: IAuth0Owner) {
@@ -88,12 +93,41 @@ export class ImportAdminDataService extends IUseCase<IAuth0Owner, void> {
     }
   }
 
+  async importComponents(owner: IAuth0Owner) {
+    const componentsExportData = this.exportedAdminData.components
+
+    for await (const {
+      descendantElements,
+      fields,
+      types,
+    } of componentsExportData) {
+      for await (const type of types) {
+        await TypeFactory.save({ ...type, owner })
+      }
+
+      for await (const field of fields) {
+        await this.fieldRepository.save(field)
+      }
+
+      for await (const element of descendantElements) {
+        await importElementInitial(element)
+      }
+    }
+
+    const components = componentsExportData.map((item) => item.component)
+    await createComponents(components, owner)
+  }
+
   /**
    * Extract all the api's from atom file
    */
   get getMergedData(): IAdminDataExport {
-    const filenames = fs
+    const atomFilenames = fs
       .readdirSync(this.dataPaths.ATOMS_PATH)
+      .filter((filename) => path.extname(filename) === '.json')
+
+    const componentFilenames = fs
+      .readdirSync(this.dataPaths.COMPONENTS_PATH)
       .filter((filename) => path.extname(filename) === '.json')
 
     // Tag data is all in single file
@@ -105,7 +139,16 @@ export class ImportAdminDataService extends IUseCase<IAuth0Owner, void> {
       fs.readFileSync(this.dataPaths.SYSTEM_TYPES_FILE_PATH, 'utf8'),
     ) as ITypesExport
 
-    return filenames.reduce(
+    const components = componentFilenames.map((filename) => {
+      const content = fs.readFileSync(
+        path.resolve(this.dataPaths.COMPONENTS_PATH, filename),
+        'utf8',
+      )
+
+      return JSON.parse(content) as IComponentExportData
+    })
+
+    return atomFilenames.reduce(
       (adminData, filename) => {
         const content = fs.readFileSync(
           `${this.dataPaths.ATOMS_PATH}/${filename}`,
@@ -118,7 +161,7 @@ export class ImportAdminDataService extends IUseCase<IAuth0Owner, void> {
 
         return adminData
       },
-      { atoms: [] as Array<IAtomExport>, systemTypes, tags },
+      { atoms: [] as Array<IAtomExport>, components, systemTypes, tags },
     )
   }
 }

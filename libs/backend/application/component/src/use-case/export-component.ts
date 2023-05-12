@@ -1,12 +1,28 @@
+import type { ComponentWhere } from '@codelab/backend/abstract/codegen'
+import { getElementWithDescendants } from '@codelab/backend/domain/element'
 import {
   componentSelectionSet,
   Repository,
 } from '@codelab/backend/infra/adapter/neo4j'
 
-export const exportComponent = async () => {
+export const exportComponents = async (where?: ComponentWhere) => {
   const Component = await Repository.instance.Component
 
   const components = await Component.find({
     selectionSet: componentSelectionSet,
+    where,
   })
+
+  return Promise.all(
+    components.map(async (component) => {
+      const descendantElements = await getElementWithDescendants(
+        component.rootElement.id,
+      )
+
+      return {
+        component,
+        descendantElements,
+      }
+    }),
+  )
 }
