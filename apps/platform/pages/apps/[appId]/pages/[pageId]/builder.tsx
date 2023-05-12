@@ -5,7 +5,8 @@ import {
   BuilderContext,
   BuilderExplorerPane,
   BuilderTabs,
-  ConfigPane,
+  ComponentsExplorerPane,
+  ConfigPaneInspectorTabContainer,
 } from '@codelab/frontend/domain/builder'
 import {
   ExplorerPanePage,
@@ -20,6 +21,7 @@ import {
 import {
   DashboardTemplate,
   sidebarNavigation,
+  SkeletonWrapper,
 } from '@codelab/frontend/presentation/view'
 import { auth0Instance } from '@codelab/shared/infra/auth0'
 import { useMountEffect } from '@react-hookz/web'
@@ -28,13 +30,16 @@ import Head from 'next/head'
 import React, { useEffect, useMemo } from 'react'
 
 const PageBuilder: CodelabPage = observer(() => {
-  const [, lazilyLoadRemainingPages] = useRemainingPages()
+  const [{ status: remainingPagesStatus }, lazilyLoadRemainingPages] =
+    useRemainingPages()
+
   const appId = useCurrentAppId()
   const pageId = useCurrentPageId()
 
-  const [{ error, result, status }, loadCurrentPage] = useRenderedPage({
-    rendererType: RendererType.PageBuilder,
-  })
+  const [{ error, result, status: renderedPageStatus }, loadCurrentPage] =
+    useRenderedPage({
+      rendererType: RendererType.PageBuilder,
+    })
 
   useMountEffect(() => {
     void lazilyLoadRemainingPages.execute()
@@ -44,15 +49,25 @@ const PageBuilder: CodelabPage = observer(() => {
     void loadCurrentPage.execute()
   }, [pageId])
 
-  const isLoading = status !== 'success'
+  const isLoading =
+    renderedPageStatus !== 'success' || remainingPagesStatus !== 'success'
+
   const contentStyles = useMemo(() => ({ paddingTop: '0rem' }), [])
 
   return (
     <DashboardTemplate
-      ConfigPane={() => <ConfigPane isLoading={isLoading} />}
+      ConfigPane={() => (
+        <SkeletonWrapper isLoading={isLoading}>
+          <ConfigPaneInspectorTabContainer />
+        </SkeletonWrapper>
+      )}
       ExplorerPane={{
         default: ExplorerPaneType.Explorer,
         items: [
+          {
+            key: ExplorerPaneType.Components,
+            render: () => <ComponentsExplorerPane isLoading={isLoading} />,
+          },
           {
             key: ExplorerPaneType.Explorer,
             render: () => <BuilderExplorerPane isLoading={isLoading} />,

@@ -6,7 +6,6 @@ import {
   RendererTab,
 } from '@codelab/frontend/abstract/core'
 import {
-  CreateComponentButton,
   CreateComponentModal,
   DeleteComponentModal,
 } from '@codelab/frontend/domain/component'
@@ -71,7 +70,6 @@ export const BuilderExplorerPane = observer<BuilderExplorerPaneProps>(
       actionService,
       builderRenderService,
       builderService,
-      componentService,
       elementService,
     } = useStore()
 
@@ -80,7 +78,6 @@ export const BuilderExplorerPane = observer<BuilderExplorerPaneProps>(
     const pageTree = pageBuilderRenderer?.elementTree.maybeCurrent
     const root = !isLoading ? pageTree?.rootElement : undefined
     const antdTree = root?.current.antdNode
-    const componentsAntdTree = componentService.componentAntdNode
     const isPageTree = antdTree && pageTree
     const store = builderService.selectedNode?.current.store.current
 
@@ -128,29 +125,6 @@ export const BuilderExplorerPane = observer<BuilderExplorerPaneProps>(
                     builderService,
                   )}
                   treeData={antdTree}
-                />
-              )}
-
-              {pageBuilderRenderer && (
-                <>
-                  <Divider />
-                  <div css={tw`flex justify-end`}>
-                    <CreateComponentButton title="Component" />
-                  </div>
-                </>
-              )}
-
-              {antdTree && (
-                <BuilderTree
-                  expandedNodeIds={builderService.expandedComponentTreeNodeIds}
-                  selectTreeNode={selectTreeNode}
-                  setActiveTab={() =>
-                    builderService.setActiveTab(RendererTab.Component)
-                  }
-                  setExpandedNodeIds={builderService.setExpandedComponentTreeNodeIds.bind(
-                    builderService,
-                  )}
-                  treeData={componentsAntdTree}
                 />
               )}
             </ExplorerPaneTemplate>
@@ -236,6 +210,7 @@ export const BuilderExplorerPane = observer<BuilderExplorerPaneProps>(
             }
           `}
           defaultActiveKey="1"
+          destroyInactiveTabPane
           items={tabItems}
           renderTabBar={renderStickyTabBar}
           size="small"

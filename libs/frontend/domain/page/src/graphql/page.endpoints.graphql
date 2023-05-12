@@ -37,7 +37,7 @@ query GetRenderedPageAndCommonAppData(
   apps(where: { id: $appId }) {
     ...PageBuilderApp
   }
-  components {
+  pageComponents(pageId: $pageId) {
     ...RenderedComponent
   }
   resources {
@@ -51,9 +51,6 @@ query GetRenderedPageAndCommonAppData(
     ...Type
   }
   unionTypes(where: { id_IN: $typeIds }) {
-    ...Type
-  }
-  interfaceTypes(where: { id_IN: $typeIds }) {
     ...Type
   }
   elementTypes(where: { id_IN: $typeIds }) {

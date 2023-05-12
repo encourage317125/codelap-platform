@@ -14873,6 +14873,7 @@ export type Query = {
   lambdaTypes: Array<LambdaType>
   lambdaTypesAggregate: LambdaTypeAggregateSelection
   lambdaTypesConnection: LambdaTypesConnection
+  pageComponents: Array<Component>
   pageTypes: Array<PageType>
   pageTypesAggregate: PageTypeAggregateSelection
   pageTypesConnection: PageTypesConnection
@@ -15226,6 +15227,10 @@ export type QueryLambdaTypesConnectionArgs = {
   first?: InputMaybe<Scalars['Int']>
   sort?: InputMaybe<Array<InputMaybe<LambdaTypeSort>>>
   where?: InputMaybe<LambdaTypeWhere>
+}
+
+export type QueryPageComponentsArgs = {
+  pageId: Scalars['ID']
 }
 
 export type QueryPageTypesArgs = {
@@ -21722,7 +21727,7 @@ export type GetComponentsQueryVariables = Exact<{
 export type GetComponentsQuery = {
   __typename?: 'Query'
   aggregate: { __typename?: 'ComponentAggregateSelection'; count: number }
-  items: Array<{ __typename?: 'Component' } & ComponentFragment>
+  items: Array<{ __typename?: 'Component' } & RenderedComponentFragment>
 }
 
 export type GetDomainsQueryVariables = Exact<{
@@ -21892,16 +21897,15 @@ export type GetRenderedPageAndCommonAppDataQueryVariables = Exact<{
 export type GetRenderedPageAndCommonAppDataQuery = {
   __typename?: 'Query'
   apps: Array<{ __typename?: 'App' } & PageBuilderAppFragment>
-  components: Array<{ __typename?: 'Component' } & RenderedComponentFragment>
+  pageComponents: Array<
+    { __typename?: 'Component' } & RenderedComponentFragment
+  >
   resources: Array<{ __typename?: 'Resource' } & ResourceFragment>
   primitiveTypes: Array<
     { __typename?: 'PrimitiveType' } & Type_PrimitiveType_Fragment
   >
   arrayTypes: Array<{ __typename?: 'ArrayType' } & Type_ArrayType_Fragment>
   unionTypes: Array<{ __typename?: 'UnionType' } & Type_UnionType_Fragment>
-  interfaceTypes: Array<
-    { __typename?: 'InterfaceType' } & Type_InterfaceType_Fragment
-  >
   elementTypes: Array<
     { __typename?: 'ElementType' } & Type_ElementType_Fragment
   >
