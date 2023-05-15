@@ -1,21 +1,18 @@
-import type { IElement, TypedValue } from '@codelab/frontend/abstract/core'
+import type {
+  IElement,
+  IField,
+  TypedValue,
+} from '@codelab/frontend/abstract/core'
 import {
   expressionTransformer,
   hasStateExpression,
 } from '@codelab/frontend/shared/utils'
 import { ITypeKind } from '@codelab/shared/abstract/core'
+import isString from 'lodash/isString'
 import { ExtendedModel, model } from 'mobx-keystone'
-import React from 'react'
 import type { ITypedValueTransformer } from '../abstract/ITypedValueTransformer'
-import {
-  antdAtoms,
-  codelabAtoms,
-  htmlAtoms,
-  muiAtoms,
-  reactAtoms,
-} from '../atoms/atoms'
 import { BaseRenderPipe } from '../renderPipes/renderPipe.base'
-import { getRootElement } from '../utils/getRootElement'
+import { cloneComponent } from '../utils'
 
 /**
  * Transforms props from the following format:
@@ -31,6 +28,16 @@ import { getRootElement } from '../utils/getRootElement'
  *   [$propName]: <(...args) => ReactNode - A function that renders the component with id: $componentId>
  * }
  */
+
+const matchPropsToFields = (fields: Array<IField> = [], props: Array<object>) =>
+  props.reduce(
+    (acc, val, index) =>
+      fields[index]?.key
+        ? { ...acc, [fields[index]?.key as string]: val }
+        : acc,
+    {},
+  )
+
 @model('@codelab/RenderPropTypedValueTransformer')
 export class RenderPropTypedValueTransformer
   extends ExtendedModel(BaseRenderPipe, {})
@@ -41,54 +48,46 @@ export class RenderPropTypedValueTransformer
   }
 
   canHandleValue(value: TypedValue<unknown>): boolean {
-    return (
-      typeof value.value === 'string' &&
-      (Boolean(
-        getRootElement(value, this.componentService, this.elementService),
-      ) ||
-        hasStateExpression(value.value))
-    )
+    const isComponentId =
+      isString(value.value) && this.componentService.components.has(value.value)
+
+    const isComponentExpression = hasStateExpression(value.value)
+
+    // either when it is a componentId or a component expression
+    return isComponentId || isComponentExpression
   }
 
-  public transform(value: TypedValue<string>) {
-    if (hasStateExpression(value.value)) {
-      // const { values } = this.renderer.appStore.current.state
-
-      const atoms = {
-        ...htmlAtoms,
-        ...codelabAtoms,
-        ...antdAtoms,
-        ...muiAtoms,
-        ...reactAtoms,
-      }
-
-      const evaluationContext = {
-        atoms,
-        React,
-        // ...values
-      }
-
-      return expressionTransformer.transpileAndEvaluateExpression(
-        value.value,
-        evaluationContext,
-      )
+  public transform(value: TypedValue<string>, element: IElement) {
+    if (hasStateExpression(value.value) && expressionTransformer.initialized) {
+      return expressionTransformer.transpileAndEvaluateExpression(value.value)
     }
 
-    const rootElement = getRootElement(
-      value,
-      this.componentService,
-      this.elementService,
-    )
+    const { value: componentId } = value
+    const component = this.componentService.components.get(componentId)
+    const fields = component?.api.current.fields
 
-    if (!rootElement) {
+    if (!component) {
+      console.error('Component not found')
+
       return value
     }
 
-    return this.makeRenderProp(rootElement)
-  }
+    // spread is required to access all args not just the first one
+    return (...renderPropArgs: Array<object>) => {
+      // match props to fields by order first to first and so on.
+      const props = matchPropsToFields(fields, renderPropArgs)
+      const componentClone = cloneComponent(component, element, props)
 
-  private makeRenderProp(element: IElement) {
-    return (renderPropArgs: Array<unknown>) =>
-      this.renderer.renderElement(element, renderPropArgs)
+      if (!componentClone) {
+        console.error('Failed to clone component')
+
+        return value
+      }
+
+      const rootElement = componentClone.rootElement.current
+      componentClone.store.current.setInitialState(props)
+
+      return this.renderer.renderElement(rootElement)
+    }
   }
 }

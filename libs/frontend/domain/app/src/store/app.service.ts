@@ -9,10 +9,11 @@ import type {
 import {
   getComponentService,
   getElementService,
+  pageRef,
 } from '@codelab/frontend/abstract/core'
 import { getAtomService } from '@codelab/frontend/domain/atom'
 import { getDomainService } from '@codelab/frontend/domain/domain'
-import { getPageService, pageApi, pageRef } from '@codelab/frontend/domain/page'
+import { getPageService, pageApi } from '@codelab/frontend/domain/page'
 import { getPropService } from '@codelab/frontend/domain/prop'
 import { getResourceService } from '@codelab/frontend/domain/resource'
 import {
@@ -158,7 +159,9 @@ export class AppService
        * Element comes with `component` or `atom` data that we need to load as well
        */
       if (elementData.renderAtomType?.id) {
-        this.typeService.addInterface(elementData.renderAtomType.api)
+        this.typeService.loadTypes({
+          interfaceTypes: [elementData.renderAtomType.api],
+        })
 
         elementData.renderAtomType.tags.forEach((tag) =>
           this.tagService.add(tag),
@@ -320,7 +323,7 @@ export class AppService
   ) {
     const {
       apps: [appData],
-      components,
+      pageComponents: components,
       resources,
       ...types
     } = initialData

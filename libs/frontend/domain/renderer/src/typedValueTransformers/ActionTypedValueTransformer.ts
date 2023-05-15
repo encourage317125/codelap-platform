@@ -42,12 +42,13 @@ export class ActionTypedValueTransformer
   public transform(props: TypedValue<unknown>) {
     const actionService = getActionService(this)
 
-    const referencedAction = actionService.actionsList.find(
+    const actionModel = actionService.actionsList.find(
       (action) => action.id === props.value,
     )
 
-    const state = referencedAction?.store.current.state
+    // get action executor for its own store's state
+    const actionExecutor = actionModel?.store.current.state[actionModel.name]
 
-    return referencedAction && state ? state[referencedAction.name] : () => null
+    return actionExecutor || (() => null)
   }
 }

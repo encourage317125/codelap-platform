@@ -5156,6 +5156,7 @@ export type Component = WithOwner & {
   childrenContainerElementAggregate?: Maybe<ComponentElementChildrenContainerElementAggregationSelection>
   childrenContainerElementConnection: ComponentChildrenContainerElementConnection
   id: Scalars['ID']
+  keyGenerator?: Maybe<Scalars['String']>
   name: Scalars['String']
   owner: User
   ownerAggregate?: Maybe<ComponentUserOwnerAggregationSelection>
@@ -5289,6 +5290,7 @@ export type ComponentAggregateSelection = {
   __typename?: 'ComponentAggregateSelection'
   count: Scalars['Int']
   id: IdAggregateSelectionNonNullable
+  keyGenerator: StringAggregateSelectionNullable
   name: StringAggregateSelectionNonNullable
 }
 
@@ -5616,6 +5618,7 @@ export type ComponentCreateInput = {
   api?: InputMaybe<ComponentApiFieldInput>
   childrenContainerElement?: InputMaybe<ComponentChildrenContainerElementFieldInput>
   id: Scalars['ID']
+  keyGenerator?: InputMaybe<Scalars['String']>
   name: Scalars['String']
   owner?: InputMaybe<WithOwnerOwnerFieldInput>
   props?: InputMaybe<ComponentPropsFieldInput>
@@ -5695,6 +5698,7 @@ export type ComponentInterfaceTypeApiNodeAggregateSelection = {
 
 export type ComponentOnCreateInput = {
   id: Scalars['ID']
+  keyGenerator?: InputMaybe<Scalars['String']>
   name: Scalars['String']
 }
 
@@ -6078,6 +6082,7 @@ export type ComponentRootElementUpdateFieldInput = {
 /** Fields to sort Components by. The order in which sorts are applied is not guaranteed when specifying many fields in one ComponentSort object. */
 export type ComponentSort = {
   id?: InputMaybe<SortDirection>
+  keyGenerator?: InputMaybe<SortDirection>
   name?: InputMaybe<SortDirection>
 }
 
@@ -6208,6 +6213,7 @@ export type ComponentUpdateInput = {
   api?: InputMaybe<ComponentApiUpdateFieldInput>
   childrenContainerElement?: InputMaybe<ComponentChildrenContainerElementUpdateFieldInput>
   id?: InputMaybe<Scalars['ID']>
+  keyGenerator?: InputMaybe<Scalars['String']>
   name?: InputMaybe<Scalars['String']>
   owner?: InputMaybe<WithOwnerOwnerUpdateFieldInput>
   props?: InputMaybe<ComponentPropsUpdateFieldInput>
@@ -6249,6 +6255,12 @@ export type ComponentWhere = {
   id_IN?: InputMaybe<Array<Scalars['ID']>>
   id_MATCHES?: InputMaybe<Scalars['String']>
   id_STARTS_WITH?: InputMaybe<Scalars['ID']>
+  keyGenerator?: InputMaybe<Scalars['String']>
+  keyGenerator_CONTAINS?: InputMaybe<Scalars['String']>
+  keyGenerator_ENDS_WITH?: InputMaybe<Scalars['String']>
+  keyGenerator_IN?: InputMaybe<Array<InputMaybe<Scalars['String']>>>
+  keyGenerator_MATCHES?: InputMaybe<Scalars['String']>
+  keyGenerator_STARTS_WITH?: InputMaybe<Scalars['String']>
   name?: InputMaybe<Scalars['String']>
   name_CONTAINS?: InputMaybe<Scalars['String']>
   name_ENDS_WITH?: InputMaybe<Scalars['String']>
@@ -7015,6 +7027,7 @@ export type ElementComponentParentComponentAggregationSelection = {
 export type ElementComponentParentComponentNodeAggregateSelection = {
   __typename?: 'ElementComponentParentComponentNodeAggregateSelection'
   id: IdAggregateSelectionNonNullable
+  keyGenerator: StringAggregateSelectionNullable
   name: StringAggregateSelectionNonNullable
 }
 
@@ -7027,6 +7040,7 @@ export type ElementComponentRenderComponentTypeAggregationSelection = {
 export type ElementComponentRenderComponentTypeNodeAggregateSelection = {
   __typename?: 'ElementComponentRenderComponentTypeNodeAggregateSelection'
   id: IdAggregateSelectionNonNullable
+  keyGenerator: StringAggregateSelectionNullable
   name: StringAggregateSelectionNonNullable
 }
 
@@ -7785,6 +7799,21 @@ export type ElementParentComponentNodeAggregationWhereInput = {
   AND?: InputMaybe<Array<ElementParentComponentNodeAggregationWhereInput>>
   NOT?: InputMaybe<ElementParentComponentNodeAggregationWhereInput>
   OR?: InputMaybe<Array<ElementParentComponentNodeAggregationWhereInput>>
+  keyGenerator_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_LT?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_LTE?: InputMaybe<Scalars['Float']>
+  keyGenerator_LONGEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
   name_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
   name_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
   name_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
@@ -8618,6 +8647,21 @@ export type ElementRenderComponentTypeNodeAggregationWhereInput = {
   AND?: InputMaybe<Array<ElementRenderComponentTypeNodeAggregationWhereInput>>
   NOT?: InputMaybe<ElementRenderComponentTypeNodeAggregationWhereInput>
   OR?: InputMaybe<Array<ElementRenderComponentTypeNodeAggregationWhereInput>>
+  keyGenerator_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_LT?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_LTE?: InputMaybe<Scalars['Float']>
+  keyGenerator_LONGEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
   name_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
   name_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
   name_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
@@ -14829,6 +14873,7 @@ export type Query = {
   lambdaTypes: Array<LambdaType>
   lambdaTypesAggregate: LambdaTypeAggregateSelection
   lambdaTypesConnection: LambdaTypesConnection
+  pageComponents: Array<Component>
   pageTypes: Array<PageType>
   pageTypesAggregate: PageTypeAggregateSelection
   pageTypesConnection: PageTypesConnection
@@ -15182,6 +15227,10 @@ export type QueryLambdaTypesConnectionArgs = {
   first?: InputMaybe<Scalars['Int']>
   sort?: InputMaybe<Array<InputMaybe<LambdaTypeSort>>>
   where?: InputMaybe<LambdaTypeWhere>
+}
+
+export type QueryPageComponentsArgs = {
+  pageId: Scalars['ID']
 }
 
 export type QueryPageTypesArgs = {
@@ -16306,8 +16355,14 @@ export type Store = {
   api: InterfaceType
   apiAggregate?: Maybe<StoreInterfaceTypeApiAggregationSelection>
   apiConnection: StoreApiConnection
+  component?: Maybe<Component>
+  componentAggregate?: Maybe<StoreComponentComponentAggregationSelection>
+  componentConnection: StoreComponentConnection
   id: Scalars['ID']
   name: Scalars['String']
+  page?: Maybe<Page>
+  pageAggregate?: Maybe<StorePagePageAggregationSelection>
+  pageConnection: StorePageConnection
 }
 
 export type StoreActionsArgs = {
@@ -16340,6 +16395,44 @@ export type StoreApiConnectionArgs = {
   first?: InputMaybe<Scalars['Int']>
   sort?: InputMaybe<Array<StoreApiConnectionSort>>
   where?: InputMaybe<StoreApiConnectionWhere>
+}
+
+export type StoreComponentArgs = {
+  directed?: InputMaybe<Scalars['Boolean']>
+  options?: InputMaybe<ComponentOptions>
+  where?: InputMaybe<ComponentWhere>
+}
+
+export type StoreComponentAggregateArgs = {
+  directed?: InputMaybe<Scalars['Boolean']>
+  where?: InputMaybe<ComponentWhere>
+}
+
+export type StoreComponentConnectionArgs = {
+  after?: InputMaybe<Scalars['String']>
+  directed?: InputMaybe<Scalars['Boolean']>
+  first?: InputMaybe<Scalars['Int']>
+  sort?: InputMaybe<Array<StoreComponentConnectionSort>>
+  where?: InputMaybe<StoreComponentConnectionWhere>
+}
+
+export type StorePageArgs = {
+  directed?: InputMaybe<Scalars['Boolean']>
+  options?: InputMaybe<PageOptions>
+  where?: InputMaybe<PageWhere>
+}
+
+export type StorePageAggregateArgs = {
+  directed?: InputMaybe<Scalars['Boolean']>
+  where?: InputMaybe<PageWhere>
+}
+
+export type StorePageConnectionArgs = {
+  after?: InputMaybe<Scalars['String']>
+  directed?: InputMaybe<Scalars['Boolean']>
+  first?: InputMaybe<Scalars['Int']>
+  sort?: InputMaybe<Array<StorePageConnectionSort>>
+  where?: InputMaybe<StorePageConnectionWhere>
 }
 
 export type StoreActionsApiActionConnectFieldInput = {
@@ -16629,14 +16722,153 @@ export type StoreApiUpdateFieldInput = {
   where?: InputMaybe<StoreApiConnectionWhere>
 }
 
+export type StoreComponentAggregateInput = {
+  AND?: InputMaybe<Array<StoreComponentAggregateInput>>
+  NOT?: InputMaybe<StoreComponentAggregateInput>
+  OR?: InputMaybe<Array<StoreComponentAggregateInput>>
+  count?: InputMaybe<Scalars['Int']>
+  count_GT?: InputMaybe<Scalars['Int']>
+  count_GTE?: InputMaybe<Scalars['Int']>
+  count_LT?: InputMaybe<Scalars['Int']>
+  count_LTE?: InputMaybe<Scalars['Int']>
+  node?: InputMaybe<StoreComponentNodeAggregationWhereInput>
+}
+
+export type StoreComponentComponentAggregationSelection = {
+  __typename?: 'StoreComponentComponentAggregationSelection'
+  count: Scalars['Int']
+  node?: Maybe<StoreComponentComponentNodeAggregateSelection>
+}
+
+export type StoreComponentComponentNodeAggregateSelection = {
+  __typename?: 'StoreComponentComponentNodeAggregateSelection'
+  id: IdAggregateSelectionNonNullable
+  keyGenerator: StringAggregateSelectionNullable
+  name: StringAggregateSelectionNonNullable
+}
+
+export type StoreComponentConnectFieldInput = {
+  connect?: InputMaybe<ComponentConnectInput>
+  /** Whether or not to overwrite any matching relationship with the new properties. Will default to `false` in 4.0.0. */
+  overwrite?: Scalars['Boolean']
+  where?: InputMaybe<ComponentConnectWhere>
+}
+
+export type StoreComponentConnectOrCreateFieldInput = {
+  onCreate: StoreComponentConnectOrCreateFieldInputOnCreate
+  where: ComponentConnectOrCreateWhere
+}
+
+export type StoreComponentConnectOrCreateFieldInputOnCreate = {
+  node: ComponentOnCreateInput
+}
+
+export type StoreComponentConnection = {
+  __typename?: 'StoreComponentConnection'
+  edges: Array<StoreComponentRelationship>
+  pageInfo: PageInfo
+  totalCount: Scalars['Int']
+}
+
+export type StoreComponentConnectionSort = {
+  node?: InputMaybe<ComponentSort>
+}
+
+export type StoreComponentConnectionWhere = {
+  AND?: InputMaybe<Array<StoreComponentConnectionWhere>>
+  NOT?: InputMaybe<StoreComponentConnectionWhere>
+  OR?: InputMaybe<Array<StoreComponentConnectionWhere>>
+  node?: InputMaybe<ComponentWhere>
+}
+
+export type StoreComponentCreateFieldInput = {
+  node: ComponentCreateInput
+}
+
+export type StoreComponentDeleteFieldInput = {
+  delete?: InputMaybe<ComponentDeleteInput>
+  where?: InputMaybe<StoreComponentConnectionWhere>
+}
+
+export type StoreComponentDisconnectFieldInput = {
+  disconnect?: InputMaybe<ComponentDisconnectInput>
+  where?: InputMaybe<StoreComponentConnectionWhere>
+}
+
+export type StoreComponentFieldInput = {
+  connect?: InputMaybe<StoreComponentConnectFieldInput>
+  connectOrCreate?: InputMaybe<StoreComponentConnectOrCreateFieldInput>
+  create?: InputMaybe<StoreComponentCreateFieldInput>
+}
+
+export type StoreComponentNodeAggregationWhereInput = {
+  AND?: InputMaybe<Array<StoreComponentNodeAggregationWhereInput>>
+  NOT?: InputMaybe<StoreComponentNodeAggregationWhereInput>
+  OR?: InputMaybe<Array<StoreComponentNodeAggregationWhereInput>>
+  keyGenerator_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_LT?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_LTE?: InputMaybe<Scalars['Float']>
+  keyGenerator_LONGEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+  name_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
+  name_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
+  name_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
+  name_AVERAGE_LENGTH_LT?: InputMaybe<Scalars['Float']>
+  name_AVERAGE_LENGTH_LTE?: InputMaybe<Scalars['Float']>
+  name_LONGEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  name_LONGEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  name_LONGEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  name_LONGEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  name_LONGEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+  name_SHORTEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  name_SHORTEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  name_SHORTEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  name_SHORTEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  name_SHORTEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+}
+
+export type StoreComponentRelationship = {
+  __typename?: 'StoreComponentRelationship'
+  cursor: Scalars['String']
+  node: Component
+}
+
+export type StoreComponentUpdateConnectionInput = {
+  node?: InputMaybe<ComponentUpdateInput>
+}
+
+export type StoreComponentUpdateFieldInput = {
+  connect?: InputMaybe<StoreComponentConnectFieldInput>
+  connectOrCreate?: InputMaybe<StoreComponentConnectOrCreateFieldInput>
+  create?: InputMaybe<StoreComponentCreateFieldInput>
+  delete?: InputMaybe<StoreComponentDeleteFieldInput>
+  disconnect?: InputMaybe<StoreComponentDisconnectFieldInput>
+  update?: InputMaybe<StoreComponentUpdateConnectionInput>
+  where?: InputMaybe<StoreComponentConnectionWhere>
+}
+
 export type StoreConnectInput = {
   actions?: InputMaybe<StoreActionsConnectInput>
   api?: InputMaybe<StoreApiConnectFieldInput>
+  component?: InputMaybe<StoreComponentConnectFieldInput>
+  page?: InputMaybe<StorePageConnectFieldInput>
 }
 
 export type StoreConnectOrCreateInput = {
   actions?: InputMaybe<StoreActionsConnectOrCreateInput>
   api?: InputMaybe<StoreApiConnectOrCreateFieldInput>
+  component?: InputMaybe<StoreComponentConnectOrCreateFieldInput>
+  page?: InputMaybe<StorePageConnectOrCreateFieldInput>
 }
 
 export type StoreConnectOrCreateWhere = {
@@ -16650,18 +16882,24 @@ export type StoreConnectWhere = {
 export type StoreCreateInput = {
   actions?: InputMaybe<StoreActionsCreateInput>
   api?: InputMaybe<StoreApiFieldInput>
+  component?: InputMaybe<StoreComponentFieldInput>
   id: Scalars['ID']
   name: Scalars['String']
+  page?: InputMaybe<StorePageFieldInput>
 }
 
 export type StoreDeleteInput = {
   actions?: InputMaybe<StoreActionsDeleteInput>
   api?: InputMaybe<StoreApiDeleteFieldInput>
+  component?: InputMaybe<StoreComponentDeleteFieldInput>
+  page?: InputMaybe<StorePageDeleteFieldInput>
 }
 
 export type StoreDisconnectInput = {
   actions?: InputMaybe<StoreActionsDisconnectInput>
   api?: InputMaybe<StoreApiDisconnectFieldInput>
+  component?: InputMaybe<StoreComponentDisconnectFieldInput>
+  page?: InputMaybe<StorePageDisconnectFieldInput>
 }
 
 export type StoreEdge = {
@@ -16694,9 +16932,146 @@ export type StoreOptions = {
   sort?: InputMaybe<Array<StoreSort>>
 }
 
+export type StorePageAggregateInput = {
+  AND?: InputMaybe<Array<StorePageAggregateInput>>
+  NOT?: InputMaybe<StorePageAggregateInput>
+  OR?: InputMaybe<Array<StorePageAggregateInput>>
+  count?: InputMaybe<Scalars['Int']>
+  count_GT?: InputMaybe<Scalars['Int']>
+  count_GTE?: InputMaybe<Scalars['Int']>
+  count_LT?: InputMaybe<Scalars['Int']>
+  count_LTE?: InputMaybe<Scalars['Int']>
+  node?: InputMaybe<StorePageNodeAggregationWhereInput>
+}
+
+export type StorePageConnectFieldInput = {
+  connect?: InputMaybe<PageConnectInput>
+  /** Whether or not to overwrite any matching relationship with the new properties. Will default to `false` in 4.0.0. */
+  overwrite?: Scalars['Boolean']
+  where?: InputMaybe<PageConnectWhere>
+}
+
+export type StorePageConnectOrCreateFieldInput = {
+  onCreate: StorePageConnectOrCreateFieldInputOnCreate
+  where: PageConnectOrCreateWhere
+}
+
+export type StorePageConnectOrCreateFieldInputOnCreate = {
+  node: PageOnCreateInput
+}
+
+export type StorePageConnection = {
+  __typename?: 'StorePageConnection'
+  edges: Array<StorePageRelationship>
+  pageInfo: PageInfo
+  totalCount: Scalars['Int']
+}
+
+export type StorePageConnectionSort = {
+  node?: InputMaybe<PageSort>
+}
+
+export type StorePageConnectionWhere = {
+  AND?: InputMaybe<Array<StorePageConnectionWhere>>
+  NOT?: InputMaybe<StorePageConnectionWhere>
+  OR?: InputMaybe<Array<StorePageConnectionWhere>>
+  node?: InputMaybe<PageWhere>
+}
+
+export type StorePageCreateFieldInput = {
+  node: PageCreateInput
+}
+
+export type StorePageDeleteFieldInput = {
+  delete?: InputMaybe<PageDeleteInput>
+  where?: InputMaybe<StorePageConnectionWhere>
+}
+
+export type StorePageDisconnectFieldInput = {
+  disconnect?: InputMaybe<PageDisconnectInput>
+  where?: InputMaybe<StorePageConnectionWhere>
+}
+
+export type StorePageFieldInput = {
+  connect?: InputMaybe<StorePageConnectFieldInput>
+  connectOrCreate?: InputMaybe<StorePageConnectOrCreateFieldInput>
+  create?: InputMaybe<StorePageCreateFieldInput>
+}
+
+export type StorePageNodeAggregationWhereInput = {
+  AND?: InputMaybe<Array<StorePageNodeAggregationWhereInput>>
+  NOT?: InputMaybe<StorePageNodeAggregationWhereInput>
+  OR?: InputMaybe<Array<StorePageNodeAggregationWhereInput>>
+  _compoundName_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
+  _compoundName_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
+  _compoundName_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
+  _compoundName_AVERAGE_LENGTH_LT?: InputMaybe<Scalars['Float']>
+  _compoundName_AVERAGE_LENGTH_LTE?: InputMaybe<Scalars['Float']>
+  _compoundName_LONGEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  _compoundName_LONGEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  _compoundName_LONGEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  _compoundName_LONGEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  _compoundName_LONGEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+  _compoundName_SHORTEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  _compoundName_SHORTEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  _compoundName_SHORTEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  _compoundName_SHORTEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  _compoundName_SHORTEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+  url_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
+  url_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
+  url_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
+  url_AVERAGE_LENGTH_LT?: InputMaybe<Scalars['Float']>
+  url_AVERAGE_LENGTH_LTE?: InputMaybe<Scalars['Float']>
+  url_LONGEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  url_LONGEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  url_LONGEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  url_LONGEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  url_LONGEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+  url_SHORTEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  url_SHORTEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  url_SHORTEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  url_SHORTEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  url_SHORTEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+}
+
+export type StorePagePageAggregationSelection = {
+  __typename?: 'StorePagePageAggregationSelection'
+  count: Scalars['Int']
+  node?: Maybe<StorePagePageNodeAggregateSelection>
+}
+
+export type StorePagePageNodeAggregateSelection = {
+  __typename?: 'StorePagePageNodeAggregateSelection'
+  _compoundName: StringAggregateSelectionNonNullable
+  id: IdAggregateSelectionNonNullable
+  url: StringAggregateSelectionNonNullable
+}
+
+export type StorePageRelationship = {
+  __typename?: 'StorePageRelationship'
+  cursor: Scalars['String']
+  node: Page
+}
+
+export type StorePageUpdateConnectionInput = {
+  node?: InputMaybe<PageUpdateInput>
+}
+
+export type StorePageUpdateFieldInput = {
+  connect?: InputMaybe<StorePageConnectFieldInput>
+  connectOrCreate?: InputMaybe<StorePageConnectOrCreateFieldInput>
+  create?: InputMaybe<StorePageCreateFieldInput>
+  delete?: InputMaybe<StorePageDeleteFieldInput>
+  disconnect?: InputMaybe<StorePageDisconnectFieldInput>
+  update?: InputMaybe<StorePageUpdateConnectionInput>
+  where?: InputMaybe<StorePageConnectionWhere>
+}
+
 export type StoreRelationInput = {
   actions?: InputMaybe<StoreActionsCreateFieldInput>
   api?: InputMaybe<StoreApiCreateFieldInput>
+  component?: InputMaybe<StoreComponentCreateFieldInput>
+  page?: InputMaybe<StorePageCreateFieldInput>
 }
 
 /** Fields to sort Stores by. The order in which sorts are applied is not guaranteed when specifying many fields in one StoreSort object. */
@@ -16712,8 +17087,10 @@ export type StoreUniqueWhere = {
 export type StoreUpdateInput = {
   actions?: InputMaybe<StoreActionsUpdateInput>
   api?: InputMaybe<StoreApiUpdateFieldInput>
+  component?: InputMaybe<StoreComponentUpdateFieldInput>
   id?: InputMaybe<Scalars['ID']>
   name?: InputMaybe<Scalars['String']>
+  page?: InputMaybe<StorePageUpdateFieldInput>
 }
 
 export type StoreWhere = {
@@ -16733,6 +17110,11 @@ export type StoreWhere = {
   apiConnection?: InputMaybe<StoreApiConnectionWhere>
   apiConnection_NOT?: InputMaybe<StoreApiConnectionWhere>
   api_NOT?: InputMaybe<InterfaceTypeWhere>
+  component?: InputMaybe<ComponentWhere>
+  componentAggregate?: InputMaybe<StoreComponentAggregateInput>
+  componentConnection?: InputMaybe<StoreComponentConnectionWhere>
+  componentConnection_NOT?: InputMaybe<StoreComponentConnectionWhere>
+  component_NOT?: InputMaybe<ComponentWhere>
   id?: InputMaybe<Scalars['ID']>
   id_CONTAINS?: InputMaybe<Scalars['ID']>
   id_ENDS_WITH?: InputMaybe<Scalars['ID']>
@@ -16745,6 +17127,11 @@ export type StoreWhere = {
   name_IN?: InputMaybe<Array<Scalars['String']>>
   name_MATCHES?: InputMaybe<Scalars['String']>
   name_STARTS_WITH?: InputMaybe<Scalars['String']>
+  page?: InputMaybe<PageWhere>
+  pageAggregate?: InputMaybe<StorePageAggregateInput>
+  pageConnection?: InputMaybe<StorePageConnectionWhere>
+  pageConnection_NOT?: InputMaybe<StorePageConnectionWhere>
+  page_NOT?: InputMaybe<PageWhere>
 }
 
 export type StoresConnection = {
@@ -19702,6 +20089,7 @@ export type UserComponentComponentsAggregationSelection = {
 export type UserComponentComponentsNodeAggregateSelection = {
   __typename?: 'UserComponentComponentsNodeAggregateSelection'
   id: IdAggregateSelectionNonNullable
+  keyGenerator: StringAggregateSelectionNullable
   name: StringAggregateSelectionNonNullable
 }
 
@@ -19775,6 +20163,21 @@ export type UserComponentsNodeAggregationWhereInput = {
   AND?: InputMaybe<Array<UserComponentsNodeAggregationWhereInput>>
   NOT?: InputMaybe<UserComponentsNodeAggregationWhereInput>
   OR?: InputMaybe<Array<UserComponentsNodeAggregationWhereInput>>
+  keyGenerator_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_LT?: InputMaybe<Scalars['Float']>
+  keyGenerator_AVERAGE_LENGTH_LTE?: InputMaybe<Scalars['Float']>
+  keyGenerator_LONGEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  keyGenerator_LONGEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_EQUAL?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_GT?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_GTE?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_LT?: InputMaybe<Scalars['Int']>
+  keyGenerator_SHORTEST_LENGTH_LTE?: InputMaybe<Scalars['Int']>
   name_AVERAGE_LENGTH_EQUAL?: InputMaybe<Scalars['Float']>
   name_AVERAGE_LENGTH_GT?: InputMaybe<Scalars['Float']>
   name_AVERAGE_LENGTH_GTE?: InputMaybe<Scalars['Float']>
@@ -20693,6 +21096,7 @@ export type ComponentFragment = {
   __typename?: 'Component'
   id: string
   name: string
+  keyGenerator?: string | null
   rootElement: { __typename?: 'Element'; id: string; name: string }
   owner: { __typename?: 'User' } & OwnerFragment
   api: { __typename?: 'InterfaceType' } & InterfaceTypeFragment
@@ -20801,6 +21205,8 @@ export type StoreFragment = {
   id: string
   name: string
   api: { __typename?: 'InterfaceType' } & InterfaceTypeFragment
+  component?: { __typename?: 'Component'; id: string } | null
+  page?: { __typename?: 'Page'; id: string } | null
   actions: Array<
     | ({ __typename?: 'ApiAction' } & Action_ApiAction_Fragment)
     | ({ __typename?: 'CodeAction' } & Action_CodeAction_Fragment)
@@ -21321,7 +21727,7 @@ export type GetComponentsQueryVariables = Exact<{
 export type GetComponentsQuery = {
   __typename?: 'Query'
   aggregate: { __typename?: 'ComponentAggregateSelection'; count: number }
-  items: Array<{ __typename?: 'Component' } & ComponentFragment>
+  items: Array<{ __typename?: 'Component' } & RenderedComponentFragment>
 }
 
 export type GetDomainsQueryVariables = Exact<{
@@ -21491,16 +21897,15 @@ export type GetRenderedPageAndCommonAppDataQueryVariables = Exact<{
 export type GetRenderedPageAndCommonAppDataQuery = {
   __typename?: 'Query'
   apps: Array<{ __typename?: 'App' } & PageBuilderAppFragment>
-  components: Array<{ __typename?: 'Component' } & RenderedComponentFragment>
+  pageComponents: Array<
+    { __typename?: 'Component' } & RenderedComponentFragment
+  >
   resources: Array<{ __typename?: 'Resource' } & ResourceFragment>
   primitiveTypes: Array<
     { __typename?: 'PrimitiveType' } & Type_PrimitiveType_Fragment
   >
   arrayTypes: Array<{ __typename?: 'ArrayType' } & Type_ArrayType_Fragment>
   unionTypes: Array<{ __typename?: 'UnionType' } & Type_UnionType_Fragment>
-  interfaceTypes: Array<
-    { __typename?: 'InterfaceType' } & Type_InterfaceType_Fragment
-  >
   elementTypes: Array<
     { __typename?: 'ElementType' } & Type_ElementType_Fragment
   >

@@ -1,27 +1,36 @@
 /// <reference types='jest'/>
 
-import type { IType } from '@codelab/frontend/abstract/core'
+import type { IInterfaceType, IType } from '@codelab/frontend/abstract/core'
 import {
+  atomRef,
   CUSTOM_TEXT_PROP_KEY,
   elementRef,
   elementTreeRef,
+  pageRef,
+  propRef,
   RendererType,
   ROOT_ELEMENT_NAME,
+  storeRef,
+  typeRef,
 } from '@codelab/frontend/abstract/core'
-import { Atom, atomRef, AtomService } from '@codelab/frontend/domain/atom'
+import { Atom, AtomService } from '@codelab/frontend/domain/atom'
 import { ComponentService } from '@codelab/frontend/domain/component'
 import { ElementService } from '@codelab/frontend/domain/element'
 import { PageService } from '@codelab/frontend/domain/page'
-import { propRef, PropService } from '@codelab/frontend/domain/prop'
-import { ActionService, StoreService } from '@codelab/frontend/domain/store'
+import { PropService } from '@codelab/frontend/domain/prop'
+import {
+  ActionService,
+  Store,
+  StoreService,
+} from '@codelab/frontend/domain/store'
 import { TagService } from '@codelab/frontend/domain/tag'
 import {
+  Field,
   FieldService,
   InterfaceType,
   PrimitiveType,
   ReactNodeType,
   RenderPropType,
-  typeRef,
   TypeService,
 } from '@codelab/frontend/domain/type'
 import { PrimitiveTypeKind } from '@codelab/shared/abstract/codegen'
@@ -30,6 +39,7 @@ import {
   IPageKind,
   IRenderTypeKind,
 } from '@codelab/shared/abstract/core'
+import type { Ref } from 'mobx-keystone'
 import { objectMap, unregisterRootStore } from 'mobx-keystone'
 import { v4 } from 'uuid'
 import { RenderService } from '../../render.service'
@@ -43,6 +53,10 @@ import type { ITestRootStore, TestServices } from './test-root-store.interface'
 const stubServiceRepositories = (rootStore: ITestRootStore) => {
   jest
     .spyOn(rootStore.elementService.elementRepository, 'add')
+    .mockImplementation()
+
+  jest
+    .spyOn(rootStore.elementService.elementRepository, 'updateNodes')
     .mockImplementation()
 
   jest
@@ -79,10 +93,33 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
       type: IAtomType.Text,
     })
 
-    const primitiveType = new PrimitiveType({
+    const integerType = new PrimitiveType({
       name: 'primitiveType',
       owner,
       primitiveKind: PrimitiveTypeKind.Integer,
+    })
+
+    const stringType = new PrimitiveType({
+      name: 'primitiveType',
+      owner,
+      primitiveKind: PrimitiveTypeKind.String,
+    })
+
+    const pageStore = new Store({
+      actions: [],
+      api: typeRef(emptyInterface.id) as Ref<IInterfaceType>,
+      component: null,
+      id: v4(),
+      name: Store.createName({ name: 'Page' }),
+      page: pageRef(pageId),
+    })
+
+    data.textField = new Field({
+      api: typeRef(emptyInterface),
+      id: v4(),
+      key: CUSTOM_TEXT_PROP_KEY,
+      name: CUSTOM_TEXT_PROP_KEY,
+      type: typeRef(stringType.id),
     })
 
     data.renderPropType = new RenderPropType({
@@ -106,15 +143,20 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
       builderRenderService: new RenderService({}),
       componentService: new ComponentService({}),
       elementService: new ElementService({}),
-      fieldService: new FieldService({}),
+      fieldService: new FieldService({
+        fields: objectMap([[data.textField.id, data.textField]]),
+      }),
       pageService: new PageService({}),
       propService: new PropService({}),
       renderer: data.renderer,
-      storeService: new StoreService({}),
+      storeService: new StoreService({
+        stores: objectMap([[pageStore.id, pageStore]]),
+      }),
       tagService: new TagService({}),
       typeService: new TypeService({
         types: objectMap<IType>([
-          [primitiveType.id, primitiveType],
+          [integerType.id, integerType],
+          [stringType.id, stringType],
           [data.renderPropType.id, data.renderPropType],
           [data.reactNodeType.id, data.reactNodeType],
           [emptyInterface.id, emptyInterface],
@@ -129,16 +171,15 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
         prop01: 'prop01Value',
         prop02: 'prop02Value',
         prop03: {
-          type: primitiveType.id,
+          type: integerType.id,
           value: 'prop03Value',
         },
       }),
     }
 
-    data.elementToRender = await data.rootStore.elementService.create({
+    data.element = await data.rootStore.elementService.create({
       id: v4(),
       name: ROOT_ELEMENT_NAME,
-      page: { id: pageId },
       props: elementToRenderProp,
       propTransformationJs: `
         // Write a transformer function, you get the input props as parameter
@@ -157,20 +198,16 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
       renderType: { id: divAtom.id, kind: IRenderTypeKind.Atom },
     })
 
-    data.store = await data.rootStore.storeService.create({
-      api: typeRef(emptyInterface),
-      id: v4(),
-      name: 'Store',
-    })
+    data.element.setPage(pageRef(pageId))
 
     data.rootStore.pageService.add({
       app: { id: v4() },
       id: pageId,
       kind: IPageKind.Regular,
       name: 'page',
-      rootElement: elementRef(data.elementToRender),
-      store: data.store,
-      url: '',
+      rootElement: elementRef(data.element),
+      store: storeRef(pageStore.id),
+      url: 'page-url',
     })
 
     const componentRootElementProps = await data.rootStore.propService.create({
@@ -181,34 +218,41 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
       id: v4(),
     })
 
-    data.componentToRender = await data.rootStore.componentService.create({
-      api: typeRef(emptyInterface),
-      childrenContainerElement: { id: compRootElementId },
+    data.component = await data.rootStore.componentService.create({
       id: v4(),
+      keyGenerator: `function run(props) {
+        // props are of type component api
+          return props.id
+      }`,
       name: 'My Component',
       owner,
-      rootElement: { id: compRootElementId },
     })
-    data.componentToRender.rootElement.current.setRenderType(atomRef(textAtom))
-    data.componentToRender.rootElement.current.setProps(
+
+    data.component.api.current.writeCache({
+      fields: [{ id: data.textField.id }],
+    })
+
+    data.component.setChildrenContainerElement(elementRef(compRootElementId))
+    data.component.rootElement.current.setRenderType(atomRef(textAtom))
+    data.component.rootElement.current.setProps(
       propRef(componentRootElementProps),
     )
 
-    data.componentInstanceElementToRender =
-      await data.rootStore.elementService.create({
+    data.componentInstance =
+      await data.rootStore.elementService.createElementAsFirstChild({
         id: v4(),
         name: '01',
-        parentComponent: data.componentToRender,
+        parentElement: { id: data.element.id },
         props: { data: JSON.stringify({ componentProp: 'instance' }) },
         renderType: {
-          id: data.componentToRender.id,
+          id: data.component.id,
           kind: IRenderTypeKind.Component,
         },
       })
 
     const renderer = new Renderer({
       debugMode: false,
-      elementTree: elementTreeRef(data.componentToRender),
+      elementTree: elementTreeRef(data.component),
       rendererType: RendererType.PageBuilder,
       renderPipe: renderPipeFactory([PassThroughRenderPipe, ...pipes]),
     })

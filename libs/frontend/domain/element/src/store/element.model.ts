@@ -6,6 +6,7 @@ import type {
   IPage,
   IProp,
   IPropData,
+  IStore,
   RenderingError,
   RenderingMetadata,
 } from '@codelab/frontend/abstract/core'
@@ -17,11 +18,12 @@ import {
   getElementService,
   IBuilderDataNode,
   IElement,
+  isAtomInstance,
   isComponentInstance,
+  pageRef,
+  propRef,
 } from '@codelab/frontend/abstract/core'
-import { isAtomInstance } from '@codelab/frontend/domain/atom'
-import { pageRef } from '@codelab/frontend/domain/page'
-import { getPropService, propRef } from '@codelab/frontend/domain/prop'
+import { getPropService } from '@codelab/frontend/domain/prop'
 import {
   ElementCreateInput,
   ElementUpdateInput,
@@ -99,7 +101,7 @@ export class Element
     _page: prop<Nullable<Ref<IPage>>>(null),
 
     // component which has this element as rootElement
-    _parentComponent: prop<Nullable<Ref<IComponent>>>(null).withSetter(),
+    _parentComponent: prop<Nullable<Ref<IComponent>>>(null),
 
     customCss: prop<Nullable<string>>(null).withSetter(),
 
@@ -175,8 +177,8 @@ export class Element
   }
 
   @computed
-  get store() {
-    return this.closestContainerNode.store.current
+  get store(): Ref<IStore> {
+    return this.closestContainerNode.store
   }
 
   @computed
@@ -456,6 +458,7 @@ export class Element
       generateNewIds: true,
     })
 
+    // FIXME: add atom and props
     clonedElement.setName(`${this.name} ${cloneIndex}`)
     clonedElement.setSourceElement(elementRef(this.id))
 

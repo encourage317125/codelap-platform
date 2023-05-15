@@ -5,13 +5,20 @@ import type {
   IStoreService,
   IUpdateStoreData,
 } from '@codelab/frontend/abstract/core'
-import { getTypeService, typeRef } from '@codelab/frontend/domain/type'
+import {
+  actionRef,
+  componentRef,
+  pageRef,
+  storeRef,
+  typeRef,
+} from '@codelab/frontend/abstract/core'
+import { getTypeService } from '@codelab/frontend/domain/type'
 import { ModalService } from '@codelab/frontend/shared/utils'
 import type {
   StoreFragment,
   StoreWhere,
 } from '@codelab/shared/abstract/codegen'
-import type { IStoreDTO } from '@codelab/shared/abstract/core'
+import { IStoreDTO } from '@codelab/shared/abstract/core'
 import { computed } from 'mobx'
 import type { Ref } from 'mobx-keystone'
 import {
@@ -27,13 +34,12 @@ import {
 } from 'mobx-keystone'
 import { StoreRepository } from '../services/store.repo'
 import { getActionService } from './action.service.context'
-import { actionRef, Store } from './models'
+import { Store } from './models'
 import { StoreModalService } from './store-modal.service'
 
 @model('@codelab/StoreService')
 export class StoreService
   extends Model({
-    clonedStores: prop(() => objectMap<IStore>()),
     createModal: prop(() => new ModalService({})),
     deleteModal: prop(() => new StoreModalService({})),
     storeRepository: prop(() => new StoreRepository({})),
@@ -58,16 +64,19 @@ export class StoreService
   }
 
   store(id: string) {
-    return this.stores.get(id) || this.clonedStores.get(id)
+    return this.stores.get(id)
   }
 
   @modelAction
-  add = ({ actions, api, id, name }: IStoreDTO) => {
+  add({ actions, api, component, id, name, page, source }: IStoreDTO) {
     const store = new Store({
-      actions: actions?.map((action) => actionRef(action.id)),
+      actions: actions?.map((action) => actionRef(action.id)) || [],
       api: typeRef(api.id) as Ref<IInterfaceType>,
+      component: component ? componentRef(component.id) : null,
       id,
       name,
+      page: page ? pageRef(page.id) : null,
+      source: source ? storeRef(source.id) : null,
     })
 
     this.stores.set(store.id, store)
@@ -82,7 +91,7 @@ export class StoreService
       interfaceTypes: stores.map((store) => store.api),
     })
 
-    return stores.map((store) => this.add(store))
+    return stores.map((store) => this.add({ ...store, source: null }))
   }
 
   @modelFlow

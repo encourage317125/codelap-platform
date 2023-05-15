@@ -6,13 +6,13 @@ import type {
   IRenderOutput,
   IRenderPipe,
   RendererProps,
+  RendererType,
 } from '@codelab/frontend/abstract/core'
 import {
   CUSTOM_TEXT_PROP_KEY,
   elementTreeRef,
-  RendererType,
+  isAtomInstance,
 } from '@codelab/frontend/abstract/core'
-import { isAtomInstance } from '@codelab/frontend/domain/atom'
 import { getTypeService } from '@codelab/frontend/domain/type'
 import {
   expressionTransformer,
@@ -29,6 +29,7 @@ import type { ReactElement, ReactNode } from 'react'
 import React from 'react'
 import type { ArrayOrSingle } from 'ts-essentials'
 import type { ITypedValueTransformer } from './abstract/ITypedValueTransformer'
+import { allAtoms } from './atoms'
 import type { ElementWrapperProps } from './element/ElementWrapper'
 import { ElementWrapper } from './element/ElementWrapper'
 import { makeCustomTextContainer } from './element/wrapper.utils'
@@ -97,7 +98,7 @@ export class Renderer
   implements IRenderer
 {
   onAttachedToRootStore() {
-    void expressionTransformer.init()
+    void expressionTransformer.init({ atoms: allAtoms, React })
   }
 
   renderRoot() {
@@ -138,15 +139,9 @@ export class Renderer
     element: IElement,
     extraProps?: IPropData,
   ): ArrayOrSingle<IRenderOutput> => {
-    const component = element.parentComponent?.current
-    const componentInstance = component?.instanceElement?.current
-    const componentApi = component?.api.maybeCurrent
-
     let props = mergeProps(
       element.__metadataProps,
-      componentApi?.defaultValues,
-      component?.props.current.values,
-      componentInstance?.props.current.values,
+      element.parentComponent?.current.initialState,
       element.props.current.values,
       extraProps,
     )
@@ -258,15 +253,10 @@ export class Renderer
    * Parses and transforms the props for a given element, so they are ready for rendering
    */
   private processPropsForRender = (props: IPropData, element: IElement) => {
-    // FIXME:
-    const context =
-      this.rendererType === RendererType.ComponentBuilder
-        ? props
-        : mergeProps(element.store.state, props)
-
-    props = this.applyPropTypeTransformers(props, context)
+    props = this.applyPropTypeTransformers(props, element)
     props = element.executePropTransformJs(props)
-    props = replaceStateInProps(props, context)
+
+    props = replaceStateInProps(props, element.store.current.state)
 
     return props
   }
@@ -274,10 +264,8 @@ export class Renderer
   /**
    * Applies all the type transformers to the props
    */
-  private applyPropTypeTransformers = (props: IPropData, context: IPropData) =>
+  private applyPropTypeTransformers = (props: IPropData, element: IElement) =>
     mapDeep(props, (value) => {
-      value = preTransformPropTypeValue(value)
-
       if (!isTypedValue(value)) {
         return value
       }
@@ -296,7 +284,7 @@ export class Renderer
           continue
         }
 
-        return propTransformer.transform(value, typeKind, context)
+        return propTransformer.transform(value, element)
       }
 
       /*

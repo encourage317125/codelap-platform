@@ -1,5 +1,7 @@
 import { FileOutlined } from '@ant-design/icons'
-import type { IAction, IActionService } from '@codelab/frontend/abstract/core'
+import type { IAction } from '@codelab/frontend/abstract/core'
+import { actionRef } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presentation/container'
 import {
   ListItemDeleteButton,
   ListItemEditButton,
@@ -7,32 +9,28 @@ import {
 import { List, Space } from 'antd'
 import { observer } from 'mobx-react-lite'
 import React from 'react'
-import { actionRef } from '../../../store'
 
-export interface ActionItemProps {
-  action: IAction
-  actionService: IActionService
-}
+export const ActionItem = observer<{ action: IAction }>(({ action }) => {
+  const { actionService } = useStore()
 
-export const ActionItem = observer<ActionItemProps>(
-  ({ action, actionService }) => {
-    const onClickDelete = () =>
-      actionService.deleteModal.open(actionRef(action.id))
+  const onClickDelete = () => {
+    actionService.deleteModal.open(actionRef(action.id))
+  }
 
-    const onClickEdit = () =>
-      actionService.updateModal.open(actionRef(action.id))
+  const onClickEdit = () => {
+    actionService.updateModal.open(actionRef(action.id))
+  }
 
-    return (
-      <List.Item style={{ padding: 8 }}>
-        <Space style={{ width: '100%' }}>
-          <FileOutlined />
-          {action.name}
-        </Space>
-        <Space>
-          <ListItemEditButton onClick={onClickEdit} />
-          <ListItemDeleteButton onClick={onClickDelete} />
-        </Space>
-      </List.Item>
-    )
-  },
-)
+  return (
+    <List.Item style={{ padding: 8 }}>
+      <Space style={{ width: '100%' }}>
+        <FileOutlined />
+        {action.name}
+      </Space>
+      <Space>
+        <ListItemEditButton onClick={onClickEdit} />
+        <ListItemDeleteButton onClick={onClickDelete} />
+      </Space>
+    </List.Item>
+  )
+})

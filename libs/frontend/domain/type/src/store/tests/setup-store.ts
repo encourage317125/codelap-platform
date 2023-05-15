@@ -1,17 +1,11 @@
 import type { IType } from '@codelab/frontend/abstract/core'
+import { fieldRef, typeRef } from '@codelab/frontend/abstract/core'
 import { PrimitiveTypeKind } from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
 import { objectMap } from 'mobx-keystone'
 import { v4 } from 'uuid'
 import { FieldService } from '../field.service'
-import {
-  Field,
-  fieldRef,
-  InterfaceType,
-  PrimitiveType,
-  typeRef,
-  UnionType,
-} from '../models'
+import { Field, InterfaceType, PrimitiveType, UnionType } from '../models'
 import { TypeService } from '../type.service'
 import { TestRootStore } from './test-root-store'
 

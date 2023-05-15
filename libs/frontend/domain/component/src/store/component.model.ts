@@ -12,15 +12,15 @@ import {
   getComponentService,
   IComponent,
   isComponentInstance,
+  propRef,
+  storeRef,
+  typeRef,
 } from '@codelab/frontend/abstract/core'
-import { propRef } from '@codelab/frontend/domain/prop'
-import { storeRef } from '@codelab/frontend/domain/store'
-import { typeRef } from '@codelab/frontend/domain/type'
-import { throwIfUndefined } from '@codelab/frontend/shared/utils'
 import { ComponentCreateInput } from '@codelab/shared/abstract/codegen'
 import type { IAuth0Owner } from '@codelab/shared/abstract/core'
-import type { IEntity, Nullable } from '@codelab/shared/abstract/types'
+import type { IEntity, Nullable, Nullish } from '@codelab/shared/abstract/types'
 import { connectAuth0Owner, connectNodeId } from '@codelab/shared/domain/mapper'
+import { mergeProps } from '@codelab/shared/utils'
 import { computed } from 'mobx'
 import type { Ref } from 'mobx-keystone'
 import { clone, ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
@@ -29,6 +29,7 @@ const create = ({
   api,
   childrenContainerElement,
   id,
+  keyGenerator,
   name,
   owner,
   props,
@@ -40,6 +41,7 @@ const create = ({
     childrenContainerElement: elementRef(childrenContainerElement.id),
     id,
     instanceElement: null,
+    keyGenerator,
     name,
     owner,
     props: propRef(props.id),
@@ -55,15 +57,25 @@ export class Component
     childrenContainerElement: prop<Ref<IElement>>().withSetter(),
     // element which this component is attached to.
     instanceElement: prop<Nullable<Ref<IElement>>>(null).withSetter(),
+    // a function to extract component key from input
+    keyGenerator: prop<Nullish<string>>().withSetter(),
     name: prop<string>().withSetter(),
     owner: prop<IAuth0Owner>(),
+
     props: prop<Ref<IProp>>().withSetter(),
+
     // if this is a duplicate, trace source component id else null
     sourceComponent: prop<Nullable<IEntity>>(null).withSetter(),
-    store: prop<Ref<IStore>>(),
+
+    store: prop<Ref<IStore>>().withSetter(),
   })
   implements IComponent
 {
+  @computed
+  get initialState() {
+    return mergeProps(this.api.current.defaultValues, this.props.current.values)
+  }
+
   // This must be defined outside the class or weird things happen https://github.com/xaviergonz/mobx-keystone/issues/173
   static create = create
 
@@ -71,7 +83,7 @@ export class Component
   writeCache({
     api,
     childrenContainerElement,
-    id,
+    keyGenerator,
     name,
     owner,
     props,
@@ -86,7 +98,7 @@ export class Component
     this.owner = owner ?? this.owner
     this.api = apiRef
     this.props = props?.id ? propRef(props.id) : this.props
-
+    this.keyGenerator = keyGenerator ?? this.keyGenerator
     this.childrenContainerElement = childrenContainerElement
       ? elementRef(childrenContainerElement.id)
       : this.childrenContainerElement
@@ -163,15 +175,19 @@ export class Component
   }
 
   /**
-   * @param instanceId element which component clone will be attached to
+   * @param key a unique identifier to avoid repeating clone
+   * @param instanceId instance element id
+   * Typed values doesn't have an instance element
+   * therefore the key can't be the same as instanceId
    */
   @modelAction
-  clone(instanceId: string) {
+  clone(key: string, instanceId?: string) {
     const componentService = getComponentService(this)
 
     // if instance already created
-    if (componentService.clonedComponents.has(instanceId)) {
-      return throwIfUndefined(componentService.clonedComponents.get(instanceId))
+    if (componentService.clonedComponents.has(key)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      return componentService.clonedComponents.get(key)!
     }
 
     const clonesList = [...componentService.clonedComponents.values()].filter(
@@ -179,13 +195,19 @@ export class Component
     )
 
     const clonedComponent: IComponent = clone<IComponent>(this)
+    componentService.clonedComponents.set(key, clonedComponent)
+
     this.cloneTree(clonedComponent, clonesList.length)
+
+    const clonedStore = this.store.current.clone(clonedComponent.id)
 
     clonedComponent.setProps(propRef(this.props.current.clone()))
     clonedComponent.setSourceComponent({ id: this.id })
-    clonedComponent.setInstanceElement(elementRef(instanceId))
+    clonedComponent.setStore(storeRef(clonedStore))
 
-    componentService.clonedComponents.set(instanceId, clonedComponent)
+    if (instanceId) {
+      clonedComponent.setInstanceElement(elementRef(instanceId))
+    }
 
     return clonedComponent
   }
@@ -196,6 +218,7 @@ export class Component
       api: { create: { node: this.api.current.toCreateInput() } },
       childrenContainerElement: connectNodeId(this.rootElement.id),
       id: this.id,
+      keyGenerator: this.keyGenerator,
       name: this.name,
       owner: connectAuth0Owner(this.owner),
       props: { create: { node: this.props.current.toCreateInput() } },

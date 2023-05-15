@@ -1,5 +1,7 @@
-import { DATA_ELEMENT_ID } from '@codelab/frontend/abstract/core'
-import { isAtomInstance } from '@codelab/frontend/domain/atom'
+import {
+  DATA_ELEMENT_ID,
+  isAtomInstance,
+} from '@codelab/frontend/abstract/core'
 import { ConditionalRenderPipe } from '../renderPipes/conditionalRenderPipe'
 import { setupTestForRenderer } from './setup/setup-test'
 
@@ -7,64 +9,64 @@ describe('ConditionalRenderPipe', () => {
   const data = setupTestForRenderer([ConditionalRenderPipe])
 
   beforeEach(() => {
-    data.elementToRender.setRenderIfExpression('{{this.shouldRender}}')
+    data.element.setRenderIfExpression('{{this.shouldRender}}')
   })
 
   it('should render normally if no expression is set', async () => {
-    data.elementToRender.setRenderIfExpression(undefined)
+    data.element.setRenderIfExpression(undefined)
 
     const output = data.rootStore.renderer.renderIntermediateElement(
-      data.elementToRender,
+      data.element,
       {},
     )
 
-    const atomType = isAtomInstance(data.elementToRender.renderType)
-      ? data.elementToRender.renderType.current.type
+    const atomType = isAtomInstance(data.element.renderType)
+      ? data.element.renderType.current.type
       : null
 
     expect(output).toEqual({
       atomType,
-      element: data.elementToRender,
+      element: data.element,
       props: expect.objectContaining({
-        [DATA_ELEMENT_ID]: data.elementToRender.id,
+        [DATA_ELEMENT_ID]: data.element.id,
       }),
     })
   })
 
   it('should stop rendering by returning an empty output', async () => {
-    data.store.state.set('shouldRender', false)
+    data.element.store.current.setInitialState({ shouldRender: false })
 
     const output = data.rootStore.renderer.renderIntermediateElement(
-      data.elementToRender,
+      data.element,
       {},
     )
 
     expect(output).toMatchObject({
-      element: data.elementToRender,
+      element: data.element,
     })
   })
 
   it('should continue rendering', async () => {
-    data.store.state.set('shouldRender', true)
+    data.element.store.current.setInitialState({ shouldRender: true })
 
     const initialProps = {
       prop01: 'prop01',
     }
 
     const output = data.rootStore.renderer.renderIntermediateElement(
-      data.elementToRender,
+      data.element,
       initialProps,
     )
 
-    const atomType = isAtomInstance(data.elementToRender.renderType)
-      ? data.elementToRender.renderType.current.type
+    const atomType = isAtomInstance(data.element.renderType)
+      ? data.element.renderType.current.type
       : null
 
     expect(output).toEqual({
       atomType,
-      element: data.elementToRender,
+      element: data.element,
       props: expect.objectContaining({
-        [DATA_ELEMENT_ID]: data.elementToRender.id,
+        [DATA_ELEMENT_ID]: data.element.id,
       }),
     })
   })

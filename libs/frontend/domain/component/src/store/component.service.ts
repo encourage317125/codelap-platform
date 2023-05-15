@@ -13,20 +13,20 @@ import {
   IComponentDTO,
   IUpdateComponentData,
   RendererType,
+  typeRef,
 } from '@codelab/frontend/abstract/core'
+import { getAtomService } from '@codelab/frontend/domain/atom'
 import { getPropService } from '@codelab/frontend/domain/prop'
 import { getStoreService, Store } from '@codelab/frontend/domain/store'
-import {
-  getTypeService,
-  InterfaceType,
-  typeRef,
-} from '@codelab/frontend/domain/type'
+import { getTagService } from '@codelab/frontend/domain/tag'
+import { getTypeService, InterfaceType } from '@codelab/frontend/domain/type'
 import { ModalService, PaginationService } from '@codelab/frontend/shared/utils'
 import type {
   ComponentOptions,
   ComponentWhere,
 } from '@codelab/shared/abstract/codegen'
 import { ITypeKind } from '@codelab/shared/abstract/core'
+import isEmpty from 'lodash/isEmpty'
 import { computed } from 'mobx'
 import {
   _async,
@@ -51,6 +51,7 @@ import { ComponentModalService } from './component-modal.service'
 @model('@codelab/ComponentService')
 export class ComponentService
   extends Model({
+    allComponentsLoaded: prop(() => false),
     clonedComponents: prop(() => objectMap<IComponent>()),
     componentRepository: prop(() => new ComponentRepository({})),
     components: prop(() => objectMap<IComponent>()),
@@ -99,6 +100,16 @@ export class ComponentService
   }
 
   @computed
+  get tagService() {
+    return getTagService(this)
+  }
+
+  @computed
+  get atomService() {
+    return getAtomService(this)
+  }
+
+  @computed
   get builderRenderService() {
     return getBuilderRenderService(this)
   }
@@ -109,17 +120,39 @@ export class ComponentService
   }
 
   @modelAction
+  component(id: string) {
+    const component = this.maybeComponent(id)
+
+    if (!component) {
+      throw new Error('Missing component')
+    }
+
+    return component
+  }
+
+  @modelAction
+  maybeComponent(id: string) {
+    return this.components.get(id) || this.clonedComponents.get(id)
+  }
+
+  @modelAction
   add(componentDTO: IComponentDTO) {
-    const component = Component.create(componentDTO)
+    let component = this.maybeComponent(componentDTO.id)
 
-    this.builderRenderService.addRenderer({
-      elementTree: component,
-      id: component.id,
-      providerTree: null,
-      rendererType: RendererType.ComponentBuilder,
-    })
+    if (component) {
+      component.writeCache(componentDTO)
+    } else {
+      component = Component.create(componentDTO)
 
-    this.components.set(component.id, component)
+      this.builderRenderService.addRenderer({
+        elementTree: component,
+        id: component.id,
+        providerTree: null,
+        rendererType: RendererType.ComponentBuilder,
+      })
+
+      this.components.set(component.id, component)
+    }
 
     return component
   }
@@ -128,7 +161,7 @@ export class ComponentService
   @transaction
   create = _async(function* (
     this: ComponentService,
-    { name, owner, ...data }: ICreateComponentData,
+    { id, keyGenerator, name, owner }: ICreateComponentData,
   ) {
     const storeApi = this.typeService.addInterface({
       id: v4(),
@@ -146,14 +179,14 @@ export class ComponentService
     const rootElementProps = this.propService.add({ data: '{}', id: v4() })
 
     const rootElement = this.elementService.add({
-      ...data.rootElement,
+      id: v4(),
       name,
-      parentComponent: { id: data.id },
+      parentComponent: { id },
       props: rootElementProps,
     })
 
     const api = this.typeService.addInterface({
-      ...data.api,
+      id: v4(),
       kind: ITypeKind.InterfaceType,
       name: InterfaceType.createName(name),
       owner,
@@ -165,8 +198,10 @@ export class ComponentService
     })
 
     const component = this.add({
-      ...data,
       api,
+      childrenContainerElement: { id: rootElement.id },
+      id,
+      keyGenerator,
       name,
       owner,
       props: componentProps,
@@ -185,12 +220,12 @@ export class ComponentService
   @transaction
   update = _async(function* (
     this: ComponentService,
-    { childrenContainerElement, id, name }: IUpdateComponentData,
+    { childrenContainerElement, id, keyGenerator, name }: IUpdateComponentData,
   ) {
     const component = this.components.get(id)!
 
-    component.writeCache({ childrenContainerElement, name })
-    this.writeCloneCache({ childrenContainerElement, id, name })
+    component.writeCache({ childrenContainerElement, keyGenerator, name })
+    this.writeCloneCache({ childrenContainerElement, id, keyGenerator, name })
 
     yield* _await(this.componentRepository.update(component))
 
@@ -248,12 +283,48 @@ export class ComponentService
     where: ComponentWhere = {},
     options?: ComponentOptions,
   ) {
+    if (this.allComponentsLoaded) {
+      return this.componentList
+    }
+
     const { items: components } = yield* _await(
       this.componentRepository.find(where, options),
     )
 
+    if (isEmpty(where)) {
+      this.allComponentsLoaded = true
+    }
+
     return components.map((component) => {
       this.storeService.load([component.store])
+      this.propService.add(component.props)
+      this.typeService.loadTypes({ interfaceTypes: [component.api] })
+
+      const allElements = [
+        component.rootElement,
+        ...component.rootElement.descendantElements,
+      ]
+
+      allElements.forEach((elementData) => {
+        this.propService.add(elementData.props)
+
+        /**
+         * Element comes with `component` or `atom` data that we need to load as well
+         */
+        if (elementData.renderAtomType?.id) {
+          this.typeService.loadTypes({
+            interfaceTypes: [elementData.renderAtomType.api],
+          })
+
+          elementData.renderAtomType.tags.forEach((tag) =>
+            this.tagService.add(tag),
+          )
+
+          this.atomService.add(elementData.renderAtomType)
+        }
+
+        this.elementService.add(elementData)
+      })
 
       return this.add(component)
     })

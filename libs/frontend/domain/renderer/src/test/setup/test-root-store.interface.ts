@@ -1,11 +1,11 @@
 import type {
   IComponent,
   IElement,
+  IField,
   IReactNodeType,
   IRenderer,
   IRenderPropType,
   IRootStore,
-  IStore,
 } from '@codelab/frontend/abstract/core'
 
 export type ITestRootStore = Pick<
@@ -26,12 +26,12 @@ export type ITestRootStore = Pick<
 }
 
 export interface TestServices {
-  componentInstanceElementToRender: IElement
-  componentToRender: IComponent
-  elementToRender: IElement
+  component: IComponent
+  componentInstance: IElement
+  element: IElement
   reactNodeType: IReactNodeType
   renderPropType: IRenderPropType
   renderer: IRenderer
   rootStore: ITestRootStore
-  store: IStore
+  textField: IField
 }

@@ -1,6 +1,10 @@
 import { gql } from 'apollo-server-micro'
 
 export const componentSchema = gql`
+  type Query {
+    pageComponents(pageId: ID!): [Component!]!
+  }
+
   type Component implements WithOwner {
     id: ID! @id(autogenerate: false)
     name: String!
@@ -9,6 +13,10 @@ export const componentSchema = gql`
     owner: User!
     store: Store! @relationship(type: "STORE_OF_COMPONENT", direction: IN)
     props: Prop! @relationship(type: "PROPS_OF_COMPONENT", direction: OUT)
+
+    # Function to extract a unique key from component input
+    keyGenerator: String
+
     # This is the slot where prop children is rendered in the component instance
     # We may want multiple slots in the future
     childrenContainerElement: Element!
