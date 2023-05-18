@@ -9,11 +9,10 @@ import React from 'react'
 import {
   CreatePageButton,
   CreatePageForm,
-  CreatePageModal,
   DeletePageModal,
   PageList,
-  UpdatePageModal,
 } from '../use-cases'
+import { UpdatePageForm } from '../use-cases/update-page/UpdatePageForm'
 
 interface ExplorerPanePageProps {
   appId: string
@@ -42,7 +41,7 @@ export const ExplorerPanePage = observer(({ appId }: ExplorerPanePageProps) => {
       headerProps={headerProps}
       title="Pages"
     >
-      {!pageService.createForm.isOpen ? (
+      {!pageService.createForm.isOpen && !pageService.updateForm.isOpen ? (
         isLoading || !apps?.[0] ? (
           <Spin />
         ) : (
@@ -50,8 +49,7 @@ export const ExplorerPanePage = observer(({ appId }: ExplorerPanePageProps) => {
         )
       ) : null}
       {pageService.createForm.isOpen && <CreatePageForm />}
-      <CreatePageModal />
-      <UpdatePageModal />
+      {pageService.updateForm.isOpen && <UpdatePageForm />}
       <DeletePageModal />
     </ExplorerPaneTemplate>
   )

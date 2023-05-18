@@ -5,8 +5,8 @@ import { observer } from 'mobx-react-lite'
 import type { PropsWithChildren } from 'react'
 import React, { useMemo } from 'react'
 import tw from 'twin.macro'
-import { BuilderDropId } from './BuilderDropId'
-import { useCreateElementDroppable } from './useCreateElementDroppable'
+import { BuilderDropId } from './builder-drop-id'
+import { useCreateElementDroppable } from './useCreateElementDroppable.hook'
 import { shouldCreateElementAsFirstChild } from './utils'
 
 interface BuilderDropHandlerProps {
