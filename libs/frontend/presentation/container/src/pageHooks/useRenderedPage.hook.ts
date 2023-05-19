@@ -1,7 +1,14 @@
-import { RendererType } from '@codelab/frontend/abstract/core'
+import type { IElement } from '@codelab/frontend/abstract/core'
+import {
+  isComponentInstance,
+  RendererType,
+} from '@codelab/frontend/abstract/core'
 import type { ProductionWebsiteProps } from '@codelab/frontend/abstract/types'
 import { PageType } from '@codelab/frontend/abstract/types'
+import { PageKind } from '@codelab/shared/abstract/codegen'
 import { useAsync } from '@react-hookz/web'
+import flatMap from 'lodash/flatMap'
+import has from 'lodash/has'
 import { useRouter } from 'next/router'
 import { useStore } from '../providers'
 import { useCurrentAppId, useCurrentPageId } from '../routerHooks'
@@ -32,7 +39,9 @@ export const useRenderedPage = ({
     appService,
     builderRenderService,
     builderService,
+    componentService,
     elementService,
+    typeService,
   } = useStore()
 
   const appIdFromUrl = useCurrentAppId()
@@ -60,6 +69,57 @@ export const useRenderedPage = ({
     }
 
     const page = app.page(pageId)
+    const loadedComponentElements: Array<IElement> = []
+
+    const pageElements = [
+      // This will load the custom components in the _app (provider page) for the regular pages since we also
+      // render the elements of the provider page as part of the regular page
+      ...(page.kind === PageKind.Regular
+        ? app.providerPage.rootElement.current.descendantElements
+        : []),
+      ...page.rootElement.current.descendantElements,
+    ]
+
+    // Loading custom components
+    let componentsBatch = getComponentIdsFromElements(pageElements).filter(
+      (id) => !componentService.components.has(id),
+    )
+
+    // This makes sure the deeply nested components will also be loaded
+    // e.g. When an element has a render prop type with a component, and that component
+    // also has render prop type with another component, and so on
+    do {
+      if (componentsBatch.length > 0) {
+        const components = await componentService.getAll({
+          id_IN: componentsBatch,
+        })
+
+        const componentElements = [
+          ...components.map((comp) => comp.rootElement.current),
+          ...flatMap(
+            components.map(
+              (comp) => comp.rootElement.current.descendantElements,
+            ),
+          ),
+        ]
+
+        loadedComponentElements.push(...componentElements)
+
+        componentsBatch = getComponentIdsFromElements(componentElements).filter(
+          (id) => !componentService.components.has(id),
+        )
+      }
+    } while (componentsBatch.length > 0)
+
+    // Loading all the types of the elements that are used on the current page
+    // This will also get the types of fields, not just interface types
+    const typeIds = getTypeIdsFromElements([
+      ...pageElements,
+      ...loadedComponentElements,
+    ]).filter((id) => !typeService.types.has(id))
+
+    await typeService.getAll(typeIds)
+
     const pageRootElement = elementService.maybeElement(page.rootElement.id)
 
     if (pageRootElement) {
@@ -82,4 +142,54 @@ export const useRenderedPage = ({
       renderer,
     }
   })
+}
+
+/**
+ * Get all component ids that could be an element or a render prop type
+ */
+const getComponentIdsFromElements = (elements: Array<IElement>) => {
+  return elements.reduce<Array<string>>((acc, element) => {
+    // Component as an element
+    if (isComponentInstance(element.renderType)) {
+      acc.push(element.renderType.id)
+    }
+
+    // Components as render prop types
+    const renderPropTypeFieldValues = Object.values(
+      element.props.current.values,
+    )
+      .filter(
+        (value) =>
+          has(value, 'value') &&
+          has(value, 'type') &&
+          typeof value['value'] === 'string' &&
+          typeof value['type'] === 'string' &&
+          value['value'] &&
+          value['type'],
+      )
+      .map(({ value }) => value)
+
+    if (renderPropTypeFieldValues.length > 0) {
+      acc.push(...renderPropTypeFieldValues)
+    }
+
+    return acc
+  }, [])
+}
+
+/**
+ * Get all api and field type ids from the elements
+ */
+const getTypeIdsFromElements = (elements: Array<IElement>) => {
+  return elements.reduce<Array<string>>((acc, element) => {
+    if (element.renderType) {
+      acc.push(element.renderType.current.api.id)
+
+      element.renderType.current.api.current.fields.forEach((field) => {
+        acc.push(field.type.id)
+      })
+    }
+
+    return acc
+  }, [])
 }
