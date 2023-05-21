@@ -125,11 +125,19 @@ export class ElementService
   create = _async(function* (this: ElementService, data: ICreateElementData) {
     const renderTypeApi =
       data.renderType &&
-      getRenderTypeApi({
-        atomService: this.atomService,
-        componentService: this.componentService,
-        renderType: data.renderType,
-      })
+      (yield* _await(
+        getRenderTypeApi({
+          atomService: this.atomService,
+          componentService: this.componentService,
+          renderType: data.renderType,
+        }),
+      ))
+
+    if (renderTypeApi) {
+      // If the new element is an atom or component that is not used yet anywhere
+      // in the current page, this will load its interface types and its fields
+      yield* _await(this.typeService.getOne(renderTypeApi.id))
+    }
 
     const elementProps = this.propService.add({
       data: data.props?.data ?? makeDefaultProps(renderTypeApi?.current),

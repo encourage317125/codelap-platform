@@ -32,7 +32,6 @@ import type {
 import { IAppDTO } from '@codelab/shared/abstract/core'
 import flatMap from 'lodash/flatMap'
 import merge from 'lodash/merge'
-import sortBy from 'lodash/sortBy'
 import { computed } from 'mobx'
 import {
   _async,
@@ -130,22 +129,8 @@ export class AppService
    * - Hydrate element
    */
   @modelAction
-  loadPages = ({ components = [], pages }: IPageBuilderAppProps) => {
-    components.forEach((componentData) => {
-      this.propService.add(componentData.props)
-      this.componentService.add(componentData)
-      this.typeService.loadTypes({ interfaceTypes: [componentData.api] })
-    })
-
-    // Sorting the components here so that they will be sorted when referenced in the
-    // explorer builder tree, or in other areas
-    // Would be nice if this can be sorted in the backend instead
+  loadPages = ({ pages }: IPageBuilderAppProps) => {
     const allElements = [
-      ...flatMap(sortBy(components, 'name'), ({ rootElement }) => rootElement),
-      ...flatMap(
-        components,
-        ({ rootElement }) => rootElement.descendantElements,
-      ),
       ...flatMap(pages, ({ rootElement }) => [
         rootElement,
         ...rootElement.descendantElements,
@@ -323,9 +308,7 @@ export class AppService
   ) {
     const {
       apps: [appData],
-      pageComponents: components,
       resources,
-      ...types
     } = initialData
       ? initialData
       : yield* _await(
@@ -339,16 +322,12 @@ export class AppService
     /**
      * Load app, pages, elements
      */
-    this.loadPages({ components, pages: appData.pages })
-
-    this.typeService.loadTypes(types)
+    this.loadPages({ pages: appData.pages })
 
     // write cache for resources
     this.resourceService.load(resources)
 
-    const stores = [...appData.pages, ...components].map(
-      (pageOrComponent) => pageOrComponent.store,
-    )
+    const stores = appData.pages.map((pageOrComponent) => pageOrComponent.store)
 
     this.storeService.load(stores)
 
