@@ -16,6 +16,7 @@ import '@testing-library/cypress/add-commands'
 import 'cypress-jest-adapter'
 import './commands'
 import './antd/register'
+import './codelab-ui/register'
 import { stopOnFirstError } from './stop-on-first-error'
 
 afterEach(stopOnFirstError)
