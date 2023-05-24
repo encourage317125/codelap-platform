@@ -47,6 +47,10 @@ import { makeAutoIncrementedName } from '../utils'
 import { getRenderTypeApi, makeDefaultProps } from './api.utils'
 import { Element } from './element.model'
 import {
+  CreateElementFormService,
+  UpdateElementFormService,
+} from './element-form.service'
+import {
   CreateElementModalService,
   ElementModalService,
   UpdateElementModalService,
@@ -62,6 +66,7 @@ import {
 export class ElementService
   extends Model({
     clonedElements: prop(() => objectMap<IElement>()),
+    createForm: prop(() => new CreateElementFormService({})),
     createModal: prop(() => new CreateElementModalService({})),
     deleteModal: prop(() => new ElementModalService({})),
     elementRepository: prop(() => new ElementRepository({})),
@@ -73,6 +78,7 @@ export class ElementService
      */
     elements: prop(() => objectMap<IElement>()),
     id: idProp,
+    updateForm: prop(() => new UpdateElementFormService({})),
     updateModal: prop(() => new UpdateElementModalService({})),
   })
   implements IElementService

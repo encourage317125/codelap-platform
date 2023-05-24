@@ -10,6 +10,7 @@ import {
   DeleteComponentModal,
 } from '@codelab/frontend/domain/component'
 import {
+  CreateElementForm,
   CreateElementModal,
   DeleteElementModal,
 } from '@codelab/frontend/domain/element'
@@ -88,7 +89,7 @@ export const BuilderExplorerPane = observer<{ isLoading?: boolean }>(
             >
               {!pageBuilderRenderer && <Spin />}
 
-              {isPageTree && (
+              {isPageTree && !elementService.createForm.isOpen && (
                 <>
                   <BuilderTree
                     className="page-builder"
@@ -104,9 +105,11 @@ export const BuilderExplorerPane = observer<{ isLoading?: boolean }>(
                     )}
                     treeData={antdTree}
                   />
+
                   <StorePane isLoading={isLoading} store={store} />
                 </>
               )}
+              {elementService.createForm.isOpen && <CreateElementForm />}
             </ExplorerPaneTemplate>
           </SkeletonWrapper>
         ),
@@ -145,7 +148,6 @@ export const BuilderExplorerPane = observer<{ isLoading?: boolean }>(
           renderTabBar={renderStickyTabBar}
           size="small"
         />
-        <CreateElementModal />
         <CreateComponentModal />
         <DeleteComponentModal />
         <DeleteElementModal />

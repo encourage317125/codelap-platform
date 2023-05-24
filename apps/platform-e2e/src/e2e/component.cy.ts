@@ -22,25 +22,6 @@ const componentChildren: Array<ComponentChildData> = [
   { atom: IAtomType.AntDesignTypographyText, name: COMPONENT_CHILD_TYPOGRAPHY },
 ]
 
-const setElementNameInModal = (value: string) => {
-  cy.getModal()
-    .getFormField({
-      label: 'Name',
-    })
-    .within(() => {
-      // Need to wait for the name to automatically be set first (after the
-      // atom is set) because it would override the name otherwise
-      cy.get('input')
-        .should('not.have.value', '')
-        .getModal()
-        .setFormFieldValue({
-          label: 'Name',
-          type: FIELD_TYPE.INPUT,
-          value,
-        })
-    })
-}
-
 let testApp: any
 let appId: string | undefined
 let pageId: string | undefined
@@ -118,32 +99,37 @@ describe('Component CRUD', () => {
     })
 
     it('should be able to add elements to the component', () => {
-      cy.get(`.ant-tree-node-content-wrapper[title="${COMPONENT_NAME}"]`)
-        .eq(1)
-        .trigger('contextmenu')
-
       /**
        * TODO(@nx/cypress): Nesting Cypress commands in a should assertion now throws.
        * You should use .then() to chain commands instead.
        * More Info: https://docs.cypress.io/guides/references/migration-guide#-should
        * */
       cy.wrap(componentChildren).each((child: ComponentChildData) => {
+        cy.get(`.ant-tree-node-content-wrapper[title="${COMPONENT_NAME}"]`)
+          .eq(1)
+          .trigger('contextmenu')
         cy.contains(/Add child/).click({ force: true })
-        cy.getModal().setFormFieldValue({
+        cy.findByTestId('create-element-form').setFormFieldValue({
           label: 'Render Type',
           type: FIELD_TYPE.SELECT,
           value: 'Atom',
         })
-        cy.getModal().setFormFieldValue({
+        cy.findByTestId('create-element-form').setFormFieldValue({
           label: 'Atom',
           type: FIELD_TYPE.SELECT,
           value: child.atom,
         })
-        setElementNameInModal(child.name)
-        cy.getModal()
-          .getModalAction(/Create/)
+        cy.findByTestId('create-element-form').setFormFieldValue({
+          label: 'Name',
+          type: FIELD_TYPE.INPUT,
+          value: child.name,
+        })
+        cy.findByTestId('create-element-form')
+          .getButton({ label: 'Create Element' })
           .click()
-        cy.getModal().should('not.exist', { timeout: 10000 })
+        cy.findByTestId('create-element-form').should('not.exist', {
+          timeout: 10000,
+        })
         cy.get(`[title="${child.name}"]`).click({ force: true })
       })
 
@@ -181,23 +167,30 @@ describe('Component CRUD', () => {
         .getButton({ icon: 'plus' })
         .click()
 
-      cy.getModal().setFormFieldValue({
+      cy.findByTestId('create-element-form').setFormFieldValue({
         label: 'Render Type',
         type: FIELD_TYPE.SELECT,
         value: 'Component',
       })
-      cy.getModal().setFormFieldValue({
+      cy.findByTestId('create-element-form').setFormFieldValue({
         label: 'Component',
         type: FIELD_TYPE.SELECT,
         value: COMPONENT_NAME,
       })
 
-      setElementNameInModal(COMPONENT_INSTANCE_NAME)
+      cy.findByTestId('create-element-form').setFormFieldValue({
+        label: 'Name',
+        type: FIELD_TYPE.INPUT,
+        value: COMPONENT_INSTANCE_NAME,
+      })
 
-      cy.getModal()
-        .getModalAction(/Create/)
+      cy.findByTestId('create-element-form')
+        .getButton({ label: 'Create Element' })
         .click()
-      cy.getModal().should('not.exist', { timeout: 10000 })
+
+      cy.findByTestId('create-element-form').should('not.exist', {
+        timeout: 10000,
+      })
     })
 
     it('should be able to set props on an instance of the component', () => {
@@ -217,23 +210,32 @@ describe('Component CRUD', () => {
         .getButton({ icon: 'plus' })
         .click()
 
-      cy.getModal().setFormFieldValue({
+      cy.findByTestId('create-element-form').setFormFieldValue({
         label: 'Render Type',
         type: FIELD_TYPE.SELECT,
         value: 'Atom',
       })
-      cy.getModal().setFormFieldValue({
+
+      cy.findByTestId('create-element-form').setFormFieldValue({
         label: 'Atom',
         type: FIELD_TYPE.SELECT,
         value: IAtomType.AntDesignTypographyText,
       })
 
-      setElementNameInModal(COMPONENT_INSTANCE_TEXT)
+      cy.findByTestId('create-element-form').setFormFieldValue({
+        label: 'Name',
+        type: FIELD_TYPE.INPUT,
+        value: COMPONENT_INSTANCE_TEXT,
+      })
 
-      cy.getModal()
-        .getModalAction(/Create/)
+      cy.findByTestId('create-element-form')
+        .getButton({ label: 'Create Element' })
         .click()
-      cy.getModal().should('not.exist', { timeout: 10000 })
+
+      cy.findByTestId('create-element-form').should('not.exist', {
+        timeout: 10000,
+      })
+
       cy.get(`[title="${COMPONENT_INSTANCE_TEXT}"]`).click({ force: true })
       cy.get(`.ant-tabs [aria-label="setting"]`).click()
       cy.get('.ant-tabs-tabpane-active form .ql-editor').type(
