@@ -13,7 +13,8 @@
         "tsConfig": "apps/cli/tsconfig.app.json",
         "webpackConfig": "apps/cli/webpack.config.js",
         "target": "node",
-        "compiler": "tsc"
+        "compiler": "tsc",
+        "additionalEntryPoints": []
       },
       "configurations": {
         "test": {},
@@ -34,7 +35,9 @@
     "serve": {
       "executor": "@nx/node:node",
       "options": {
-        "buildTarget": "cli:build"
+        "buildTarget": "cli:build",
+        // specify path to your OpenTelemetry setup script
+        "runtimeArgs": ["-r", "./src/instrumentation"]
       }
     },
     "lint": {

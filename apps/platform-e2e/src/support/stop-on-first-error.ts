@@ -1,6 +1,8 @@
+import { getEnv } from '@codelab/shared/config'
+
 export const stopOnFirstError = function (this: any) {
   // Only do this on CI to save credits
-  if (process.env.CI !== 'true') {
+  if (getEnv().circleci.ci) {
     return
   }
 

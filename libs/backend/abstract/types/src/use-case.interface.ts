@@ -1,30 +1,8 @@
-import type { IAuth0Owner } from '@codelab/shared/abstract/core'
+import type { Tracer } from '@opentelemetry/api'
 
-export abstract class IUseCase<IRequest = void, IResponse = void> {
-  execute(request: IRequest): IResponse | Promise<IResponse> {
-    console.log('Executing Use Case:', this.constructor, request)
+export interface IUseCase<IRequest = void, IResponse = void> {
+  tracer: Tracer
 
-    return this._execute(request)
-  }
-
-  protected abstract _execute(request: IRequest): IResponse | Promise<IResponse>
-}
-
-/**
- * For authenticated user
- */
-export abstract class IAuthUseCase<IRequest = void, IResponse = void> {
-  constructor(protected readonly owner: IAuth0Owner) {}
-
-  execute(request: IRequest): IResponse | Promise<IResponse> {
-    console.log('Executing Use Case:', this.constructor, request)
-
-    return this._execute(request)
-  }
-
-  protected abstract _execute(request: IRequest): IResponse | Promise<IResponse>
-}
-
-export abstract class IAuthService {
-  constructor(protected readonly owner: IAuth0Owner) {}
+  // _execute(request: IRequest): IResponse | Promise<IResponse>
+  execute(request: IRequest): IResponse | Promise<IResponse>
 }

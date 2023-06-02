@@ -10,7 +10,6 @@ import type { CommandModule } from 'yargs'
 import { getStageOptions } from '../../shared/command'
 import { Stage } from '../../shared/utils/stage'
 import { Tasks } from '../../shared/utils/tasks'
-//
 
 /**
  * We require this since execCommand creates a new process and any env set before that doesn't apply
@@ -65,7 +64,7 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
 
           if (stage === Stage.CI) {
             execCommand(
-              'npx nx affected --target=test --testPathPattern="[^i].spec.ts" --color --verbose --parallel=4 --runInBand',
+              'npx nx affected --target=test --testPathPattern="[^i].spec.ts" --color --parallel=3 --verbose --reporters=default --reporters=jest-junit --ci',
             )
           }
         },
@@ -83,7 +82,7 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
 
           if (stage === Stage.CI) {
             execCommand(
-              'npx nx affected --target=test --testPathPattern="[i].spec.ts" --color --parallel=4 --verbose',
+              'npx nx affected --target=test --testPathPattern="[i].spec.ts" --color --parallel=4 --reporters=default --reporters=jest-junit',
             )
           }
         },
@@ -100,6 +99,7 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
             }
 
             execCommand('yarn graphql-codegen')
+            // await graphqlCodegen()
             await generateOgmTypes()
 
             process.exit(0)
@@ -164,15 +164,17 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
         (argv) => argv,
         ({ stage }) => {
           if (stage === Stage.Test) {
-            execCommand(`${NX_TEST} affected --target=e2e -c test --verbose`)
+            execCommand(`${NX_TEST} run platform-e2e:e2e:test `)
           }
 
           if (stage === Stage.Dev) {
-            execCommand(`${NX_TEST} affected --target=e2e -c dev`)
+            execCommand(`${NX_TEST} run platform-e2e:e2e:dev`)
           }
 
           if (stage === Stage.CI) {
-            execCommand(`npx nx affected --target=e2e -c ci --verbose`)
+            // Using `affected` here causes CircleCI parallel specs to not work
+            // execCommand(`npx nx affected --target=e2e -c ci`)
+            execCommand(`npx nx run platform-e2e:e2e:ci --verbose`)
           }
         },
       )
@@ -182,12 +184,15 @@ export const tasksCommand: CommandModule<unknown, unknown> = {
         (argv) => argv,
         ({ stage }) => {
           if (stage === Stage.Test) {
-            execCommand(`yarn cross-env TIMING=1 lint-staged --verbose`)
+            execCommand(`yarn cross-env TIMING=1 lint-staged`)
             execCommand(`npx ls-lint`)
           }
 
           if (stage === Stage.CI) {
-            execCommand(`npx nx affected --target=lint --parallel=4`)
+            execCommand(
+              `npx nx affected --target=lint --parallel=3 --verbose --format junit --output-file ./reports/eslint.xml`,
+            )
+            // https://github.com/nrwl/nx/discussions/8769
             execCommand(`npx prettier --check "./**/*.{graphql,yaml,json}"`)
             // execCommand(
             //   `yarn madge --circular apps libs --extensions ts,tsx,js,jsx`,
