@@ -43,7 +43,7 @@ describe('Component CRUD', () => {
         appId = app.id
         pageId = app.pages?.[0]?.id
         cy.visit(
-          `/apps/${appId}/pages/${pageId}/builder?explorerPaneKey=components`,
+          `/apps/${appId}/pages/${pageId}/builder?primarySidebarKey=components`,
         )
         // GetRenderedPageAndCommonAppData
         cy.waitForApiCalls()
@@ -157,15 +157,12 @@ describe('Component CRUD', () => {
 
     it('should be able to create an instance of the component', () => {
       cy.visit(
-        `/apps/${appId}/pages/${pageId}/builder?explorerPaneKey=explorer`,
+        `/apps/${appId}/pages/${pageId}/builder?primarySidebarKey=explorer`,
       )
 
       cy.get(`[title="Body"]`).click({ force: true })
 
-      cy.getSider()
-        .find('.ant-page-header-heading')
-        .getButton({ icon: 'plus' })
-        .click()
+      cy.getCuiSidebar('Explorer').getToolbarItem('Add Element').click()
 
       cy.findByTestId('create-element-form').setFormFieldValue({
         label: 'Render Type',
@@ -205,10 +202,7 @@ describe('Component CRUD', () => {
     })
 
     it('should be able to add children to component instance', () => {
-      cy.getSider()
-        .find('.ant-page-header-heading')
-        .getButton({ icon: 'plus' })
-        .click()
+      cy.getCuiSidebar('Explorer').getToolbarItem('Add Element').click()
 
       cy.findByTestId('create-element-form').setFormFieldValue({
         label: 'Render Type',

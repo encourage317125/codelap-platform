@@ -3,11 +3,11 @@ import { Button, Dropdown, Menu } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
 import tw from 'twin.macro'
 import type { ToolbarItem, ToolbarProps } from '../../abstract'
-import { HeaderToolbarItem } from './HeaderToolbarItem'
+import { CuiSidebarToolbarItem } from './CuiSidebarToolbarItem'
 
-type HeaderToolbarProps = ToolbarProps
+export type CuiSidebarToolbarProps = ToolbarProps
 
-export const HeaderToolbar = ({ items }: HeaderToolbarProps) => {
+export const CuiSidebarToolbar = ({ items }: CuiSidebarToolbarProps) => {
   const [showDropdown, setShowDropdown] = useState(false)
   const [overflowItems, setOverflowItems] = useState<Array<ToolbarItem>>([])
   const listRef = useRef<HTMLDivElement>(null)
@@ -65,16 +65,14 @@ export const HeaderToolbar = ({ items }: HeaderToolbarProps) => {
           flex
           items-start
           flex-row
-          gap-2
           overflow-hidden
         `}
         ref={listRef}
       >
         {items.map((item) => (
-          <HeaderToolbarItem
+          <CuiSidebarToolbarItem
             icon={item.icon}
             key={item.key}
-            label={item.label}
             onClick={item.onClick}
             title={item.title}
           />
