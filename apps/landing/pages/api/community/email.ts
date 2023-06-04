@@ -1,4 +1,4 @@
-import { EnvLanding } from '@codelab/shared/config'
+import { getEnv } from '@codelab/shared/config'
 import client from '@mailchimp/mailchimp_marketing'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import z from 'zod'
@@ -8,16 +8,16 @@ const schema = z.object({
 })
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const { api_key, list_id, server_prefix } = EnvLanding().mailchimp
+  const { apiKey, listId, serverPrefix } = getEnv().mailchimp
 
   try {
     const { email } = schema.parse(req.body)
     client.setConfig({
-      apiKey: api_key,
-      server: server_prefix,
+      apiKey,
+      server: serverPrefix,
     })
 
-    const response = await client.lists.addListMember(list_id, {
+    const response = await client.lists.addListMember(listId, {
       email_address: email,
       status: 'subscribed',
     })

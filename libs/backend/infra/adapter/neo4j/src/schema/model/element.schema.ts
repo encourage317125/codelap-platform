@@ -1,5 +1,5 @@
+import { gql } from '@apollo/client'
 import { __RenderTypeKind } from '@codelab/shared/abstract/core'
-import { gql } from 'apollo-server-micro'
 
 const renderTypeKindSchema = `enum RenderTypeKind {
   ${Object.values(__RenderTypeKind).join('\n')}

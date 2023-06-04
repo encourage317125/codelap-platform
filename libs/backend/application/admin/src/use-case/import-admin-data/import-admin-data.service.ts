@@ -4,7 +4,7 @@ import type {
   IComponentExportData,
   ITypesExport,
 } from '@codelab/backend/abstract/core'
-import { IUseCase } from '@codelab/backend/abstract/types'
+import { UseCase } from '@codelab/backend/application/service'
 import { createComponents } from '@codelab/backend/domain/app'
 import { AtomRepository } from '@codelab/backend/domain/atom'
 import { importElementInitial } from '@codelab/backend/domain/element'
@@ -15,6 +15,7 @@ import {
   TypeFactory,
 } from '@codelab/backend/domain/type'
 import type { IAuth0Owner, ITagDTO } from '@codelab/shared/abstract/core'
+import { withTracing } from '@codelab/shared/infra/otel'
 import fs from 'fs'
 import path from 'path'
 import { DataPaths } from '../../data-paths'
@@ -22,7 +23,7 @@ import { DataPaths } from '../../data-paths'
 /**
  * During `save`, we'll want to replace the owner with the current
  */
-export class ImportAdminDataService extends IUseCase<IAuth0Owner, void> {
+export class ImportAdminDataService extends UseCase<IAuth0Owner, void> {
   tagRepository = new TagRepository()
 
   atomRepository = new AtomRepository()
@@ -48,13 +49,15 @@ export class ImportAdminDataService extends IUseCase<IAuth0Owner, void> {
     /**
      * System types must be seeded first, so other types can reference it
      */
-    await this.importSystemTypes(owner)
+    await withTracing('import-system-types', () =>
+      this.importSystemTypes(owner),
+    )()
 
-    await this.importTags(owner)
+    // await this.importTags(owner)
 
-    await this.importAtoms(owner)
+    // await this.importAtoms(owner)
 
-    await this.importComponents(owner)
+    // await this.importComponents(owner)
   }
 
   private async importSystemTypes(owner: IAuth0Owner) {
@@ -70,15 +73,15 @@ export class ImportAdminDataService extends IUseCase<IAuth0Owner, void> {
   private async importAtoms(owner: IAuth0Owner) {
     for await (const { api, atom, fields, types } of this.exportedAdminData
       .atoms) {
-      // Create types first so they can be referenced
+      // C reate types first so they can be referenced
       for await (const type of types) {
         await TypeFactory.save({ ...type, owner })
       }
 
-      // Then api's
+      // T hen api's
       await TypeFactory.save({ ...api, owner })
 
-      // Finally fields
+      // F inally fields
       for await (const field of fields) {
         await this.fieldRepository.save(field)
       }
@@ -130,7 +133,7 @@ export class ImportAdminDataService extends IUseCase<IAuth0Owner, void> {
       .readdirSync(this.dataPaths.COMPONENTS_PATH)
       .filter((filename) => path.extname(filename) === '.json')
 
-    // Tag data is all in single file
+    // T ag data is all in single file
     const tags = JSON.parse(
       fs.readFileSync(this.dataPaths.TAGS_FILE_PATH, 'utf8'),
     ) as Array<ITagDTO>

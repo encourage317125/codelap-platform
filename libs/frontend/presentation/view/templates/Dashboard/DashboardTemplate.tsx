@@ -1,4 +1,4 @@
-import { NavigationBar } from '@codelab/frontend/presentation//codelab-ui'
+import { CuiNavigationBar } from '@codelab/frontend/presentation//codelab-ui'
 import {
   useCurrentAppId,
   useCurrentPageId,
@@ -11,7 +11,6 @@ import { Panel, PanelGroup } from 'react-resizable-panels'
 import tw from 'twin.macro'
 import { sidebarWidth } from './constants'
 import { DashboardTemplateConfigPane } from './DashboardTemplateConfigPane'
-import { DashboardTemplateExplorerPane } from './DashboardTemplateExplorerPane'
 import { defaultNavigationBarItems } from './NavigationBar'
 import ResizeHandle from './ResizeHandle'
 import type { DashboardTemplateProps } from './Types'
@@ -23,10 +22,10 @@ export const DashboardTemplateSSR = observer(
     children,
     ConfigPane,
     contentStyles,
-    ExplorerPane,
     Header,
+    PrimarySidebar,
   }: React.PropsWithChildren<DashboardTemplateProps>) => {
-    const { explorerPaneKey } = useRouter().query
+    const { primarySidebarKey } = useRouter().query
     const appId = useCurrentAppId()
     const pageId = useCurrentPageId()
 
@@ -35,11 +34,11 @@ export const DashboardTemplateSSR = observer(
       [appId, pageId],
     )
 
-    const activeTabKey =
-      (explorerPaneKey as React.Key) || ExplorerPane?.default || null
+    const activeSidebarKey =
+      (primarySidebarKey as React.Key) || PrimarySidebar?.default || null
 
-    const activeExplorerPane = ExplorerPane?.items.find(
-      (item) => item.key === activeTabKey,
+    const ActivePrimarySidebar = PrimarySidebar?.items.find(
+      (item) => item.key === activeSidebarKey,
     )?.render
 
     return (
@@ -47,19 +46,22 @@ export const DashboardTemplateSSR = observer(
         {Header && <Header />}
         <Layout>
           <Sider collapsed collapsedWidth={sidebarWidth} theme="light">
-            <NavigationBar
+            <CuiNavigationBar
               primaryItems={navigationBarItems.primaryItems}
               secondaryItems={navigationBarItems.secondaryItems}
             />
           </Sider>
           <Layout style={contentStyles}>
             <PanelGroup direction="horizontal">
-              {activeExplorerPane && (
+              {ActivePrimarySidebar && (
                 <>
                   <Panel defaultSize={20} order={1}>
-                    <DashboardTemplateExplorerPane
-                      ExplorerPane={activeExplorerPane}
-                    />
+                    <div
+                      css={tw`w-full h-full overflow-auto`}
+                      data-cy="temp-primary-panel-wrapper"
+                    >
+                      <ActivePrimarySidebar />
+                    </div>
                   </Panel>
                   <ResizeHandle />
                 </>

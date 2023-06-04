@@ -5,8 +5,9 @@ commands:
             - restore_cache:
                 keys:
                     - nx-cache-{{ checksum "node_modules/.cache/nx/lockfile.hash" }}
+                    - nx-cache
                 name: Restore NX Cache
-            - run: npx nx run-many --target=build --projects=platform,cli,landing,websites --parallel=4 --verbose -c ci --nx-bail
+            - run: npx nx run-many --target=build --projects=platform,cli,landing,websites --parallel=4 -c ci --verbose --nx-bail
             - save_cache:
                 key: nx-cache-{{ checksum "node_modules/.cache/nx/lockfile.hash" }}
                 name: Save Cache
@@ -14,7 +15,7 @@ commands:
                     - ~/project/dist/apps/platform/.next/cache
                     - ~/project/dist/apps/landing/.next/cache
                     - ~/project/dist/apps/websites/.next/cache
-                    - ~/project/node_modules/nx/.cache
+                    - ~/project/node_modules/.cache/nx
     install-npm:
         steps:
             - restore_cache:
@@ -60,16 +61,31 @@ commands:
                     node -v
                 name: Set Node Version
     install-terraform:
-        description: Setup Infra Workspace
+        description: Install Terraform
         steps:
             - run:
                 command: |
                     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys DA418C88A3219F7B
+
                     curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
                     sudo apt-add-repository --yes "deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+
                     sudo apt update
-                    sudo apt install terraform
+                    sudo apt install terraform=1.3.9
                 name: Install Terraform
+    restore-infra-workspace:
+        description: Restore Infra Workspace
+        steps:
+            - checkout
+            - attach_workspace:
+                at: ..
+            - restore_cache:
+                keys:
+                    - node-modules-{{ checksum "yarn.lock" }}
+                    - nvm-cache-{{ checksum ".nvmrc" }}
+                name: Restore Cache
+            - install-terraform
+            - setup-env
     restore-workspace:
         description: Restore Workspace
         steps:
@@ -104,7 +120,6 @@ executors:
               image: neo4j:5.4.0
     machine-ubuntu:
         machine:
-            docker_layer_caching: true
             image: ubuntu-2004:2022.04.1
     terraform:
         docker:
@@ -115,7 +130,10 @@ jobs:
     apply:
         executor: docker-node
         steps:
-            - restore-workspace
+            - restore-infra-workspace
+            - run:
+                command: yarn cli terraform --stage=prod init
+                name: Terraform Init
             - run:
                 command: yarn cli terraform --stage=prod apply
                 name: Terraform Apply
@@ -124,10 +142,40 @@ jobs:
         resource_class: medium
         steps:
             - restore-workspace
-            - run: env
             - run:
                 command: yarn cli tasks codegen --stage ci
                 name: GraphQL Codegen
+    deploy-preview:
+        executor: docker-node-neo4j
+        resource_class: large
+        steps:
+            - checkout
+            - add_ssh_keys-f:
+                fingerprints:
+                    - SHA256:9rhQIHmDI4ch+zBMmw7SOWe0utLgvKuqcUrvoXEcKMk
+            - run:
+                command: git push -f origin HEAD:staging
+                name: Push to Staging Branch
+            - run:
+                command: curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_tV5TS4XJhvtYfyw8GMEKzRzSn9au/2Ze7qyE7x3
+                name: Trigger Vercel Deploy
+    deploy-production:
+        executor: docker-node-neo4j
+        resource_class: large
+        steps:
+            - restore-workspace
+            - run:
+                command: npm install --global vercel@latest
+                name: Install Vercel CLI
+            - run:
+                command: vercel pull --yes --environment=production --token=$VERCEL_ACCESS_TOKEN
+                name: Pull Vercel Environment Information
+            - run:
+                command: vercel build --prod --token=$VERCEL_ACCESS_TOKEN
+                name: Build Project Artifacts
+            - run:
+                command: vercel deploy --prebuilt --prod --token=$VERCEL_ACCESS_TOKEN
+                name: Deploy Project Artifacts to Vercel
     e2e:
         executor: docker-node-neo4j
         parallelism: 4
@@ -135,12 +183,14 @@ jobs:
         steps:
             - restore-workspace
             - setup_remote_docker:
-                docker_layer_caching: true
                 version: 20.10.14
             - run: npx cypress install
             - run: npx cypress verify
             - run:
                 command: yarn cli tasks e2e --stage ci
+                environment:
+                    JEST_JUNIT_OUTPUT_DIR: /tmp/test-reports
+                    JEST_JUNIT_OUTPUT_NAME: e2e-specs-results.xml
                 name: Run E2E Tests
             - store_artifacts:
                 destination: cypress/videos
@@ -151,6 +201,8 @@ jobs:
             - store_artifacts:
                 destination: cypress/data
                 path: ~/project/apps/platform-e2e/src/data
+            - store_test_results:
+                path: /tmp/test-reports
     integration:
         executor: docker-node-neo4j
         resource_class: large
@@ -158,8 +210,13 @@ jobs:
             - restore-workspace
             - run:
                 command: yarn cli tasks int --stage ci
+                environment:
+                    JEST_JUNIT_OUTPUT_DIR: /tmp/test-reports
+                    JEST_JUNIT_OUTPUT_NAME: integration-specs-results.xml
                 name: Run Integration Tests
                 no_output_timeout: 20m
+            - store_test_results:
+                path: /tmp/test-reports
     lint:
         environment:
             CIRCLE_BASE_REVISION: << pipeline.git.base_revision >>
@@ -174,6 +231,8 @@ jobs:
             - run:
                 command: yarn cli tasks commitlint --stage ci
                 name: Commitlint
+            - store_test_results:
+                path: ./reports/
     notify-failure:
         executor: machine-ubuntu
         resource_class: small
@@ -264,7 +323,7 @@ jobs:
     plan:
         executor: docker-node
         steps:
-            - restore-workspace
+            - restore-infra-workspace
             - run:
                 command: |
                     echo "credentials \"app.terraform.io\" {token = \"$TERRAFORM_TOKEN\"}" >> $HOME/.terraformrc
@@ -289,7 +348,7 @@ jobs:
                 root: ~/
     setup-infra-workspace:
         executor: docker-node
-        resource_class: medium
+        resource_class: large
         steps:
             - restore-workspace
             - install-terraform
@@ -298,8 +357,7 @@ jobs:
             - build-repo
             - persist_to_workspace:
                 paths:
-                    - project/node_modules
-                    - project/dist
+                    - ./project/dist
                 root: ~/
     setup-workspace:
         executor: docker-node
@@ -310,28 +368,22 @@ jobs:
             - install-npm
             - install-nvm
             - build-repo
-            - run:
-                command: |
-                    cd ~/
-                    du -hd1
-                    cd ~/project
-                    du -hd1
-                    cd ~/.cache
-                    du -hd1
             - persist_to_workspace:
                 paths:
                     - project/dist
                 root: ~/
     unit:
         executor: docker-node
-        resource_class: medium
+        resource_class: large
         steps:
             - restore-workspace
             - run:
                 command: yarn cli tasks unit --stage ci
+                environment:
+                    JEST_JUNIT_OUTPUT_DIR: ./reports/
                 name: Run Unit Tests
             - store_test_results:
-                path: /tmp/test-reports
+                path: ./reports/
 orbs:
     node: circleci/node@5.1.0
     nx: nrwl/nx@1.6.1

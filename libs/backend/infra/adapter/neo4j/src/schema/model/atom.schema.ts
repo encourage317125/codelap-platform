@@ -1,5 +1,5 @@
+import { gql } from '@apollo/client'
 import { __AtomType } from '@codelab/shared/abstract/core'
-import { gql } from 'apollo-server-micro'
 
 const atomTypeSchema = `enum AtomType {
   ${Object.values(__AtomType).join('\n')}
