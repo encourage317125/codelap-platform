@@ -4,6 +4,7 @@ import type {
   IRenderer,
 } from '@codelab/frontend/abstract/core'
 import { isAtomInstance, RendererType } from '@codelab/frontend/abstract/core'
+import { useStore } from '@codelab/frontend/presentation/container'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import { mergeProps } from '@codelab/shared/utils'
 import { jsx } from '@emotion/react'
@@ -30,6 +31,8 @@ export interface ElementWrapperProps {
  */
 export const ElementWrapper = observer<ElementWrapperProps>(
   ({ element, extraProps = {}, renderer, ...rest }) => {
+    const { atomService } = useStore()
+
     // Render the element to an intermediate output
     const renderOutputs = renderer.renderIntermediateElement(
       element,
@@ -59,7 +62,13 @@ export const ElementWrapper = observer<ElementWrapperProps>(
         }
       }
 
-      const ReactComponent = getReactComponent(renderOutput)
+      const ReactComponent =
+        renderOutput.atomType &&
+        atomService.dynamicComponents[renderOutput.atomType]
+          ? atomService.dynamicComponents[renderOutput.atomType] ??
+            React.Fragment
+          : getReactComponent(renderOutput)
+
       const extractedProps = extractValidProps(ReactComponent, renderOutput)
 
       return jsx(ReactComponent, mergeProps(extractedProps, rest), children)

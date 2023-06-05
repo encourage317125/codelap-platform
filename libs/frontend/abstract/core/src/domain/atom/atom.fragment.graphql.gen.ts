@@ -14,6 +14,9 @@ export type AtomFragment = {
   id: string
   name: string
   type: Types.AtomType
+  externalCssSource?: string | null
+  externalJsSource?: string | null
+  externalSourceType?: string | null
   owner: OwnerFragment
   tags: Array<TagFragment>
   api: InterfaceTypeFragment
@@ -53,6 +56,9 @@ export const AtomFragmentDoc = gql`
       name
       type
     }
+    externalCssSource
+    externalJsSource
+    externalSourceType
   }
   ${OwnerFragmentDoc}
   ${TagFragmentDoc}
