@@ -1,4 +1,5 @@
 import type { IAtomRendererRecord } from '@codelab/frontend/abstract/core'
+import { dynamicLoader } from '@codelab/frontend/shared/utils'
 import { IAtomType } from '@codelab/shared/abstract/core'
 
 export const htmlAtoms: IAtomRendererRecord = {
@@ -77,4 +78,9 @@ export const htmlAtoms: IAtomRendererRecord = {
   [IAtomType.HtmlStrong]: 'strong',
   [IAtomType.HtmlSub]: 'sub',
   [IAtomType.HtmlSup]: 'sup',
+  [IAtomType.HtmlScript]: dynamicLoader(() =>
+    import('@codelab/frontend/application/atoms').then(
+      (mod) => mod.CodelabScript,
+    ),
+  ),
 }

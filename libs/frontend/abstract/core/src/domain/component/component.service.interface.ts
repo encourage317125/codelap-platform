@@ -7,10 +7,10 @@ import type { ObjectMap, Ref } from 'mobx-keystone'
 import type {
   ICRUDModalService,
   ICRUDService,
+  IEntityFormService,
   IPaginateable,
   IQueryService,
 } from '../../service'
-import type { IBuilderDataNode } from '../../ui'
 import type {
   IComponentDTO,
   ICreateComponentData,
@@ -25,10 +25,10 @@ export interface IComponentService
     ICRUDModalService<Ref<IComponent>, { component: Maybe<IComponent> }>,
     IPaginateable<IComponent, { name?: string }> {
   clonedComponents: ObjectMap<IComponent>
-  componentAntdNode: IBuilderDataNode
   componentList: Array<IComponent>
   componentRepository: IComponentRepository
   components: ObjectMap<IComponent>
+  createForm: IEntityFormService
 
   add(componentDTO: IComponentDTO): IComponent
   component(id: string): IComponent

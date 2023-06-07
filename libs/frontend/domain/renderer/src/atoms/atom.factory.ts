@@ -12,15 +12,15 @@ import type { AtomFactoryInput, AtomFactoryResult } from './types'
  * Creates a React Component and default props for it out of an node and an atom
  */
 export const atomFactory = (input: AtomFactoryInput): AtomFactoryResult => {
-  const { atomType, node, props } = input
+  const { atom, node, props } = input
   /**
    * Get ReactComponent by atomType, this takes in a module mapper to resolve the ReactComponent
    */
-  const ReactComponent = getAtom(atomType)
+  const ReactComponent = getAtom(atom.type)
 
-  if (!ReactComponent) {
+  if (!ReactComponent && !atom.externalSourceType) {
     notify({
-      title: `Missing atom of type ${atomType} in atom type map`,
+      title: `Missing atom of type ${atom.type} in atom type map`,
       type: 'error',
     })
 
@@ -37,11 +37,15 @@ export const atomFactory = (input: AtomFactoryInput): AtomFactoryResult => {
 
   let newProps = mergeProps(commonProps, props)
   // get propsCustomizer for atomType
-  const propsCustomizer = allPropsCustomizer[atomType]
+  const propsCustomizer = allPropsCustomizer[atom.type]
 
   if (propsCustomizer) {
     // apply propsCustomizer and get the new props
-    const customizer = propsCustomizer({ atomType, node, props: newProps })
+    const customizer = propsCustomizer({
+      atom,
+      node,
+      props: newProps,
+    })
 
     if (customizer.props) {
       newProps = customizer.props

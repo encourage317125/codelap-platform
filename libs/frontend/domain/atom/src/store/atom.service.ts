@@ -8,14 +8,20 @@ import type {
 import { atomRef, typeRef } from '@codelab/frontend/abstract/core'
 import { getTagService } from '@codelab/frontend/domain/tag'
 import { getTypeService } from '@codelab/frontend/domain/type'
-import { ModalService, PaginationService } from '@codelab/frontend/shared/utils'
+import {
+  dynamicLoader,
+  ModalService,
+  PaginationService,
+} from '@codelab/frontend/shared/utils'
 import type { AtomOptions, AtomWhere } from '@codelab/shared/abstract/codegen'
-import type { IAtomDTO } from '@codelab/shared/abstract/core'
+import type { IAtomDTO, IComponentType } from '@codelab/shared/abstract/core'
 import { ITypeKind } from '@codelab/shared/abstract/core'
-import { computed } from 'mobx'
+import isEmpty from 'lodash/isEmpty'
+import { computed, observable } from 'mobx'
 import {
   _async,
   _await,
+  arraySet,
   idProp,
   Model,
   model,
@@ -38,6 +44,8 @@ export class AtomService
     createModal: prop(() => new ModalService({})),
     deleteManyModal: prop(() => new AtomsModalService({})),
     id: idProp,
+    loadedExternalCssSources: prop(() => arraySet<string>()),
+    loadedExternalJsSources: prop(() => arraySet<string>()),
     paginationService: prop(
       () => new PaginationService<IAtom, { name?: string }>({}),
     ),
@@ -64,6 +72,9 @@ export class AtomService
   update = _async(function* (
     this: AtomService,
     {
+      externalCssSource,
+      externalJsSource,
+      externalSourceType,
       id,
       name,
       requiredParents = [],
@@ -75,6 +86,9 @@ export class AtomService
     const atom = this.atoms.get(id)
 
     atom?.writeCache({
+      externalCssSource,
+      externalJsSource,
+      externalSourceType,
       name,
       requiredParents: requiredParents.map((child) => ({ id: child })),
       suggestedChildren: suggestedChildren.map((child) => ({ id: child })),
@@ -102,9 +116,15 @@ export class AtomService
     return Array.from(this.atoms.values())
   }
 
+  @observable
+  dynamicComponents: Record<string, IComponentType> = {}
+
   @modelAction
   add = ({
     api,
+    externalCssSource,
+    externalJsSource,
+    externalSourceType,
     icon,
     id,
     name,
@@ -118,6 +138,9 @@ export class AtomService
 
     const atom = Atom.create({
       api: apiRef,
+      externalCssSource,
+      externalJsSource,
+      externalSourceType,
       icon,
       id,
       name,
@@ -127,6 +150,54 @@ export class AtomService
       tags: [],
       type,
     })
+
+    // dynamically load an external css
+    if (
+      externalSourceType &&
+      externalCssSource &&
+      !this.loadedExternalCssSources.has(externalSourceType)
+    ) {
+      const link = document.createElement('link')
+      link.setAttribute('rel', 'stylesheet')
+      link.setAttribute('href', externalCssSource)
+      document.head.appendChild(link)
+
+      console.log(`Loaded external css for "${externalSourceType}"`)
+
+      this.loadedExternalCssSources.add(externalSourceType)
+    }
+
+    // dynamically load an external js
+    if (
+      externalSourceType &&
+      externalJsSource &&
+      !this.loadedExternalJsSources.has(externalSourceType)
+    ) {
+      // this stores the react component into this class so it can be observable
+      // @ts-expect-error: dynamic function
+      window[`onload${externalSourceType}`] = (
+        component: React.ComponentType,
+      ) => {
+        this.loadedExternalJsSources.add(externalSourceType)
+        this.dynamicComponents[externalSourceType] = dynamicLoader(
+          async () => component,
+        )
+      }
+
+      const script = document.createElement('script')
+      script.type = 'module'
+      script.innerText = `
+        import ${externalSourceType} from '${externalJsSource}';
+        window.${externalSourceType} = ${externalSourceType};
+        if (window.onload${externalSourceType}) {
+          window.onload${externalSourceType}(${externalSourceType});
+          delete window.onload${externalSourceType};
+        }
+      `
+      document.getElementsByTagName('head')[0]?.appendChild(script)
+
+      console.log(`Loaded external js for "${externalSourceType}"`)
+    }
 
     this.atoms.set(atom.id, atom)
 
@@ -146,6 +217,12 @@ export class AtomService
     } = yield* _await(this.atomRepository.find(where, options))
 
     this.paginationService.totalItems = count
+
+    if (!isEmpty(where) || options?.limit) {
+      this.typeService.loadTypes({
+        interfaceTypes: atoms.map((atom) => atom.api),
+      })
+    }
 
     return atoms.map((atom) => this.add(atom))
   })
@@ -176,25 +253,35 @@ export class AtomService
   @transaction
   create = _async(function* (
     this: AtomService,
-    { id, name, owner, tags = [], type }: ICreateAtomData,
+    {
+      externalCssSource,
+      externalJsSource,
+      externalSourceType,
+      id,
+      name,
+      owner,
+      tags = [],
+      type,
+    }: ICreateAtomData,
   ) {
-    const interfaceType = this.typeService.addInterface({
+    const api = this.typeService.addInterface({
       id: v4(),
       kind: ITypeKind.InterfaceType,
       name: `${name} API`,
       owner,
     })
 
-    const atom = Atom.create({
-      api: interfaceType,
+    const atom = this.add({
+      api,
+      externalCssSource,
+      externalJsSource,
+      externalSourceType,
       id,
       name,
       owner,
       tags,
       type,
     })
-
-    this.atoms.set(atom.id, atom)
 
     yield* _await(this.atomRepository.add(atom))
 

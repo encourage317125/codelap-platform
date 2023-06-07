@@ -396,6 +396,9 @@ export enum __AtomType {
   HtmlVar = 'HtmlVar',
   HtmlVideo = 'HtmlVideo',
   HtmlWbr = 'HtmlWbr',
+
+  // External dynamic component
+  ExternalComponent = 'ExternalComponent',
 }
 
 export { AtomType as IAtomType }

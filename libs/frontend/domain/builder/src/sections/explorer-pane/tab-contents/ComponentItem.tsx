@@ -15,14 +15,18 @@ import { useCreateElementDraggable } from '../../../dnd/useCreateElementDraggabl
 
 interface DraggableComponentItemProps {
   component: IAtom | IComponent
+  selected?: boolean
   onDelete?(id: string): void
   onEdit?(id: string): void
+  onSelect?(id: string): void
 }
 
 export const DraggableComponentItem = ({
   component,
   onDelete,
   onEdit,
+  onSelect,
+  selected,
 }: DraggableComponentItemProps) => {
   const createElementInput = useMemo(() => {
     return {
@@ -58,12 +62,14 @@ export const DraggableComponentItem = ({
       {...listeners}
       // eslint-disable-next-line react/jsx-props-no-spreading
       {...attributes}
-      css={tw`cursor-pointer [max-width: 300px]`}
+      css={tw`cursor-pointer [max-width: 350px]`}
     >
       <ComponentItem
         component={component}
         onDelete={onDelete}
         onEdit={onEdit}
+        onSelect={onSelect}
+        selected={selected}
       />
     </div>
   )
@@ -71,8 +77,10 @@ export const DraggableComponentItem = ({
 
 interface ComponentItemProps {
   component: IAtom | IComponent
+  selected?: boolean
   onDelete?(id: string): void
   onEdit?(id: string): void
+  onSelect?(id: string): void
 }
 
 export const antDesignIconPrefix = 'assets/atoms/antd'
@@ -81,6 +89,8 @@ export const ComponentItem = ({
   component,
   onDelete,
   onEdit,
+  onSelect,
+  selected,
 }: ComponentItemProps) => {
   const title = (
     <Tooltip placement="left" title={component.name}>
@@ -96,14 +106,29 @@ export const ComponentItem = ({
       ? `/${antDesignIconPrefix}/${component.icon}.svg`
       : '/codelab-logo-default.svg'
 
+  const handleEditClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    onEdit && onEdit(component.id)
+  }
+
+  const handleDeleteClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    onDelete && onDelete(component.id)
+  }
+
+  const handleSelectClick = () => {
+    onSelect && onSelect(component.id)
+  }
+
   return (
     <Card
+      css={[selected ? tw`border border-solid border-blue-400` : '']}
       extra={
         <>
           {onEdit ? (
             <Button
               icon={<EditOutlined />}
-              onClick={() => onEdit(component.id)}
+              onMouseDown={handleEditClick}
               type="text"
             />
           ) : (
@@ -114,7 +139,7 @@ export const ComponentItem = ({
               danger
               hidden={!onDelete}
               icon={<DeleteOutlined />}
-              onClick={() => onDelete(component.id)}
+              onMouseDown={handleDeleteClick}
               type="text"
             />
           ) : (
@@ -123,6 +148,7 @@ export const ComponentItem = ({
         </>
       }
       hoverable
+      onMouseDown={handleSelectClick}
       title={title}
     >
       <img alt="" css={tw`w-full`} src={src} />
