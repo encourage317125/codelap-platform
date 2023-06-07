@@ -6,8 +6,10 @@ import {
   CUSTOM_TEXT_PROP_KEY,
   elementRef,
   elementTreeRef,
+  fieldRef,
   pageRef,
   propRef,
+  rendererRef,
   RendererType,
   ROOT_ELEMENT_NAME,
   storeRef,
@@ -128,6 +130,7 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
       id: v4(),
       key: 'rootComponentProp',
       name: 'Root Component Prop',
+      prevSibling: fieldRef(data.textField.id),
       type: typeRef(stringType.id),
     })
 
@@ -149,7 +152,6 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
           [textAtom.id, textAtom],
         ]),
       }),
-      builderRenderService: new RenderService({}),
       componentService: new ComponentService({}),
       elementService: new ElementService({}),
       fieldService: new FieldService({
@@ -161,6 +163,7 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
       pageService: new PageService({}),
       propService: new PropService({}),
       renderer: data.renderer,
+      renderService: new RenderService({}),
       storeService: new StoreService({
         stores: objectMap([[pageStore.id, pageStore]]),
       }),
@@ -226,7 +229,7 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
       data: JSON.stringify({
         componentProp: 'original',
         [CUSTOM_TEXT_PROP_KEY]: "I'm a component",
-        expressionProp: `expression value - {{this.${data.componentField.key}}}`,
+        expressionProp: `expression value - {{component.${data.componentField.key}}}`,
       }),
       id: v4(),
     })
@@ -242,12 +245,7 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
     })
 
     data.component.api.current.writeCache({
-      fields: [
-        { id: data.textField.id },
-        {
-          id: data.componentField.id,
-        },
-      ],
+      fields: [{ id: data.textField.id }, { id: data.componentField.id }],
     })
 
     data.component.setChildrenContainerElement(elementRef(compRootElementId))
@@ -281,6 +279,7 @@ export const setupTestForRenderer = (pipes: Array<RenderPipeClass> = []) => {
     })
 
     data.rootStore.setRenderer(renderer)
+    data.rootStore.renderService.setActiveRenderer(rendererRef(renderer.id))
   })
 
   afterEach(() => {

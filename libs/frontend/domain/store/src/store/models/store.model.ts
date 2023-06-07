@@ -8,7 +8,6 @@ import type {
 import {
   actionRef,
   componentRef,
-  IPropData,
   pageRef,
   typeRef,
 } from '@codelab/frontend/abstract/core'
@@ -19,13 +18,12 @@ import type {
 } from '@codelab/shared/abstract/codegen'
 import type { IAppDTO, IStoreDTO } from '@codelab/shared/abstract/core'
 import type { Nullable } from '@codelab/shared/abstract/types'
-import { mergeProps } from '@codelab/shared/utils'
+import { mergeProps, propSafeStringify } from '@codelab/shared/utils'
 import merge from 'lodash/merge'
 import { computed, makeAutoObservable } from 'mobx'
 import type { Ref } from 'mobx-keystone'
 import { idProp, Model, model, modelAction, prop } from 'mobx-keystone'
 import { v4 } from 'uuid'
-import { getActionService } from '../action.service.context'
 import { getStoreService } from '../store.service.context'
 
 const create = ({
@@ -53,7 +51,6 @@ const createName = (app: Pick<IAppDTO, 'name'>) => {
 @model('@codelab/Store')
 export class Store
   extends Model(() => ({
-    _initialState: prop<IPropData>(() => ({})),
     actions: prop<Array<Ref<IAction>>>(),
     api: prop<Ref<IInterfaceType>>().withSetter(),
     component: prop<Nullable<Ref<IComponent>>>().withSetter(),
@@ -73,12 +70,7 @@ export class Store
 
   @computed
   get jsonString() {
-    return JSON.stringify(this.state, null, 4)
-  }
-
-  @modelAction
-  setInitialState(state: IPropData) {
-    this._initialState = state
+    return propSafeStringify(this.state)
   }
 
   @modelAction
@@ -93,18 +85,10 @@ export class Store
   }
 
   @computed
-  get actionService() {
-    return getActionService(this)
-  }
-
-  @computed
   get state() {
     return makeAutoObservable(
       mergeProps(
         this.api.current.defaultValues,
-        this.component?.current.initialState,
-        this.component?.current.instanceElement?.current.props.current.values,
-        this._initialState,
         this.actions
           .map((action) => ({
             [action.current.name]: action.current.createRunner(),

@@ -1,3 +1,4 @@
+import type { IPropData } from '@codelab/frontend/abstract/core'
 import type { SubmitController } from '@codelab/frontend/abstract/types'
 import { replaceStateInProps } from '@codelab/frontend/shared/utils'
 import type { Maybe, Nullish } from '@codelab/shared/abstract/types'
@@ -76,17 +77,14 @@ ajv.addSchema({
   },
 })
 
-export const createValidator = (schema: Schema, allowExpressions?: boolean) => {
+export const createValidator = (schema: Schema, state: IPropData = {}) => {
   const validator = ajv.compile(schema)
 
   return (model: Record<string, unknown>) => {
-    // FIXME: replaceStateInProps should take state as second argument instead of empty object
+    // replace expressions with values to pass validation
+    const evaluatedModel = replaceStateInProps(model, state)
 
-    const modelToValidate = allowExpressions
-      ? replaceStateInProps(model, {})
-      : model
-
-    validator(modelToValidate)
+    validator(evaluatedModel)
 
     return validator.errors?.length ? { details: validator.errors } : null
   }
@@ -94,9 +92,5 @@ export const createValidator = (schema: Schema, allowExpressions?: boolean) => {
 
 export const createBridge = <T = unknown>(
   schema: JSONSchemaType<T>,
-  allowExpressions?: boolean,
-) => {
-  const schemaValidator = createValidator(schema, allowExpressions)
-
-  return new JSONSchemaBridge(schema, schemaValidator)
-}
+  state: IPropData = {},
+) => new JSONSchemaBridge(schema, createValidator(schema, state))

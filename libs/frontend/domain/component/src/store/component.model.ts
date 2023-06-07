@@ -1,5 +1,6 @@
 import type {
   IComponentDTO,
+  IComponentRuntimeProp,
   IElement,
   IInterfaceType,
   IProp,
@@ -7,9 +8,11 @@ import type {
 } from '@codelab/frontend/abstract/core'
 import {
   componentRef,
+  DATA_COMPONENT_ID,
   elementRef,
   ElementTree,
   getComponentService,
+  getRenderService,
   IComponent,
   isComponentInstance,
   propRef,
@@ -19,8 +22,8 @@ import {
 import { ComponentCreateInput } from '@codelab/shared/abstract/codegen'
 import type { IAuth0Owner } from '@codelab/shared/abstract/core'
 import type { IEntity, Nullable, Nullish } from '@codelab/shared/abstract/types'
+import { Maybe } from '@codelab/shared/abstract/types'
 import { connectAuth0Owner, connectNodeId } from '@codelab/shared/domain/mapper'
-import { mergeProps } from '@codelab/shared/utils'
 import { computed } from 'mobx'
 import type { Ref } from 'mobx-keystone'
 import { clone, ExtendedModel, model, modelAction, prop } from 'mobx-keystone'
@@ -71,13 +74,20 @@ export class Component
   })
   implements IComponent
 {
-  @computed
-  get initialState() {
-    return mergeProps(this.api.current.defaultValues, this.props.current.values)
-  }
-
   // This must be defined outside the class or weird things happen https://github.com/xaviergonz/mobx-keystone/issues/173
   static create = create
+
+  @computed
+  get renderService() {
+    return getRenderService(this)
+  }
+
+  @computed
+  get runtimeProp(): Maybe<IComponentRuntimeProp> {
+    return this.renderService.activeRenderer?.current.runtimeProps.get(
+      this.id,
+    ) as Maybe<IComponentRuntimeProp>
+  }
 
   @modelAction
   writeCache({
@@ -204,6 +214,10 @@ export class Component
     clonedComponent.setProps(propRef(this.props.current.clone()))
     clonedComponent.setSourceComponent({ id: this.id })
     clonedComponent.setStore(storeRef(clonedStore))
+
+    clonedComponent.elements.forEach((childElement) => {
+      childElement.props.current.set(DATA_COMPONENT_ID, clonedComponent.id)
+    })
 
     if (instanceId) {
       clonedComponent.setInstanceElement(elementRef(instanceId))

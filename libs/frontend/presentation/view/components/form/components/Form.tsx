@@ -10,10 +10,10 @@ import {
   createBridge,
   createValidator,
 } from '../hooks/uniformUtils.hook'
+import { useFormContext } from '../providers'
 
 export const withAutoForm = (BaseAutoForm: typeof AutoForm) => {
   const Form = <TData, TResponse = unknown>({
-    allowExpressions = false,
     autosave = false,
     children,
     cssString,
@@ -29,24 +29,21 @@ export const withAutoForm = (BaseAutoForm: typeof AutoForm) => {
     submitField,
     submitRef,
   }: React.PropsWithChildren<FormProps<TData, TResponse>>): ReactElement => {
+    const { selectedNode } = useFormContext()
+    const state = selectedNode?.current.store.current
+
     const [bridge, setBridge] = useState(
-      schema instanceof Bridge
-        ? schema
-        : createBridge(schema, allowExpressions),
+      schema instanceof Bridge ? schema : createBridge(schema, state),
     )
 
     useEffect(() => {
-      setBridge(
-        schema instanceof Bridge
-          ? schema
-          : createBridge(schema, allowExpressions),
-      )
+      setBridge(schema instanceof Bridge ? schema : createBridge(schema, state))
     }, [schema])
 
     const modelRef = useRef(model)
     // apply default values from the schema for the formData
     // https://ajv.js.org/guide/modifying-data.html#assigning-defaults
-    const validate = createValidator(schema)
+    const validate = createValidator(schema, state)
 
     return (
       <div
