@@ -8,16 +8,11 @@ import { setupTestForRenderer } from './setup/setup-test'
 describe('ConditionalRenderPipe', () => {
   const data = setupTestForRenderer([ConditionalRenderPipe])
 
-  beforeEach(() => {
-    data.element.setRenderIfExpression('{{this.shouldRender}}')
-  })
-
   it('should render normally if no expression is set', async () => {
     data.element.setRenderIfExpression(undefined)
 
     const output = data.rootStore.renderer.renderIntermediateElement(
       data.element,
-      {},
     )
 
     const atomType = isAtomInstance(data.element.renderType)
@@ -34,28 +29,24 @@ describe('ConditionalRenderPipe', () => {
   })
 
   it('should stop rendering by returning an empty output', async () => {
-    data.element.store.current.setInitialState({ shouldRender: false })
+    data.element.setRenderIfExpression('{{this.shouldRender}}')
+    // changing state is bit tricky so, just use props
+    data.element.props.current.set('shouldRender', false)
 
     const output = data.rootStore.renderer.renderIntermediateElement(
       data.element,
-      {},
     )
 
-    expect(output).toMatchObject({
-      element: data.element,
-    })
+    expect(output).toEqual({ element: data.element })
   })
 
   it('should continue rendering', async () => {
-    data.element.store.current.setInitialState({ shouldRender: true })
-
-    const initialProps = {
-      prop01: 'prop01',
-    }
+    data.element.setRenderIfExpression('{{this.shouldRender}}')
+    // changing state is bit tricky so, just use props
+    data.element.props.current.set('shouldRender', true)
 
     const output = data.rootStore.renderer.renderIntermediateElement(
       data.element,
-      initialProps,
     )
 
     const atomType = isAtomInstance(data.element.renderType)

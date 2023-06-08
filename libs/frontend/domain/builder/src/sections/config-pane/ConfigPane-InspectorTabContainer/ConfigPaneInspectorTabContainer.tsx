@@ -24,10 +24,7 @@ import {
   UpdateElementPropTransformationForm,
 } from '@codelab/frontend/domain/element'
 import { UpdatePageTabForm } from '@codelab/frontend/domain/page'
-import {
-  useCurrentPageId,
-  useStore,
-} from '@codelab/frontend/presentation/container'
+import { useStore } from '@codelab/frontend/presentation/container'
 import { FormContextProvider } from '@codelab/frontend/presentation/view'
 import { css } from '@emotion/react'
 import { Tabs, Tooltip } from 'antd'
@@ -60,21 +57,13 @@ const TooltipIcon = ({ icon, title }: TooltipIconProps) => {
 }
 
 export const ConfigPaneInspectorTabContainer = observer(() => {
-  const { builderRenderService, builderService, elementService, pageService } =
-    useStore()
-
-  const pageId = useCurrentPageId()
-  const renderService = builderRenderService.renderers.get(pageId)
+  const { builderService, elementService, pageService } = useStore()
   const elementTree = builderService.activeElementTree
   const selectedNode = builderService.selectedNode
 
   if (!selectedNode) {
     return null
   }
-
-  const store = elementTree?.rootElement.current.store.current
-  const autocomplete = store?.state || {}
-  const allowExpressions = true
 
   const tabItems = [
     {
@@ -107,15 +96,7 @@ export const ConfigPaneInspectorTabContainer = observer(() => {
         <div key={selectedNode.id}>
           {isElementPageNodeRef(selectedNode) &&
           selectedNode.current.renderType ? (
-            <FormContextProvider
-              value={{
-                allowExpressions,
-                autocomplete,
-                elementTree,
-              }}
-            >
-              <UpdateElementPropsForm element={selectedNode} />
-            </FormContextProvider>
+            <UpdateElementPropsForm element={selectedNode} />
           ) : isComponentPageNodeRef(selectedNode) ? (
             <UpdateComponentPropsForm component={selectedNode.current} />
           ) : (
@@ -144,13 +125,7 @@ export const ConfigPaneInspectorTabContainer = observer(() => {
       ),
     },
     {
-      children: renderService && (
-        <PropsInspectorTab
-          key={selectedNode.id}
-          node={selectedNode}
-          renderer={renderService}
-        />
-      ),
+      children: <PropsInspectorTab key={selectedNode.id} node={selectedNode} />,
       key: TAB_NAMES.PropsInspector,
       label: (
         <TooltipIcon icon={<CodeOutlined />} title={TAB_NAMES.PropsInspector} />
@@ -174,15 +149,7 @@ export const ConfigPaneInspectorTabContainer = observer(() => {
     },
     {
       children: (
-        <FormContextProvider
-          value={{
-            allowExpressions,
-            autocomplete,
-            elementTree,
-          }}
-        >
-          <UpdatePageTabForm key={selectedNode.id} pageService={pageService} />
-        </FormContextProvider>
+        <UpdatePageTabForm key={selectedNode.id} pageService={pageService} />
       ),
       key: TAB_NAMES.Page,
       label: <TooltipIcon icon={<FileOutlined />} title={TAB_NAMES.Page} />,
@@ -190,14 +157,16 @@ export const ConfigPaneInspectorTabContainer = observer(() => {
   ]
 
   return (
-    <TabContainer>
-      <Tabs
-        defaultActiveKey={TAB_NAMES.Node}
-        destroyInactiveTabPane
-        items={tabItems}
-        size="small"
-      />
-    </TabContainer>
+    <FormContextProvider value={{ elementTree, selectedNode }}>
+      <TabContainer>
+        <Tabs
+          defaultActiveKey={TAB_NAMES.Node}
+          destroyInactiveTabPane
+          items={tabItems}
+          size="small"
+        />
+      </TabContainer>
+    </FormContextProvider>
   )
 })
 

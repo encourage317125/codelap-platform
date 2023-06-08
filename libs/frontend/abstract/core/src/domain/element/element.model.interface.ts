@@ -17,6 +17,7 @@ import type { IHook } from '../hook'
 import type { IModel } from '../model.interface'
 import type { IPage } from '../page'
 import type { IProp, IPropData } from '../prop'
+import type { IElementRuntimeProp } from '../render'
 import type { IStore } from '../store'
 import type { IElementRenderType } from './render-type'
 
@@ -45,13 +46,14 @@ export interface RenderingMetadata {
   error: Nullish<RenderingError>
 }
 
+export type TransformPropsFn = (props: IPropData) => IPropData
+
 export interface IElement
   extends Omit<
       IModel<ElementCreateInput, ElementUpdateInput, void>,
       'toDeleteInput'
     >,
     ICacheService<IElementDTO, IElement> {
-  __metadataProps: IPropData
   ancestorError: Nullish<RenderingError>
   atomName: string
   children: Array<IElement>
@@ -86,6 +88,8 @@ export interface IElement
   // atom: Nullable<Ref<IAtom>>
   // renderComponentType: Nullable<Ref<IComponent>>
   renderingMetadata: Nullable<RenderingMetadata>
+  runtimeProp: Maybe<IElementRuntimeProp>
+
   /**
    * to render a component we create a duplicate for each element
    * keeps track of source element in case this is a duplicate
@@ -93,6 +97,7 @@ export interface IElement
   sourceElement: Nullable<IEntity>
   // store attached to closestContainerNode
   store: Ref<IStore>
+  transformPropsFn: Maybe<TransformPropsFn>
   treeViewNode: IElementTreeViewDataNode
 
   appendToGuiCss(css: CssMap): void
@@ -104,7 +109,6 @@ export interface IElement
   deleteFromGuiCss(propNames: Array<string>): void
   detachAsFirstChild(): void
   detachFromParent(): void
-  executePropTransformJs(props: IPropData): IPropData
   setCustomCss(css: string): void
   setFirstChild(firstChild: Ref<IElement>): void
   setName(name: string): void

@@ -2,6 +2,7 @@ import type {
   IAtom,
   IComponent,
   IElementRenderType,
+  IElementRuntimeProp,
   IHook,
   IPage,
   IProp,
@@ -9,6 +10,7 @@ import type {
   IStore,
   RenderingError,
   RenderingMetadata,
+  TransformPropsFn,
 } from '@codelab/frontend/abstract/core'
 import {
   componentRef,
@@ -16,6 +18,7 @@ import {
   DATA_ELEMENT_ID,
   elementRef,
   getElementService,
+  getRenderService,
   IElement,
   IElementTreeViewDataNode,
   isAtomInstance,
@@ -50,8 +53,6 @@ import {
   Ref,
 } from 'mobx-keystone'
 import { getRenderType } from './utils'
-
-type TransformFn = (props: IPropData) => IPropData
 
 const create = ({
   customCss,
@@ -141,6 +142,11 @@ export class Element
   @computed
   get elementService() {
     return getElementService(this)
+  }
+
+  @computed
+  get renderService() {
+    return getRenderService(this)
   }
 
   @computed
@@ -247,6 +253,13 @@ export class Element
     }
 
     return null
+  }
+
+  @computed
+  get runtimeProp(): Maybe<IElementRuntimeProp> {
+    return this.renderService.activeRenderer?.current.runtimeProps.get(
+      this.id,
+    ) as Maybe<IElementRuntimeProp>
   }
 
   @modelAction
@@ -377,7 +390,7 @@ export class Element
    * Parses and materializes the propTransformationJs
    */
   @computed
-  get transformFn(): Maybe<TransformFn> {
+  get transformPropsFn(): Maybe<TransformPropsFn> {
     if (!this.propTransformationJs) {
       return undefined
     }
@@ -488,13 +501,11 @@ export class Element
    * If failed, returns the original props
    */
   executePropTransformJs = (props: IPropData) => {
-    const transformFn = this.transformFn
-
-    if (!transformFn) {
+    if (!this.transformPropsFn) {
       return props
     }
 
-    const result = attempt(transformFn, props)
+    const result = attempt(this.transformPropsFn, props)
 
     if (isError(result)) {
       console.warn('Unable to transform props', result)

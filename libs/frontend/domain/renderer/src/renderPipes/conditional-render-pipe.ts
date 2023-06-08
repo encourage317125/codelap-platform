@@ -6,8 +6,7 @@ import type {
 } from '@codelab/frontend/abstract/core'
 import { ExtendedModel, model, prop } from 'mobx-keystone'
 import type { ArrayOrSingle } from 'ts-essentials'
-import { RenderOutput } from '../abstract/render-output'
-import { shouldRenderElement } from '../utils'
+import { RenderOutput, shouldRenderElement } from '../utils'
 import { BaseRenderPipe } from './render-pipe.base'
 
 @model('@codelab/ConditionalRenderPipe')

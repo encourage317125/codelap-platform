@@ -6,7 +6,7 @@ import type {
   IRenderPipe,
 } from '@codelab/frontend/abstract/core'
 import {
-  DATA_COMPONENT_ID,
+  componentRef,
   isComponentInstance,
 } from '@codelab/frontend/abstract/core'
 import { ExtendedModel, model, prop } from 'mobx-keystone'
@@ -29,14 +29,11 @@ export class ComponentRenderPipe
     const clonedComponent = component.clone(element.id, element.id)
     const rootElement = clonedComponent.rootElement.current
 
-    const overrideProps = {
-      ...props,
-      [DATA_COMPONENT_ID]: clonedComponent.id,
-    }
+    this.renderer.addRuntimeProps(componentRef(clonedComponent.id))
 
     ComponentRenderPipe.logRendering(this.renderer, rootElement, element)
 
-    return this.renderer.renderIntermediateElement(rootElement, overrideProps)
+    return this.renderer.renderIntermediateElement(rootElement)
   }
 
   // private static logRootElementNotFound(

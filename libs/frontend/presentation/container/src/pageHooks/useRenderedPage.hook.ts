@@ -1,18 +1,22 @@
 import type {
   IComponentService,
   IElement,
+  IPropData,
   ITypeService,
+  RendererType,
 } from '@codelab/frontend/abstract/core'
 import {
   isComponentInstance,
-  RendererType,
+  isTypedProp,
+  rendererRef,
 } from '@codelab/frontend/abstract/core'
 import type { ProductionWebsiteProps } from '@codelab/frontend/abstract/types'
 import { PageType } from '@codelab/frontend/abstract/types'
 import { PageKind } from '@codelab/shared/abstract/codegen'
 import { useAsync } from '@react-hookz/web'
 import flatMap from 'lodash/flatMap'
-import has from 'lodash/has'
+import isObject from 'lodash/isObject'
+import values from 'lodash/values'
 import { useRouter } from 'next/router'
 import { useStore } from '../providers'
 import { useCurrentAppId, useCurrentPageId } from '../routerHooks'
@@ -39,12 +43,11 @@ export const useRenderedPage = ({
   rendererType,
 }: RenderedPageProps) => {
   const {
-    appRenderService,
     appService,
-    builderRenderService,
     builderService,
     componentService,
     elementService,
+    renderService,
     typeService,
   } = useStore()
 
@@ -53,11 +56,6 @@ export const useRenderedPage = ({
   const appId = productionProps?.appId ?? appIdFromUrl
   const pageId = productionProps?.pageId ?? pageIdFromUrl
   const router = useRouter()
-
-  const renderService =
-    rendererType === RendererType.Preview
-      ? appRenderService
-      : builderRenderService
 
   return useAsync(async () => {
     const app = await appService.getRenderedPageAndCommonAppData(
@@ -98,6 +96,7 @@ export const useRenderedPage = ({
       rendererType,
     })
 
+    renderService.setActiveRenderer(rendererRef(renderer.id))
     await renderer.expressionTransformer.init()
 
     return {
@@ -109,38 +108,29 @@ export const useRenderedPage = ({
   })
 }
 
+const getComponentIdsFromProp = (prop: IPropData): Array<string> =>
+  isTypedProp(prop)
+    ? [prop.value]
+    : isObject(prop)
+    ? values(prop).flatMap((childProp) => getComponentIdsFromProp(childProp))
+    : []
+
 /**
  * Get all component ids that could be an element or a render prop type
  */
-const getComponentIdsFromElements = (elements: Array<IElement>) => {
-  return elements.reduce<Array<string>>((acc, element) => {
-    // Component as an element
-    if (isComponentInstance(element.renderType)) {
-      acc.push(element.renderType.id)
-    }
+const getComponentIdsFromElements = (elements: Array<IElement>) =>
+  elements
+    .reduce<Array<string>>((acc, element) => {
+      // Component as an element
+      if (isComponentInstance(element.renderType)) {
+        acc.push(element.renderType.id)
+      }
 
-    // Components as render prop types
-    const renderPropTypeFieldValues = Object.values(
-      element.props.current.values,
-    )
-      .filter(
-        (value) =>
-          has(value, 'value') &&
-          has(value, 'type') &&
-          typeof value['value'] === 'string' &&
-          typeof value['type'] === 'string' &&
-          value['value'] &&
-          value['type'],
-      )
-      .map(({ value }) => value)
+      acc.push(...getComponentIdsFromProp(element.props.current))
 
-    if (renderPropTypeFieldValues.length > 0) {
-      acc.push(...renderPropTypeFieldValues)
-    }
-
-    return acc
-  }, [])
-}
+      return acc
+    }, [])
+    .filter(Boolean)
 
 /**
  * Get all api and field type ids from the elements
