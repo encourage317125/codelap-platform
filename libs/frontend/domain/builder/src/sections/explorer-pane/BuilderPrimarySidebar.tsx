@@ -18,10 +18,10 @@ import {
   mapElementOption,
 } from '@codelab/frontend/domain/element'
 import {
-  ActionsList,
+  ActionsTreeView,
   CreateActionModal,
   DeleteActionModal,
-  GetStateList,
+  StateTreeView,
   UpdateActionModal,
 } from '@codelab/frontend/domain/store'
 import type { InterfaceType } from '@codelab/frontend/domain/type'
@@ -136,7 +136,9 @@ export const BuilderPrimarySidebar = observer<{ isLoading?: boolean }>(
         content: store && (
           <>
             {!fieldService.createForm.isOpen &&
-              !fieldService.updateForm.isOpen && <GetStateList store={store} />}
+              !fieldService.updateForm.isOpen && (
+                <StateTreeView store={store} />
+              )}
             {fieldService.createForm.isOpen && (
               <div css={tw`p-2`}>
                 <CreateFieldForm />
@@ -172,7 +174,7 @@ export const BuilderPrimarySidebar = observer<{ isLoading?: boolean }>(
         },
       },
       {
-        content: store && <ActionsList store={store} />,
+        content: store && <ActionsTreeView store={store} />,
         isLoading: isLoading || !store,
         key: 'Actions',
         label: 'Actions',
