@@ -78,6 +78,23 @@ export class InterfaceType
   }
 
   @computed
+  get fieldsTree() {
+    return this.fields.map((field) => {
+      return {
+        children:
+          field.type.maybeCurrent?.kind === ITypeKind.InterfaceType
+            ? field.type.maybeCurrent.fieldsTree
+            : [],
+        key: field.id,
+        node: field,
+        primaryTitle: field.key,
+        secondaryTitle: field.type.maybeCurrent?.kind,
+        title: `${field.key} (${field.type.maybeCurrent?.kind})`,
+      }
+    })
+  }
+
+  @computed
   get defaultValues(): IPropData {
     return this.fields
       .map((field) => ({ [field.key]: field.defaultValues }))

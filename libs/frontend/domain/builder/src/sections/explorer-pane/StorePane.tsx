@@ -1,8 +1,8 @@
 import type { IStore } from '@codelab/frontend/abstract/core'
 import {
-  ActionsList,
+  ActionsTreeView,
   CreateActionButton,
-  GetStateList,
+  StateTreeView,
 } from '@codelab/frontend/domain/store'
 import { CreateFieldButton } from '@codelab/frontend/domain/type'
 import {
@@ -48,7 +48,7 @@ export const StorePane = observer<{ store: Maybe<IStore>; isLoading: boolean }>(
             }
             key="store-state"
           >
-            <GetStateList store={store} />
+            <StateTreeView store={store} />
           </Collapse.Panel>
           <Collapse.Panel
             header={
@@ -56,7 +56,7 @@ export const StorePane = observer<{ store: Maybe<IStore>; isLoading: boolean }>(
             }
             key="store-actions"
           >
-            <ActionsList store={store} />
+            <ActionsTreeView store={store} />
           </Collapse.Panel>
           <Collapse.Panel
             header={<StoreHeader>Inspector</StoreHeader>}
