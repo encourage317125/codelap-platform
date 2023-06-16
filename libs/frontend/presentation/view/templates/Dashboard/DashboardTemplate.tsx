@@ -1,7 +1,7 @@
 import { CuiNavigationBar } from '@codelab/frontend/presentation//codelab-ui'
 import {
-  useCurrentAppId,
-  useCurrentPageId,
+  useCurrentApp,
+  useCurrentPage,
 } from '@codelab/frontend/presentation/container'
 import { Layout } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -26,12 +26,12 @@ export const DashboardTemplateSSR = observer(
     PrimarySidebar,
   }: React.PropsWithChildren<DashboardTemplateProps>) => {
     const { primarySidebarKey } = useRouter().query
-    const appId = useCurrentAppId()
-    const pageId = useCurrentPageId()
+    const { appSlug, userName } = useCurrentApp()
+    const { pageSlug } = useCurrentPage()
 
     const navigationBarItems = useMemo(
-      () => defaultNavigationBarItems({ appId, pageId }),
-      [appId, pageId],
+      () => defaultNavigationBarItems({ appSlug, pageSlug, userName }),
+      [appSlug, pageSlug],
     )
 
     const activeSidebarKey =

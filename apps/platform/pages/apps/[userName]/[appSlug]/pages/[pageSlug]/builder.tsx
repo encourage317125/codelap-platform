@@ -13,8 +13,7 @@ import {
   PageDetailHeader,
 } from '@codelab/frontend/domain/page'
 import {
-  useCurrentAppId,
-  useCurrentPageId,
+  useCurrentPage,
   useRemainingPages,
   useRenderedPage,
 } from '@codelab/frontend/presentation/container'
@@ -32,8 +31,7 @@ const PageBuilder: CodelabPage = observer(() => {
   const [{ status: remainingPagesStatus }, lazilyLoadRemainingPages] =
     useRemainingPages()
 
-  const appId = useCurrentAppId()
-  const pageId = useCurrentPageId()
+  const { pageName } = useCurrentPage()
 
   const [{ error, result, status: renderedPageStatus }, loadCurrentPage] =
     useRenderedPage({
@@ -46,7 +44,7 @@ const PageBuilder: CodelabPage = observer(() => {
 
   useEffect(() => {
     void loadCurrentPage.execute()
-  }, [pageId])
+  }, [pageName])
 
   const isLoading =
     renderedPageStatus !== 'success' || remainingPagesStatus !== 'success'
@@ -74,7 +72,8 @@ const PageBuilder: CodelabPage = observer(() => {
           },
           {
             key: ExplorerPaneType.PageList,
-            render: () => <ExplorerPanePage appId={appId} />,
+            render: () =>
+              result ? <ExplorerPanePage appId={result.app.id} /> : null,
           },
         ],
       }}

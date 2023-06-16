@@ -39,48 +39,69 @@ export const componentMenuItem: NavigationBarItem = {
 }
 
 export const allPagesMenuItem = (
-  appId: Nullish<string>,
-  pageId: Nullish<string>,
+  appSlug: Nullish<string>,
+  pageSlug: Nullish<string>,
+  userName: Nullish<string>,
 ): NavigationBarItem => ({
-  disabled: !appId,
+  disabled: !appSlug,
   icon: <FileOutlined title="Pages" />,
   key: ExplorerPaneType.PageList,
   link: {
     href: {
       pathname: PageType.PageBuilder,
-      query: { appId, pageId, primarySidebarKey: ExplorerPaneType.PageList },
+      query: {
+        appSlug,
+        explorerPaneKey: ExplorerPaneType.PageList,
+        pageSlug,
+        primarySidebarKey: ExplorerPaneType.PageList,
+        userName,
+      },
     },
   },
   title: 'Pages',
 })
 
 export const builderComponentsMenuItem = (
-  appId: Nullish<string>,
-  pageId: Nullish<string>,
+  appSlug: Nullish<string>,
+  pageSlug: Nullish<string>,
+  userName: Nullish<string>,
 ): NavigationBarItem => ({
-  disabled: !appId || !pageId,
+  disabled: !appSlug || !pageSlug,
   icon: <CodeSandboxOutlined title="Builder Components" />,
   key: 'components',
   link: {
     href: {
       pathname: PageType.PageBuilder,
-      query: { appId, pageId, primarySidebarKey: ExplorerPaneType.Components },
+      query: {
+        appSlug,
+        explorerPaneKey: ExplorerPaneType.Components,
+        pageSlug,
+        primarySidebarKey: ExplorerPaneType.Components,
+        userName,
+      },
     },
   },
   title: 'Builder Components',
 })
 
 export const pageBuilderMenuItem = (
-  appId: Nullish<string>,
-  pageId: Nullish<string>,
+  appSlug: Nullish<string>,
+  pageSlug: Nullish<string>,
+  userName: Nullish<string>,
 ): NavigationBarItem => ({
-  disabled: !appId || !pageId,
+  disabled: !appSlug || !pageSlug,
   icon: <BuildOutlined title="Builder" />,
   key: ExplorerPaneType.Explorer,
   link: {
     href: {
       pathname: PageType.PageBuilder,
-      query: { appId, pageId, primarySidebarKey: ExplorerPaneType.Explorer },
+      query: {
+        appSlug,
+        explorerPaneKey: ExplorerPaneType.Explorer,
+        pageSlug,
+        primarySidebarKey: ExplorerPaneType.Explorer,
+        userName,
+      },
     },
   },
   title: 'Builder',
