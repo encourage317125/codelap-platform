@@ -1,5 +1,6 @@
 import type { IAppDTO } from '@codelab/shared/abstract/core'
 import { IAtomType, IPrimitiveTypeKind } from '@codelab/shared/abstract/core'
+import slugify from 'voca/slugify'
 import { FIELD_TYPE } from '../support/antd/form'
 import { loginSession } from '../support/nextjs-auth0/commands/login'
 
@@ -11,6 +12,7 @@ const COMPONENT_CHILD_SPACE = 'Space'
 const COMPONENT_CHILD_TYPOGRAPHY = 'Typography'
 const COMPONENT_CHILD_TEXT = `text {{this.${COMPONENT_PROP_NAME}}}`
 const COMPONENT_INSTANCE_TEXT = 'Instance Text'
+const PAGE_NAME = '_app'
 
 interface ComponentChildData {
   atom: string
@@ -23,8 +25,7 @@ const componentChildren: Array<ComponentChildData> = [
 ]
 
 let testApp: any
-let appId: string | undefined
-let pageId: string | undefined
+let appName: string | undefined
 describe('Component CRUD', () => {
   before(() => {
     cy.resetDatabase()
@@ -40,10 +41,11 @@ describe('Component CRUD', () => {
         testApp = apps
 
         const app = apps.body
-        appId = app.id
-        pageId = app.pages?.[0]?.id
+        appName = app.name
         cy.visit(
-          `/apps/${appId}/pages/${pageId}/builder?primarySidebarKey=components`,
+          `/apps/cypress/${slugify(appName)}/pages/${slugify(
+            PAGE_NAME,
+          )}/builder?primarySidebarKey=components`,
         )
         // GetRenderedPageAndCommonAppData
         cy.waitForApiCalls()
@@ -148,7 +150,9 @@ describe('Component CRUD', () => {
 
     it('should be able to specify where to render component children', () => {
       cy.visit(
-        `/apps/${appId}/pages/${pageId}/builder?primarySidebarKey=components`,
+        `/apps/cypress/${slugify(appName)}/pages/${slugify(
+          PAGE_NAME,
+        )}/builder?primarySidebarKey=components`,
       )
       // GetRenderedPageAndCommonAppData
       cy.waitForApiCalls()
@@ -173,7 +177,9 @@ describe('Component CRUD', () => {
 
     it('should be able to create an instance of the component', () => {
       cy.visit(
-        `/apps/${appId}/pages/${pageId}/builder?primarySidebarKey=explorer`,
+        `/apps/cypress/${slugify(appName)}/pages/${slugify(
+          PAGE_NAME,
+        )}/builder?primarySidebarKey=explorer`,
       )
 
       cy.getCuiTreeItemByPrimaryTitle('Body').click({ force: true })

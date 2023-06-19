@@ -301,8 +301,8 @@ export class AppService
   @transaction
   getRenderedPageAndCommonAppData = _async(function* (
     this: AppService,
-    appId: string,
-    pageId: string,
+    appName: string,
+    pageName: string,
     // Production is pre-built with all required data, no need for network request
     initialData?: GetRenderedPageAndCommonAppDataQuery,
   ) {
@@ -312,7 +312,7 @@ export class AppService
     } = initialData
       ? initialData
       : yield* _await(
-          pageApi.GetRenderedPageAndCommonAppData({ appId, pageId }),
+          pageApi.GetRenderedPageAndCommonAppData({ appName, pageName }),
         )
 
     if (!appData) {

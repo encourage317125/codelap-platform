@@ -67,14 +67,14 @@ export const getStaticProps: GetStaticProps<ProductionWebsiteProps> = async (
   }
 
   const renderingData = await pageApi.GetRenderedPageAndCommonAppData({
-    appId: foundPage.app.id,
-    pageId: foundPage.id,
+    appName: foundPage.app._compoundName,
+    pageName: foundPage._compoundName,
   })
 
   return {
     props: {
-      appId: foundPage.app.id,
-      pageId: foundPage.id,
+      appName: foundPage.app.name,
+      pageName: foundPage.name,
       renderingData,
     },
   }

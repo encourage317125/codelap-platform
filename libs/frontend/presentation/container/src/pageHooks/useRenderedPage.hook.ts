@@ -19,13 +19,13 @@ import isObject from 'lodash/isObject'
 import values from 'lodash/values'
 import { useRouter } from 'next/router'
 import { useStore } from '../providers'
-import { useCurrentAppId, useCurrentPageId } from '../routerHooks'
+import { useCurrentApp, useCurrentPage } from '../routerHooks'
 
 export interface RenderedPageProps {
   /**
    * for production user websites we use slightly different flow:
    * - we prebuild pages with all required information to avoid requests to platform DB
-   * - pageId and appId are not exposed in url, so we need to pass them explicitly
+   * - pageName and appName are not exposed in url, so we need to pass them explicitly
    */
   productionProps?: ProductionWebsiteProps
 
@@ -51,16 +51,18 @@ export const useRenderedPage = ({
     typeService,
   } = useStore()
 
-  const appIdFromUrl = useCurrentAppId()
-  const pageIdFromUrl = useCurrentPageId()
-  const appId = productionProps?.appId ?? appIdFromUrl
-  const pageId = productionProps?.pageId ?? pageIdFromUrl
+  const { _compoundName: compoundAppName } = useCurrentApp()
+
+  const { _compoundName: compoundPageName, pageName: pageNameFromUrl } =
+    useCurrentPage()
+
+  const pageName = productionProps?.pageName ?? pageNameFromUrl
   const router = useRouter()
 
   return useAsync(async () => {
     const app = await appService.getRenderedPageAndCommonAppData(
-      appId,
-      pageId,
+      compoundAppName,
+      compoundPageName,
       productionProps?.renderingData,
     )
 
@@ -70,7 +72,15 @@ export const useRenderedPage = ({
       return null
     }
 
-    const page = app.page(pageId)
+    const page = app.pages.find(
+      (_page) => _page.current.name === pageName,
+    )?.current
+
+    if (!page) {
+      await router.push({ pathname: PageType.AppList, query: {} })
+
+      return null
+    }
 
     const pageElements = [
       // This will load the custom components in the _app (provider page) for the regular pages since we also

@@ -1,6 +1,7 @@
 import { ROOT_ELEMENT_NAME } from '@codelab/frontend/abstract/core'
 import type { IAppDTO } from '@codelab/shared/abstract/core'
 import { IAtomType } from '@codelab/shared/abstract/core'
+import slugify from 'voca/slugify'
 import { FIELD_TYPE } from '../support/antd/form'
 import { loginSession } from '../support/nextjs-auth0/commands/login'
 
@@ -59,8 +60,7 @@ describe('Elements CRUD', () => {
       .then(() => cy.request<IAppDTO>('/api/cypress/app'))
       .then((apps) => {
         const app = apps.body
-        const pageId = app.pages?.[0]?.id
-        cy.visit(`/apps/${app.id}/pages/${pageId}/builder`)
+        cy.visit(`/apps/cypress/${slugify(app.name)}/pages/app/builder`)
         cy.getSpinner().should('not.exist')
 
         // select root now so we can update its child later

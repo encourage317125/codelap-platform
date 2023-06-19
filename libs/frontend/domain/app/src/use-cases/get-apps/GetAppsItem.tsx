@@ -1,5 +1,6 @@
 import type { IApp, IDomain } from '@codelab/frontend/abstract/core'
 import { ExplorerPaneType, PageType } from '@codelab/frontend/abstract/types'
+import { useStore } from '@codelab/frontend/presentation/container'
 import { Card } from 'antd'
 import { observer } from 'mobx-react-lite'
 import Link from 'next/link'
@@ -13,12 +14,16 @@ export interface GetAppsItemProps {
 }
 
 export const GetAppsItem = observer<GetAppsItemProps>(({ app }) => {
+  const { userService } = useStore()
+
   const href = {
     pathname: PageType.PageBuilder,
     query: {
-      appId: app.id,
-      pageId: app.pages[0]?.id,
+      appSlug: app.slug,
+      explorerPaneKey: ExplorerPaneType.PageList,
+      pageSlug: app.pages[0]?.current.slug,
       primarySidebarKey: ExplorerPaneType.PageList,
+      userName: userService.user.username,
     },
   }
 
