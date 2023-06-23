@@ -61,19 +61,25 @@ export class ElementRuntimeProps
 
   @computed
   get evaluatedProps() {
+    const componentProps = this.node.parentComponent?.current.runtimeProp
+    const injectedProps = componentProps?.componentEvaluatedProps || {}
+
     return replaceStateInProps(
       this.renderedTypedProps,
       this.node.store.current.state,
-      this.node.parentComponent?.current.runtimeProp?.componentEvaluatedProps,
+      injectedProps,
     )
   }
 
   @computed
   get evaluatedPropsBeforeRender() {
+    const componentProps = this.node.parentComponent?.current.runtimeProp
+    const injectedProps = componentProps?.componentEvaluatedProps || {}
+
     return replaceStateInProps(
       this.props,
       this.node.store.current.state,
-      this.node.parentComponent?.current.runtimeProp?.componentEvaluatedProps,
+      injectedProps,
     )
   }
 

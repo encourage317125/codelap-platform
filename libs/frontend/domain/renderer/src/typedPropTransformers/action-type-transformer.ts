@@ -1,10 +1,10 @@
-import type {
-  ITypedPropTransformer,
-  TypedProp,
+import {
+  type IPageNode,
+  type ITypedPropTransformer,
+  type TypedProp,
+  getRunnerId,
 } from '@codelab/frontend/abstract/core'
-import { getActionService } from '@codelab/frontend/domain/store'
 import { hasStateExpression } from '@codelab/frontend/shared/utils'
-import { computed } from 'mobx'
 import { ExtendedModel, model } from 'mobx-keystone'
 import { BaseRenderPipe } from '../renderPipes/render-pipe.base'
 
@@ -27,26 +27,23 @@ export class ActionTypeTransformer
   extends ExtendedModel(BaseRenderPipe, {})
   implements ITypedPropTransformer
 {
-  @computed
-  private get actionService() {
-    return getActionService(this)
-  }
-
-  public transform(prop: TypedProp) {
+  public transform(prop: TypedProp, node: IPageNode) {
     // unwrap custom action code so it is evaluated later
     if (hasStateExpression(prop.value)) {
       return prop.value
     }
 
-    const actionModel = this.actionService.action(prop.value)
+    const state = node.store.current.state
 
-    if (!actionModel) {
-      return prop
-    }
+    const actionRunner = this.renderer.actionRunners.get(
+      getRunnerId(node.store.id, prop.value),
+    )
 
-    // get action executor for its own store's state
-    const actionExecutor = actionModel.store.current.state[actionModel.name]
+    const fallback = () =>
+      console.error(`fail to call action with id ${prop.value}`)
 
-    return actionExecutor || (() => null)
+    const runner = actionRunner?.runner || fallback
+
+    return runner.bind(state)
   }
 }

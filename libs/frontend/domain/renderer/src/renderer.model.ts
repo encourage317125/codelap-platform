@@ -1,5 +1,5 @@
 import type {
-  IElement,
+  IActionRunner,
   IElementTree,
   IExpressionTransformer,
   IPageNode,
@@ -16,6 +16,7 @@ import {
   elementRef,
   elementTreeRef,
   getRendererId,
+  IElement,
   IPageNodeRef,
   isAtomInstance,
   isElementPageNodeRef,
@@ -35,6 +36,7 @@ import { createTransformer } from 'mobx-utils'
 import type { ReactElement, ReactNode } from 'react'
 import React from 'react'
 import type { ArrayOrSingle } from 'ts-essentials'
+import { ActionRunner } from './action-runner.model'
 import { ComponentRuntimeProps } from './component-runtime-props.model'
 import type { ElementWrapperProps } from './element/element-wrapper'
 import { ElementWrapper } from './element/element-wrapper'
@@ -82,6 +84,7 @@ const create = ({
 @model('@codelab/Renderer')
 export class Renderer
   extends Model({
+    actionRunners: prop<ObjectMap<IActionRunner>>(() => objectMap([])),
     /**
      * Will log the render output and render pipe info to the console
      */
@@ -135,6 +138,18 @@ export class Renderer
   }
 
   @modelAction
+  addActionRunners(element: IElement) {
+    if (!element.isRoot) {
+      return []
+    }
+
+    const runners = ActionRunner.create(element)
+    runners.forEach((runner) => this.actionRunners.set(runner.id, runner))
+
+    return runners
+  }
+
+  @modelAction
   addRuntimeProps(nodeRef: IPageNodeRef) {
     const runtimeProps = isElementPageNodeRef(nodeRef)
       ? ElementRuntimeProps.create(nodeRef)
@@ -165,6 +180,8 @@ export class Renderer
   renderIntermediateElement = (
     element: IElement,
   ): ArrayOrSingle<IRenderOutput> => {
+    this.addActionRunners(element)
+
     const runtimeProps = this.addRuntimeProps(elementRef(element.id))
 
     return this.renderPipe.render(element, runtimeProps.evaluatedProps)
