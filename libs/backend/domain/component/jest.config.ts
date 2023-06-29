@@ -14,4 +14,14 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../../../coverage/libs/backend/domain/component',
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputName: 'backend-domain-component.xml',
+        reportTestSuiteErrors: true,
+      },
+    ],
+  ],
 }

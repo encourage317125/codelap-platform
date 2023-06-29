@@ -6,42 +6,46 @@ import type {
 } from '@codelab/backend/abstract/core'
 import { UseCase } from '@codelab/backend/application/service'
 import { createComponents } from '@codelab/backend/domain/app'
-import { AtomRepository } from '@codelab/backend/domain/atom'
-import { importElementInitial } from '@codelab/backend/domain/element'
-import { TagRepository } from '@codelab/backend/domain/tag'
-import {
-  FieldRepository,
-  InterfaceTypeRepository,
-  TypeFactory,
-} from '@codelab/backend/domain/type'
-import type { IAuth0Owner, ITagDTO } from '@codelab/shared/abstract/core'
+import { TypeFactory } from '@codelab/backend/domain/type'
+import type {
+  IAuth0Owner,
+  ITagDTO,
+  ITypeDTO,
+} from '@codelab/shared/abstract/core'
 import { withTracing } from '@codelab/shared/infra/otel'
+import { InjectQueue } from '@nestjs/bull'
+import { Injectable } from '@nestjs/common'
+import { Queue } from 'bull'
 import fs from 'fs'
+import pick from 'lodash/pick'
 import path from 'path'
 import { DataPaths } from '../../data-paths'
 
 /**
  * During `save`, we'll want to replace the owner with the current
  */
+@Injectable()
 export class ImportAdminDataService extends UseCase<IAuth0Owner, void> {
-  tagRepository = new TagRepository()
+  // tagRepository = new TagRepository()
 
-  atomRepository = new AtomRepository()
+  // atomRepository = new AtomRepository()
 
-  fieldRepository = new FieldRepository()
+  // fieldRepository = new FieldRepository()
 
-  interfaceTypeRepository = new InterfaceTypeRepository()
+  // interfaceTypeRepository = new InterfaceTypeRepository()
 
   dataPaths: DataPaths
 
   exportedAdminData: IAdminDataExport
 
+  DATA_PATH = path.resolve('./data/export')
+
   constructor(
     // Allow base directory override for testing purpose
-    DATA_PATH = path.resolve('./data/export'),
+    @InjectQueue('import-admin-data') private importQueue: Queue,
   ) {
     super()
-    this.dataPaths = new DataPaths(DATA_PATH)
+    this.dataPaths = new DataPaths(this.DATA_PATH)
     this.exportedAdminData = this.getMergedData
   }
 
@@ -52,12 +56,9 @@ export class ImportAdminDataService extends UseCase<IAuth0Owner, void> {
     await withTracing('import-system-types', () =>
       this.importSystemTypes(owner),
     )()
-
-    await this.importTags(owner)
-
-    await this.importAtoms(owner)
-
-    await this.importComponents(owner)
+    // await withTracing('import-tags', () => this.importTags(owner))()
+    // await withTracing('import-atoms', () => this.importAtoms(owner))()
+    // await withTracing('import-components', () => this.importComponents(owner))()
   }
 
   private async importSystemTypes(owner: IAuth0Owner) {
@@ -66,33 +67,50 @@ export class ImportAdminDataService extends UseCase<IAuth0Owner, void> {
     ) as ITypesExport
 
     for await (const type of types) {
-      await TypeFactory.save({ ...type, owner })
+      const data: ITypeDTO = { ...type, owner }
+      console.log('import queue')
+
+      const job = await this.importQueue.add(data)
+      // await TypeFactory.save({ ...type, owner })
     }
   }
 
   private async importAtoms(owner: IAuth0Owner) {
-    for await (const { api, atom, fields, types } of this.exportedAdminData
-      .atoms) {
-      // C reate types first so they can be referenced
-      for await (const type of types) {
-        await TypeFactory.save({ ...type, owner })
-      }
-
-      // T hen api's
-      await TypeFactory.save({ ...api, owner })
-
-      // F inally fields
-      for await (const field of fields) {
-        await this.fieldRepository.save(field)
-      }
-
-      await this.atomRepository.save({ ...atom, owner })
+    for await (const atomData of this.exportedAdminData.atoms) {
+      await withTracing(
+        'import-atom',
+        () => this.importAtom(atomData, owner),
+        (span) => {
+          const attributes = pick(atomData.atom, ['name'])
+          span.setAttributes(attributes)
+        },
+      )()
     }
+  }
+
+  private async importAtom(
+    { api, atom, fields, types }: IAtomExport,
+    owner: IAuth0Owner,
+  ) {
+    // Create types first so they can be referenced
+    for await (const type of types) {
+      await TypeFactory.save({ ...type, owner })
+    }
+
+    // Then api's
+    await TypeFactory.save({ ...api, owner })
+
+    // Finally fields
+    for await (const field of fields) {
+      // await this.fieldRepository.save(field)
+    }
+
+    // await this.atomRepository.save({ ...atom, owner })
   }
 
   private async importTags(owner: IAuth0Owner) {
     for await (const tag of this.exportedAdminData.tags) {
-      await this.tagRepository.save({ ...tag, owner })
+      // await this.tagRepository.save({ ...tag, owner })
     }
   }
 
@@ -105,15 +123,15 @@ export class ImportAdminDataService extends UseCase<IAuth0Owner, void> {
       types,
     } of componentsExportData) {
       for await (const type of types) {
-        await TypeFactory.save({ ...type, owner })
+        // await TypeFactory.save({ ...type, owner })
       }
 
       for await (const field of fields) {
-        await this.fieldRepository.save(field)
+        // await this.fieldRepository.save(field)
       }
 
       for await (const element of descendantElements) {
-        await importElementInitial(element)
+        // await importElementInitial(element)
       }
     }
 

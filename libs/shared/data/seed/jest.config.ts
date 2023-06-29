@@ -7,4 +7,14 @@ export default {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../../../coverage/libs/shared/data/seed',
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputName: 'shared-data-seed.xml',
+        reportTestSuiteErrors: true,
+      },
+    ],
+  ],
 }

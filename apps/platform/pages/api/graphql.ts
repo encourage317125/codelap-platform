@@ -1,37 +1,25 @@
-/**
- * This file is under `api` code so can import backend code
- */
-import { startServerAndCreateNextHandler } from '@as-integrations/next'
 import {
-  apolloServer,
-  apolloServerContext,
   authMiddleware,
   corsMiddleware,
 } from '@codelab/backend/infra/adapter/graphql'
+import { getEnv } from '@codelab/shared/config'
 import type { NextApiHandler } from 'next'
+import httpProxyMiddleware from 'next-http-proxy-middleware'
 
-/**
- * Taken from here https://github.com/vercel/next.js/tree/canary/examples/with-apollo-neo4j-graphql
- */
-const startServer = async () => {
-  const nextHandler = await startServerAndCreateNextHandler(
-    await apolloServer(),
-    {
-      context: apolloServerContext,
-    },
-  )
+const handler: NextApiHandler = async (req, res) => {
+  await corsMiddleware(req, res)
+  await authMiddleware(req, res)
 
-  const handler: NextApiHandler = async (req, res) => {
-    if (!corsMiddleware(req, res)) {
-      return
-    }
-
-    await authMiddleware(req, res)
-
-    return nextHandler(req, res)
-  }
-
-  return handler
+  await httpProxyMiddleware(req, res, {
+    // pathRewrite: [
+    //   {
+    //     patternStr: '^/api/graphql',
+    //     replaceStr: 'http://localhost:4000/api/graphql',
+    //   },
+    // ],
+    // 127.0.0.1:4000
+    target: getEnv().endpoint.platformApiHost,
+  })
 }
 
-export default await startServer()
+export default handler

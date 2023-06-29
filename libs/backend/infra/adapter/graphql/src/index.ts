@@ -1,3 +1,4 @@
 export * from './auth.middleware'
 export * from './cors.middleware'
-export * from './server'
+export * from './proxy.middleware'
+export * from './schema'

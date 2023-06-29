@@ -12,4 +12,14 @@ export default {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../../../coverage/libs/backend/application/store',
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputName: 'backend-application-store.xml',
+        reportTestSuiteErrors: true,
+      },
+    ],
+  ],
 }

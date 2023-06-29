@@ -16,13 +16,17 @@ resource "vercel_project" "platform" {
   team_id   = var.vercel_team_id
 
   git_repository = {
-    type = "github"
-    repo = "codelab-app/platform"
+    type              = "github"
+    repo              = "codelab-app/platform"
+    production_branch = "master"
   }
 
-  build_command    = "./scripts/vercel/platform/build.sh"
-  output_directory = "dist/apps/platform/.next"
-  install_command  = "./scripts/vercel/platform/install.sh"
+  root_directory = "apps/platform"
+
+  build_command    = "../../scripts/vercel/platform/build.sh"
+  install_command  = "../../scripts/vercel/platform/install.sh"
+  ignore_command   = "../../scripts/vercel/platform/ignore.sh"
+  output_directory = "../../dist/apps/platform/.next"
 
   serverless_function_region = "sfo1"
 
@@ -32,7 +36,12 @@ resource "vercel_project" "platform" {
       key    = "NEXT_PUBLIC_PLATFORM_HOST"
       value  = var.next_public_platform_host
     },
-    # Auth0
+    {
+      target = ["production", "preview"]
+      key    = "PLATFORM_API_HOST"
+      value  = var.platform_api_host
+    },
+    # Auth0UBLIC_PLATFORM_HOST=127.0.0.1:3001
     {
       target = ["production", "preview"]
       key    = "AUTH0_ISSUER_BASE_URL"
@@ -41,7 +50,7 @@ resource "vercel_project" "platform" {
     {
       target = ["production", "preview"]
       key    = "AUTH0_SECRET"
-      value = var.auth0_secret
+      value  = var.auth0_secret
     },
     {
       target = ["production", "preview"]
@@ -60,7 +69,7 @@ resource "vercel_project" "platform" {
     {
       target = ["production", "preview"]
       key    = "AUTH0_AUDIENCE"
-      value = "${var.auth0_issuer_base_url}api/v2/"
+      value  = "${var.auth0_issuer_base_url}api/v2/"
     },
     # Neo4j
     {
@@ -91,7 +100,7 @@ resource "vercel_project" "platform" {
       # https://github.com/hashicorp/terraform/issues/3267
       #      value = vercel_project.builder.id
       #      value = data.vercel_project.builder.id
-      value = var.vercel_builder_project_id
+      value = var.vercel_platform_project_id
     },
     {
       target = ["production", "preview"]

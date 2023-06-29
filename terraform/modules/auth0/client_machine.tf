@@ -4,11 +4,11 @@ resource "auth0_client" "machine_client" {
   app_type    = "non_interactive"
 
   web_origins = [
-    "${local.builder_url}",
-    "https://*.vercel.app"]
+    "${var.next_public_platform_host}",
+  "https://*.vercel.app"]
   allowed_origins = [
-    "${local.builder_url}",
-    "https://*.vercel.app"]
+    "${var.next_public_platform_host}",
+  "https://*.vercel.app"]
 }
 
 # Allow machine client to access the scope of the management API
