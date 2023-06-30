@@ -31,25 +31,12 @@ const plugins = [withBundleAnalyzer, withRawCypherFiles]
  */
 const nextConfig = {
   experimental: {
-    // instrumentationHook: process.env.NEXT_ENABLE_OTEL ?? false,
+    instrumentationHook: process.env.NEXT_ENABLE_OTEL ? true : false,
     // appDir: true,
   },
   nx: { svgr: true },
-  // rewrites: async () => ({
-  // We still want the api/graphql to append headers and other context before redirecting
-  // afterFiles: [
-  //   {
-  //     destination: 'http://localhost:4000/graphql',
-  //     source: '/api/graphql',
-  //   },
-  // ],
-  // }),
 }
 
-/*
- * Next.js doesn't work well with LESS so we use CSS instead.
- *
- */
 module.exports = (phase, context) => {
   const config = plugins.reduce((acc, fn) => fn(acc), nextConfig)
 
