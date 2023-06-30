@@ -1,10 +1,10 @@
 import {
+  builderServiceContext,
+  elementRef,
   type IElement,
   type IPropData,
   type IRenderOutput,
   type IRenderPipe,
-  builderServiceContext,
-  elementRef,
   isAtomInstance,
 } from '@codelab/frontend/abstract/core'
 import type { IAtomType } from '@codelab/shared/abstract/core'
@@ -71,12 +71,13 @@ export class AtomRenderPipe
       props: {
         ...newProps,
         css: elCss,
-        onMouseEnter: () =>
-          builderServiceContext
-            .get(element)
-            ?.setHoveredNode(elementRef(element)),
-        onMouseLeave: () =>
-          builderServiceContext.get(element)?.setHoveredNode(null),
+
+        // onMouseEnter: () =>
+        //   builderServiceContext
+        //     .get(element)
+        //     ?.setHoveredNode(elementRef(element)),
+        // onMouseLeave: () =>
+        //   builderServiceContext.get(element)?.setHoveredNode(null),
       },
     })
   }

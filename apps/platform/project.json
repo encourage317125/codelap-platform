@@ -12,45 +12,12 @@
         "outputPath": "dist/apps/platform"
       },
       "configurations": {
+        "dev": {},
+        "ci": {},
         "test": {
-          "root": "apps/platform",
           "outputPath": "dist/apps/platform-test"
         },
-        "ci": {
-          "root": "apps/platform",
-          "outputPath": "dist/apps/platform"
-        },
-        "production": {},
-        "development": {
-          "outputPath": "tmp/apps/platform/src"
-        }
-      },
-      "defaultConfiguration": "production"
-    },
-    "serve-test": {
-      "executor": "nx:run-commands",
-      "configurations": {
-        "dev": {
-          "commands": [
-            {
-              "command": "npx env-cmd -f .env.test nx serve platform -c test"
-            }
-          ]
-        },
-        "test": {
-          "commands": [
-            {
-              "command": "npx env-cmd -f .env.test next start dist/apps/platform-test --port 3001"
-            }
-          ]
-        },
-        "ci": {
-          "commands": [
-            {
-              "command": "npx next start dist/apps/platform --port 3000"
-            }
-          ]
-        }
+        "prod": {}
       }
     },
     "serve": {
@@ -63,28 +30,29 @@
         "maxWorkers": 4
       },
       "configurations": {
-        "ci": {},
-        "test": {
-          "buildTarget": "platform:build:test",
-          "memoryLimit": 8192,
-          "port": 3001
-        },
-        "production": {
-          "buildTarget": "platform:build:production",
+        "ci": {
+          "buildTarget": "platform:build:ci",
           "dev": false
         },
-        "development": {
-          "buildTarget": "platform:build:development",
-          "dev": true,
+        "test": {
+          "buildTarget": "platform:build:test",
+          "port": 3001
+        },
+        "prod": {
+          "buildTarget": "platform:build:prod",
+          "dev": false
+        },
+        "dev": {
+          "buildTarget": "platform:build:dev",
           "open": true
         }
       },
-      "defaultConfiguration": "development"
+      "defaultConfiguration": "dev"
     },
     "export": {
       "executor": "@nx/next:export",
       "options": {
-        "buildTarget": "platform:build:production"
+        "buildTarget": "platform:build:prod"
       }
     },
     "lint": {
@@ -96,7 +64,8 @@
       "configurations": {
         "ci": {
           "format": "junit",
-          "outputFile": "tmp/reports/lint/platform.xml"
+          "outputFile": "tmp/reports/lint/platform.xml",
+          "quiet": true
         }
       }
     },
@@ -104,7 +73,8 @@
       "executor": "@nx/jest:jest",
       "options": {
         "jestConfig": "apps/platform/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "reporters": ["default"]
       },
       "configurations": {
         "test": {
@@ -148,6 +118,60 @@
       "options": {
         "command": "test-storybook -c apps/platform/.storybook --url=http://localhost:4400"
       }
+    },
+    "test:integration": {
+      "defaultConfiguration": "dev",
+      "options": {
+        "memoryLimit": 8192,
+        "color": true,
+        "testPathPattern": ["[i].spec.ts"],
+        "jestConfig": "apps/platform/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "dev": {
+          "reporters": ["default"]
+        },
+        "test": {
+          "reporters": ["default"],
+          "testPathPattern": ["i.spec.ts"],
+          "runInBand": true
+        },
+        "ci": {
+          "parallel": 3,
+          "testPathPattern": ["i.spec.ts"],
+          "runInBand": true
+        }
+      },
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/platform"]
+    },
+    "test:unit": {
+      "defaultConfiguration": "dev",
+      "options": {
+        "memoryLimit": 8192,
+        "parallel": 3,
+        "color": true,
+        "testPathPattern": ["[^i].spec.ts"],
+        "jestConfig": "apps/platform/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "dev": {
+          "reporters": ["default"]
+        },
+        "test": {
+          "reporters": ["default"],
+          "testPathPattern": ["i.spec.ts"],
+          "runInBand": true
+        },
+        "ci": {
+          "testPathPattern": ["i.spec.ts"],
+          "runInBand": true
+        }
+      },
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/platform"]
     }
   },
   "tags": ["scope:frontend"],

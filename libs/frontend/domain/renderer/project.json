@@ -16,7 +16,8 @@
       "configurations": {
         "ci": {
           "format": "junit",
-          "outputFile": "tmp/reports/lint/frontend-domain-renderer.xml"
+          "outputFile": "tmp/reports/lint/frontend-domain-renderer.xml",
+          "quiet": true
         }
       }
     },
@@ -26,8 +27,56 @@
       "options": {
         "jestConfig": "libs/frontend/domain/renderer/jest.config.ts",
         "passWithNoTests": true,
-        "runInBand": true
+        "runInBand": true,
+        "reporters": ["default"]
       }
+    },
+    "test:integration": {
+      "defaultConfiguration": "dev",
+      "options": {
+        "memoryLimit": 8192,
+        "color": true,
+        "testPathPattern": ["[i].spec.ts"],
+        "jestConfig": "libs/frontend/domain/renderer/jest.config.ts",
+        "passWithNoTests": true,
+        "runInBand": true
+      },
+      "configurations": {
+        "dev": {
+          "reporters": ["default"]
+        },
+        "test": {
+          "reporters": ["default"]
+        },
+        "ci": {
+          "parallel": 3
+        }
+      },
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/domain/renderer"]
+    },
+    "test:unit": {
+      "defaultConfiguration": "dev",
+      "options": {
+        "memoryLimit": 8192,
+        "parallel": 3,
+        "color": true,
+        "testPathPattern": ["[^i].spec.ts"],
+        "jestConfig": "libs/frontend/domain/renderer/jest.config.ts",
+        "passWithNoTests": true,
+        "runInBand": true
+      },
+      "configurations": {
+        "dev": {
+          "reporters": ["default"]
+        },
+        "test": {
+          "reporters": ["default"]
+        },
+        "ci": {}
+      },
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/domain/renderer"]
     }
   }
 }

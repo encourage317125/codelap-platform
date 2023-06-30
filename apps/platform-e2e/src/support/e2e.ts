@@ -17,6 +17,11 @@ import 'cypress-jest-adapter'
 import './commands'
 import './antd/register'
 import './codelab-ui/register'
-import { stopOnFirstError } from './stop-on-first-error'
 
-afterEach(stopOnFirstError)
+// afterEach(stopOnFirstError)
+
+Cypress.on('test:after:run', (test) => {
+  if (test.state !== 'passed' && test.retries > 0) {
+    ;(Cypress as any).runner.stop()
+  }
+})

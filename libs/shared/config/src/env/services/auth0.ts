@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/member-ordering */
 import * as env from 'env-var'
-import type { IGraphQLEnvVars } from './graphql'
+import type { IEndpointEnvVars } from './endpoint'
 
 export interface IAuth0EnvVars {
   baseUrl: string
@@ -33,7 +33,7 @@ export class Auth0EnvVars implements IAuth0EnvVars {
 
   private _audience?: string
 
-  constructor(private readonly graphql: IGraphQLEnvVars) {}
+  constructor(private readonly endpoint: IEndpointEnvVars) {}
 
   get clientId(): string {
     return (this._clientId ??= env.get('AUTH0_CLIENT_ID').required().asString())
@@ -76,10 +76,8 @@ export class Auth0EnvVars implements IAuth0EnvVars {
   }
 
   get baseUrl() {
-    const auth0baseUrl = this.graphql.nextPublicPlatformHost
-    const protocol = this.graphql.isLocal ? 'http' : 'https'
-    const baseUrl = `${protocol}://${auth0baseUrl}`
+    const auth0baseUrl = this.endpoint.nextPublicPlatformHost
 
-    return baseUrl
+    return auth0baseUrl
   }
 }

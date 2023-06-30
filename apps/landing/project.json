@@ -7,31 +7,36 @@
     "build": {
       "executor": "@nx/next:build",
       "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
+      "defaultConfiguration": "prod",
       "options": {
         "outputPath": "dist/apps/landing"
       },
       "configurations": {
-        "development": {
+        "dev": {
           "outputPath": "apps/landing"
         },
-        "production": {}
+        "ci": {},
+        "prod": {}
       }
     },
     "serve": {
       "executor": "@nx/next:server",
-      "defaultConfiguration": "development",
+      "defaultConfiguration": "dev",
       "options": {
         "buildTarget": "landing:build",
         "dev": true
       },
       "configurations": {
-        "development": {
-          "buildTarget": "landing:build:development",
+        "dev": {
+          "buildTarget": "landing:build:dev",
           "dev": true
         },
-        "production": {
-          "buildTarget": "landing:build:production",
+        "ci": {
+          "buildTarget": "landing:build:ci",
+          "dev": false
+        },
+        "prod": {
+          "buildTarget": "landing:build:prod",
           "dev": false
         }
       }
@@ -39,7 +44,7 @@
     "export": {
       "executor": "@nx/next:export",
       "options": {
-        "buildTarget": "landing:build:production"
+        "buildTarget": "landing:build:prod"
       }
     },
     "lint": {
@@ -51,7 +56,8 @@
       "configurations": {
         "ci": {
           "format": "junit",
-          "outputFile": "tmp/reports/lint/landing.xml"
+          "outputFile": "tmp/reports/lint/landing.xml",
+          "quiet": true
         }
       }
     }

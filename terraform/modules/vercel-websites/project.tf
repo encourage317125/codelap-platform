@@ -7,22 +7,26 @@ resource "vercel_project" "websites" {
   team_id   = var.vercel_team_id
 
   git_repository = {
-    type = "github"
-    repo = "codelab-app/platform"
+    type              = "github"
+    repo              = "codelab-app/platform"
+    production_branch = "master"
   }
 
-  build_command    = "./scripts/vercel/websites/build.sh"
-  output_directory = "dist/apps/websites/.next"
-  install_command  = "./scripts/vercel/websites/install.sh"
+  root_directory = "apps/websites"
+
+  build_command    = "../../scripts/vercel/websites/build.sh"
+  install_command  = "../../scripts/vercel/websites/install.sh"
+  ignore_command   = "../../scripts/vercel/websites/ignore.sh"
+  output_directory = "../../dist/apps/websites/.next"
 
   serverless_function_region = "sfo1"
 
   environment = [
-    {
-      target = ["production", "preview"]
-      key    = "NEXT_PUBLIC_PLATFORM_HOST"
-      value  = var.next_public_platform_host
-    },
+    # {
+    #   target = ["production", "preview"]
+    #   key    = "NEXT_PUBLIC_PLATFORM_HOST"
+    #   value  = var.next_public_platform_host
+    # },
     # Auth0
     {
       target = ["production", "preview"]
@@ -32,7 +36,7 @@ resource "vercel_project" "websites" {
     {
       target = ["production", "preview"]
       key    = "AUTH0_SECRET"
-      value = var.auth0_secret
+      value  = var.auth0_secret
     },
     {
       target = ["production", "preview"]
@@ -51,7 +55,7 @@ resource "vercel_project" "websites" {
     {
       target = ["production", "preview"]
       key    = "AUTH0_AUDIENCE"
-      value = "${var.auth0_issuer_base_url}api/v2/"
+      value  = "${var.auth0_issuer_base_url}api/v2/"
     },
     # Neo4j
     {

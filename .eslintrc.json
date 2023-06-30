@@ -32,7 +32,7 @@
     "plugin:canonical/recommended"
     // We first apply `typescript-sort-keys`, then comment off and manually move methods after properties
     // "plugin:typescript-sort-keys/recommended"
-    // "plugin:import/recommended",
+    // "plugin:import/recommended"
     // "plugin:lodash/recommended"
   ],
   // Used for import plugin
@@ -44,11 +44,11 @@
     "import/resolver": {
       "typescript": {
         "extensions": [".js", ".jsx", ".ts", ".tsx"],
-        "project": ["**/tsconfig.lib.json", "**/tsconfig.spec.json"]
+        "project": ["(apps|libs)/**/tsconfig.lib.json"]
       },
       "node": {
         "extensions": [".js", ".jsx", ".ts", ".tsx"],
-        "project": ["**/tsconfig.lib.json", "**/tsconfig.spec.json"]
+        "project": ["(apps|libs)/**/tsconfig.lib.json"]
       }
     }
   },
@@ -645,7 +645,6 @@
       "extends": ["plugin:@nx/javascript"],
       "rules": {}
     }
-
     // {
     //   "files": ["*.ts"],
     //   "processor": "@graphql-eslint/graphql"

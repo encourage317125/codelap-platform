@@ -13,7 +13,8 @@
       "configurations": {
         "ci": {
           "format": "junit",
-          "outputFile": "tmp/reports/lint/frontend-domain-app.xml"
+          "outputFile": "tmp/reports/lint/frontend-domain-app.xml",
+          "quiet": true
         }
       }
     },
@@ -22,7 +23,8 @@
       "outputs": ["{workspaceRoot}/coverage/libs/frontend/domain/app"],
       "options": {
         "jestConfig": "libs/frontend/domain/app/jest.config.ts",
-        "passWithNoTests": true
+        "passWithNoTests": true,
+        "reporters": ["default"]
       }
     },
     "storybook": {
@@ -55,6 +57,51 @@
       "options": {
         "command": "test-storybook -c libs/frontend/domain/app/.storybook --url=http://localhost:4400"
       }
+    },
+    "test:integration": {
+      "defaultConfiguration": "dev",
+      "options": {
+        "memoryLimit": 8192,
+        "color": true,
+        "testPathPattern": ["[i].spec.ts"],
+        "jestConfig": "libs/frontend/domain/app/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "dev": {
+          "reporters": ["default"]
+        },
+        "test": {
+          "reporters": ["default"]
+        },
+        "ci": {
+          "parallel": 3
+        }
+      },
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/domain/app"]
+    },
+    "test:unit": {
+      "defaultConfiguration": "dev",
+      "options": {
+        "memoryLimit": 8192,
+        "parallel": 3,
+        "color": true,
+        "testPathPattern": ["[^i].spec.ts"],
+        "jestConfig": "libs/frontend/domain/app/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "dev": {
+          "reporters": ["default"]
+        },
+        "test": {
+          "reporters": ["default"]
+        },
+        "ci": {}
+      },
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/domain/app"]
     }
   },
   "tags": ["scope:frontend", "layer:domain"]

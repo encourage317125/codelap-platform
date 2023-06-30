@@ -14,4 +14,14 @@ export default {
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   coverageDirectory: '../../../../coverage/libs/backend/application/atom',
+  reporters: [
+    'default',
+    [
+      'jest-junit',
+      {
+        outputName: 'backend-application-atom.xml',
+        reportTestSuiteErrors: true,
+      },
+    ],
+  ],
 }

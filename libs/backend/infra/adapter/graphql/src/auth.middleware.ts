@@ -1,4 +1,3 @@
-import { getEnv } from '@codelab/shared/config'
 import { auth0Instance } from '@codelab/shared/infra/auth0'
 import type { NextApiHandler } from 'next'
 
@@ -24,13 +23,12 @@ export const authMiddleware: NextApiHandler = async (req, res) => {
     }
   } catch (error) {
     // console.log('error when get access token', error)
-
     // Apollo studio polls the graphql schema every second, and it pollutes the log
-    if (
-      !getEnv().graphql.isLocal ||
-      !req.headers['origin']?.includes('studio.apollographql')
-    ) {
-      // console.error(e)
-    }
+    // if (
+    //   !getEnv().graphql.isLocal ||
+    //   !req.headers['origin']?.includes('studio.apollographql')
+    // ) {
+    //   // console.error(e)
+    // }
   }
 }
