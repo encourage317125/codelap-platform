@@ -13,6 +13,7 @@
       },
       "configurations": {
         "dev": {},
+        "ci": {},
         "test": {
           "outputPath": "dist/apps/platform-test"
         },
@@ -30,7 +31,7 @@
       },
       "configurations": {
         "ci": {
-          "buildTarget": "platform:build",
+          "buildTarget": "platform:build:ci",
           "dev": false
         },
         "test": {

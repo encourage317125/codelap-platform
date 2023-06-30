@@ -20,6 +20,7 @@ describe('RenderService', () => {
   it('should render props when kind is ReactNodeType', async () => {
     data.element.props.current.setMany({
       someNode: {
+        kind: data.reactNodeType.kind,
         type: data.reactNodeType.id,
         value: data.component.id,
       } as TypedProp,
@@ -46,6 +47,7 @@ describe('RenderService', () => {
   it('should render prop when kind is RenderPropType with component prop values', async () => {
     data.element.props.current.setMany({
       someNode: {
+        kind: data.renderPropType.kind,
         type: data.renderPropType.id,
         value: data.component.id,
       } as TypedProp,
@@ -73,6 +75,7 @@ describe('RenderService', () => {
   it('should render props when kind is RenderPropType with passed arguments (override component props)', async () => {
     data.element.props.current.setMany({
       someNode: {
+        kind: data.renderPropType.kind,
         type: data.renderPropType.id,
         value: data.component.id,
       },

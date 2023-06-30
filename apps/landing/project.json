@@ -15,6 +15,7 @@
         "dev": {
           "outputPath": "apps/landing"
         },
+        "ci": {},
         "prod": {}
       }
     },
@@ -29,6 +30,10 @@
         "dev": {
           "buildTarget": "landing:build:dev",
           "dev": true
+        },
+        "ci": {
+          "buildTarget": "landing:build:ci",
+          "dev": false
         },
         "prod": {
           "buildTarget": "landing:build:prod",
