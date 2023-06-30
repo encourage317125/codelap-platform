@@ -5,8 +5,10 @@ import { PageDetailHeader } from '@codelab/frontend/domain/page'
 import { Renderer } from '@codelab/frontend/domain/renderer'
 import { useRenderedPage } from '@codelab/frontend/presentation/container'
 import { DashboardTemplate } from '@codelab/frontend/presentation/view'
-import { extractErrorMessage } from '@codelab/frontend/shared/utils'
-import { auth0Instance } from '@codelab/shared/infra/auth0'
+import {
+  extractErrorMessage,
+  withPageAuthRedirect,
+} from '@codelab/frontend/shared/utils'
 import { useMountEffect } from '@react-hookz/web'
 import { Alert, Spin } from 'antd'
 import { observer } from 'mobx-react-lite'
@@ -36,7 +38,7 @@ const PageRenderer: CodelabPage<IPageProps> = observer(() => {
 
 export default PageRenderer
 
-export const getServerSideProps = auth0Instance.withPageAuthRequired()
+export const getServerSideProps = withPageAuthRedirect()
 
 PageRenderer.Layout = observer(({ children }) => {
   return (
