@@ -12,7 +12,7 @@ import {
   ContentSection,
   DashboardTemplate,
 } from '@codelab/frontend/presentation/view'
-import { auth0Instance } from '@codelab/shared/infra/auth0'
+import { withPageAuthRedirect } from '@codelab/frontend/shared/utils'
 import { Image, Space } from 'antd'
 import { observer } from 'mobx-react-lite'
 import Head from 'next/head'
@@ -37,7 +37,7 @@ const AdminPage: CodelabPage<DashboardTemplateProps> = observer(() => {
 
 export default AdminPage
 
-export const getServerSideProps = auth0Instance.withPageAuthRequired()
+export const getServerSideProps = withPageAuthRedirect()
 
 AdminPage.Layout = ({ children }) => {
   const AdminHeader = () => (

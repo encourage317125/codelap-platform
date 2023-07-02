@@ -6,7 +6,14 @@ import type {
 } from '@codelab/backend/abstract/core'
 import { UseCase } from '@codelab/backend/application/service'
 import { createComponents } from '@codelab/backend/domain/app'
-import { TypeFactory } from '@codelab/backend/domain/type'
+import { AtomRepository } from '@codelab/backend/domain/atom'
+import { importElementInitial } from '@codelab/backend/domain/element'
+import { TagRepository } from '@codelab/backend/domain/tag'
+import {
+  FieldRepository,
+  InterfaceTypeRepository,
+  TypeFactory,
+} from '@codelab/backend/domain/type'
 import type {
   IAuth0Owner,
   ITagDTO,
@@ -26,13 +33,13 @@ import { DataPaths } from '../../data-paths'
  */
 @Injectable()
 export class ImportAdminDataService extends UseCase<IAuth0Owner, void> {
-  // tagRepository = new TagRepository()
+  tagRepository = new TagRepository()
 
-  // atomRepository = new AtomRepository()
+  atomRepository = new AtomRepository()
 
-  // fieldRepository = new FieldRepository()
+  fieldRepository = new FieldRepository()
 
-  // interfaceTypeRepository = new InterfaceTypeRepository()
+  interfaceTypeRepository = new InterfaceTypeRepository()
 
   dataPaths: DataPaths
 
@@ -71,10 +78,9 @@ export class ImportAdminDataService extends UseCase<IAuth0Owner, void> {
 
     for await (const type of types) {
       const data: ITypeDTO = { ...type, owner }
-      console.log('import queue')
 
-      const job = await this.importQueue.add(data)
-      // await TypeFactory.save({ ...type, owner })
+      // const job = await this.importQueue.add(data)
+      await TypeFactory.save({ ...type, owner })
     }
   }
 
@@ -105,15 +111,15 @@ export class ImportAdminDataService extends UseCase<IAuth0Owner, void> {
 
     // Finally fields
     for await (const field of fields) {
-      // await this.fieldRepository.save(field)
+      await this.fieldRepository.save(field)
     }
 
-    // await this.atomRepository.save({ ...atom, owner })
+    await this.atomRepository.save({ ...atom, owner })
   }
 
   private async importTags(owner: IAuth0Owner) {
     for await (const tag of this.exportedAdminData.tags) {
-      // await this.tagRepository.save({ ...tag, owner })
+      await this.tagRepository.save({ ...tag, owner })
     }
   }
 
@@ -126,15 +132,15 @@ export class ImportAdminDataService extends UseCase<IAuth0Owner, void> {
       types,
     } of componentsExportData) {
       for await (const type of types) {
-        // await TypeFactory.save({ ...type, owner })
+        await TypeFactory.save({ ...type, owner })
       }
 
       for await (const field of fields) {
-        // await this.fieldRepository.save(field)
+        await this.fieldRepository.save(field)
       }
 
       for await (const element of descendantElements) {
-        // await importElementInitial(element)
+        await importElementInitial(element)
       }
     }
 
