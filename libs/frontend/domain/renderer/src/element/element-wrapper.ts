@@ -1,4 +1,8 @@
-import type { IElement, IRenderer } from '@codelab/frontend/abstract/core'
+import type {
+  IComponentType,
+  IElement,
+  IRenderer,
+} from '@codelab/frontend/abstract/core'
 import {
   getRunnerId,
   isAtomInstance,
@@ -7,12 +11,13 @@ import {
 import { useStore } from '@codelab/frontend/presentation/container'
 import { IAtomType } from '@codelab/shared/abstract/core'
 import { mergeProps } from '@codelab/shared/utils'
-import { jsx } from '@emotion/react'
 import { observer } from 'mobx-react-lite'
 import React, { useEffect } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
+import styled from 'styled-components'
 import { shouldRenderElement } from '../utils'
 import { mapOutput } from '../utils/render-output-utils'
+import { getStyledComponent } from './get-styled-components'
 import { extractValidProps, getReactComponent } from './wrapper.utils'
 
 export interface ElementWrapperProps {
@@ -68,7 +73,7 @@ export const ElementWrapper = observer<ElementWrapperProps>(
         }
       }
 
-      const ReactComponent =
+      const ReactComponent: IComponentType =
         renderOutput.atomType &&
         atomService.dynamicComponents[renderOutput.atomType]
           ? atomService.dynamicComponents[renderOutput.atomType] ??
@@ -77,7 +82,18 @@ export const ElementWrapper = observer<ElementWrapperProps>(
 
       const extractedProps = extractValidProps(ReactComponent, renderOutput)
 
-      return jsx(ReactComponent, mergeProps(extractedProps, rest), children)
+      const StyledReactComponent = getStyledComponent(
+        ReactComponent,
+        extractedProps?.['css'],
+      )
+
+      // console.log(ReactComponent, renderOutput, extractedProps)
+
+      return React.createElement(
+        StyledReactComponent,
+        mergeProps(extractedProps, rest),
+        children,
+      )
     })
 
     return React.createElement(

@@ -1,6 +1,4 @@
 import {
-  builderServiceContext,
-  elementRef,
   type IElement,
   type IPropData,
   type IRenderOutput,
@@ -8,10 +6,11 @@ import {
   isAtomInstance,
 } from '@codelab/frontend/abstract/core'
 import type { IAtomType } from '@codelab/shared/abstract/core'
-import { css } from '@emotion/react'
 import { ExtendedModel, model, prop } from 'mobx-keystone'
+import { css } from 'styled-components'
 import type { ArrayOrSingle } from 'ts-essentials'
 import { atomFactory } from '../atoms'
+import { jsonStringToCss } from '../element/get-styled-components'
 import { RenderOutput } from '../utils'
 import { evalCss } from '../utils/eval-css'
 import { BaseRenderPipe } from './render-pipe.base'
@@ -51,13 +50,10 @@ export class AtomRenderPipe
       return this.next.render(element, props)
     }
 
-    const elCss =
-      element.customCss || element.guiCss
-        ? css([
-            JSON.parse(element.guiCss || '{}'),
-            evalCss(element.customCss || ''),
-          ])
-        : undefined
+    const elementCss = [
+      element.customCss,
+      jsonStringToCss(element.guiCss),
+    ].join(' ')
 
     if (this.renderer.debugMode) {
       console.info(`AtomRenderPipe: Rendering atom ${atomType}`, {
@@ -70,8 +66,10 @@ export class AtomRenderPipe
       element,
       props: {
         ...newProps,
-        css: elCss,
-
+        /**
+         * This is rendered to style with css prop and styled-components
+         */
+        css: elementCss,
         // onMouseEnter: () =>
         //   builderServiceContext
         //     .get(element)
