@@ -1,9 +1,7 @@
-import type {
-  IResource,
-  IResourceRepository,
-} from '@codelab/frontend/abstract/core'
+import type { IResourceRepository } from '@codelab/frontend/abstract/core'
+import { IResource } from '@codelab/frontend/abstract/core'
 import { cachedWithTTL, clearCacheForKey } from '@codelab/frontend/shared/utils'
-import type {
+import {
   ResourceOptions,
   ResourceWhere,
 } from '@codelab/shared/abstract/codegen'
@@ -16,12 +14,12 @@ export class ResourceRepository
   implements IResourceRepository
 {
   @cachedWithTTL('resources')
-  find = async (where?: ResourceWhere, options?: ResourceOptions) => {
+  async find(where?: ResourceWhere, options?: ResourceOptions) {
     return await resourceApi.GetResources({ options, where })
   }
 
   @clearCacheForKey('resources')
-  add = async (resource: IResource) => {
+  async add(resource: IResource) {
     const {
       createResources: { resources },
     } = await resourceApi.CreateResources({ input: [resource.toCreateInput()] })
@@ -30,7 +28,7 @@ export class ResourceRepository
   }
 
   @clearCacheForKey('resources')
-  update = async (resource: IResource) => {
+  async update(resource: IResource) {
     const {
       updateResources: { resources },
     } = await resourceApi.UpdateResource({
@@ -42,7 +40,7 @@ export class ResourceRepository
   }
 
   @clearCacheForKey('resources')
-  delete = async (resources: Array<IResource>) => {
+  async delete(resources: Array<IResource>) {
     const {
       deleteResources: { nodesDeleted },
     } = await resourceApi.DeleteResources({

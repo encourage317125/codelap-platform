@@ -2,23 +2,28 @@ import { PageHeader } from '@ant-design/pro-components/lib'
 import type { IComponent, IPageNode } from '@codelab/frontend/abstract/core'
 import {
   componentRef,
-  getRendererId,
   isComponentPageNode,
   isElementPageNode,
-  rendererRef,
   RendererTab,
 } from '@codelab/frontend/abstract/core'
-import {
-  CreateComponentButton,
-  CreateComponentForm,
-} from '@codelab/frontend/domain/component'
+import { ExplorerPaneType, PageType } from '@codelab/frontend/abstract/types'
+import { CreateComponentForm } from '@codelab/frontend/domain/component'
 import { CreateElementForm } from '@codelab/frontend/domain/element'
+import {
+  CreateActionForm,
+  UpdateActionForm,
+} from '@codelab/frontend/domain/store'
 import { CreateFieldForm, UpdateFieldForm } from '@codelab/frontend/domain/type'
-import { useStore } from '@codelab/frontend/presentation/container'
+import {
+  useCurrentApp,
+  useStore,
+} from '@codelab/frontend/presentation/container'
 import { SkeletonWrapper } from '@codelab/frontend/presentation/view'
+import { slugify } from '@codelab/shared/utils'
 import { useAsync } from '@react-hookz/web'
 import isNil from 'lodash/isNil'
 import { observer } from 'mobx-react-lite'
+import { useRouter } from 'next/router'
 import React, { useEffect, useRef, useState } from 'react'
 import { ElementTreeView } from '../builder-tree'
 import { StorePane } from '../StorePane'
@@ -26,13 +31,15 @@ import { ComponentList } from './ComponentList'
 
 export const CustomComponents = observer(() => {
   const {
+    actionService,
     builderService,
     componentService,
     elementService,
     fieldService,
-    renderService,
   } = useStore()
 
+  const { appSlug, userName } = useCurrentApp()
+  const router = useRouter()
   const [activeComponent, setActiveComponent] = useState<IComponent>()
   const previousActiveNode = useRef<IPageNode>()
 
@@ -48,13 +55,19 @@ export const CustomComponents = observer(() => {
     return onBack
   }, [])
 
-  const editComponent = (id: string) => {
-    const component = componentService.component(id)
-    setActiveComponent(component)
-    renderService.setActiveRenderer(rendererRef(getRendererId(id)))
-    previousActiveNode.current = builderService.selectedNode?.current
-    builderService.setActiveTab(RendererTab.Component)
-    builderService.selectComponentNode(component)
+  const editComponent = async (id: string) => {
+    const { name } = componentService.component(id)
+    const componentSlug = slugify(name)
+
+    await router.push({
+      pathname: PageType.ComponentBuilder,
+      query: {
+        appSlug,
+        componentSlug,
+        primarySidebarKey: ExplorerPaneType.Explorer,
+        userName,
+      },
+    })
   }
 
   const selectComponent = (id: string) => {
@@ -89,7 +102,9 @@ export const CustomComponents = observer(() => {
   const isInlineFormOpened =
     elementService.createForm.isOpen ||
     fieldService.createForm.isOpen ||
-    fieldService.updateForm.isOpen
+    fieldService.updateForm.isOpen ||
+    actionService.createForm.isOpen ||
+    actionService.updateForm.isOpen
 
   const selectTreeNode = (node: IPageNode) => {
     if (isComponentPageNode(node)) {
@@ -99,8 +114,6 @@ export const CustomComponents = observer(() => {
     if (isElementPageNode(node)) {
       return builderService.selectElementNode(node)
     }
-
-    return
   }
 
   return (
@@ -112,6 +125,8 @@ export const CustomComponents = observer(() => {
           {elementService.createForm.isOpen && <CreateElementForm />}
           {fieldService.createForm.isOpen && <CreateFieldForm />}
           {fieldService.updateForm.isOpen && <UpdateFieldForm />}
+          {actionService.createForm.isOpen && <CreateActionForm />}
+          {actionService.updateForm.isOpen && <UpdateActionForm />}
 
           {!isInlineFormOpened && (
             <>
@@ -137,29 +152,20 @@ export const CustomComponents = observer(() => {
             </>
           )}
         </>
+      ) : componentService.createForm.isOpen ? (
+        <CreateComponentForm />
       ) : (
-        <>
-          <div style={{ marginBottom: 10, textAlign: 'right' }}>
-            <CreateComponentButton />
-          </div>
-          {componentService.createForm.isOpen ? (
-            <CreateComponentForm />
-          ) : (
-            <ComponentList
-              components={componentService.componentList}
-              onDelete={(id) =>
-                componentService.deleteModal.open(componentRef(id))
-              }
-              onEdit={(id) => editComponent(id)}
-              onSelect={(id) => selectComponent(id)}
-              selectedIds={
-                builderService.selectedNode
-                  ? [builderService.selectedNode.id]
-                  : undefined
-              }
-            />
-          )}
-        </>
+        <ComponentList
+          components={componentService.componentList}
+          onDelete={(id) => componentService.deleteModal.open(componentRef(id))}
+          onEdit={(id) => editComponent(id)}
+          onSelect={(id) => selectComponent(id)}
+          selectedIds={
+            builderService.selectedNode
+              ? [builderService.selectedNode.id]
+              : undefined
+          }
+        />
       )}
     </SkeletonWrapper>
   )

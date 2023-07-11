@@ -13,6 +13,7 @@ export type ElementFragment = {
   name: string
   customCss?: string | null
   guiCss?: string | null
+  childMapperPropKey?: string | null
   renderForEachPropKey?: string | null
   renderIfExpression?: string | null
   propTransformationJs?: string | null
@@ -26,8 +27,15 @@ export type ElementFragment = {
   parent?: { id: string } | null
   firstChild?: { id: string } | null
   props: PropFragment
-  preRenderAction?: { id: string } | { id: string } | null
-  postRenderAction?: { id: string } | { id: string } | null
+  childMapperComponent?: { id: string; name: string } | null
+  preRenderAction?:
+    | { id: string; type: Types.ActionKind }
+    | { id: string; type: Types.ActionKind }
+    | null
+  postRenderAction?:
+    | { id: string; type: Types.ActionKind }
+    | { id: string; type: Types.ActionKind }
+    | null
 }
 
 export const ElementFragmentDoc = gql`
@@ -68,13 +76,20 @@ export const ElementFragmentDoc = gql`
     props {
       ...Prop
     }
+    childMapperPropKey
+    childMapperComponent {
+      id
+      name
+    }
     renderForEachPropKey
     renderIfExpression
     preRenderAction {
       id
+      type
     }
     postRenderAction {
       id
+      type
     }
     propTransformationJs
   }

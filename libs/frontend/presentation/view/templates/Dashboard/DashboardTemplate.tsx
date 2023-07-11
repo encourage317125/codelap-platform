@@ -1,6 +1,7 @@
 import { CuiNavigationBar } from '@codelab/frontend/presentation//codelab-ui'
 import {
   useCurrentApp,
+  useCurrentComponent,
   useCurrentPage,
 } from '@codelab/frontend/presentation/container'
 import { Layout } from 'antd'
@@ -8,7 +9,6 @@ import { observer } from 'mobx-react-lite'
 import { useRouter } from 'next/router'
 import React, { useMemo } from 'react'
 import { Panel, PanelGroup } from 'react-resizable-panels'
-import tw from 'twin.macro'
 import { sidebarWidth } from './constants'
 import { DashboardTemplateConfigPane } from './DashboardTemplateConfigPane'
 import { defaultNavigationBarItems } from './NavigationBar'
@@ -28,10 +28,17 @@ export const DashboardTemplateSSR = observer(
     const { primarySidebarKey } = useRouter().query
     const { appSlug, userName } = useCurrentApp()
     const { pageSlug } = useCurrentPage()
+    const { componentSlug } = useCurrentComponent()
 
     const navigationBarItems = useMemo(
-      () => defaultNavigationBarItems({ appSlug, pageSlug, userName }),
-      [appSlug, pageSlug],
+      () =>
+        defaultNavigationBarItems({
+          appSlug,
+          componentSlug,
+          pageSlug,
+          userName,
+        }),
+      [appSlug, pageSlug, componentSlug],
     )
 
     const activeSidebarKey =
@@ -42,7 +49,7 @@ export const DashboardTemplateSSR = observer(
     )?.render
 
     return (
-      <Layout css={tw`max-h-full min-h-full`}>
+      <Layout className="max-h-full min-h-full">
         {Header && <Header />}
         <Layout>
           <Sider collapsed collapsedWidth={sidebarWidth} theme="light">
@@ -57,7 +64,7 @@ export const DashboardTemplateSSR = observer(
                 <>
                   <Panel defaultSize={20} order={1}>
                     <div
-                      css={tw`w-full h-full overflow-auto`}
+                      className="h-full w-full overflow-auto"
                       data-cy="temp-primary-panel-wrapper"
                     >
                       <ActivePrimarySidebar />
@@ -68,7 +75,7 @@ export const DashboardTemplateSSR = observer(
               )}
 
               <Panel defaultSize={60} order={2}>
-                <main css={tw`w-full h-full mt-3 px-3 pb-6 overflow-auto`}>
+                <main className="mt-3 h-full w-full overflow-auto px-3 pb-6">
                   {children}
                 </main>
               </Panel>
@@ -76,7 +83,6 @@ export const DashboardTemplateSSR = observer(
               {ConfigPane && (
                 <>
                   <ResizeHandle />
-
                   <Panel defaultSize={20} order={3}>
                     <DashboardTemplateConfigPane ConfigPane={ConfigPane} />
                   </Panel>

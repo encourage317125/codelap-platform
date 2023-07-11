@@ -35,13 +35,16 @@ export const elementSchema = gql`
     # {[prop: string]: string}, where the prop is a css property and the value is its value.
     guiCss: String
     propTransformationJs: String
+    childMapperPropKey: String
+    childMapperComponent: Component
+      @relationship(type: "CHILD_MAPPER_COMPONENT", direction: OUT)
     renderForEachPropKey: String
     renderIfExpression: String
 
     preRenderAction: BaseAction
-      @relationship(type: "ELEMENT_ACTION", direction: OUT)
+      @relationship(type: "PRE_RENDER_ELEMENT_ACTION", direction: OUT)
     postRenderAction: BaseAction
-      @relationship(type: "ELEMENT_ACTION", direction: OUT)
+      @relationship(type: "POST_RENDER_ELEMENT_ACTION", direction: OUT)
 
     # Type of element to render, could be either a component or atom
     renderComponentType: Component

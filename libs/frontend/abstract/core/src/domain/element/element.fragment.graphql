@@ -36,13 +36,20 @@ fragment Element on Element {
   props {
     ...Prop
   }
+  childMapperPropKey
+  childMapperComponent {
+    id
+    name
+  }
   renderForEachPropKey
   renderIfExpression
   preRenderAction {
     id
+    type
   }
   postRenderAction {
     id
+    type
   }
   propTransformationJs
 }

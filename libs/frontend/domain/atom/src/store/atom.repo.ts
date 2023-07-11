@@ -1,7 +1,7 @@
-import type { IAtom, IAtomRepository } from '@codelab/frontend/abstract/core'
-import { filterNotHookType } from '@codelab/frontend/abstract/core'
+import type { IAtomRepository } from '@codelab/frontend/abstract/core'
+import { filterNotHookType, IAtom } from '@codelab/frontend/abstract/core'
 import { cachedWithTTL, clearCacheForKey } from '@codelab/frontend/shared/utils'
-import type { AtomOptions, AtomWhere } from '@codelab/shared/abstract/codegen'
+import { AtomOptions, AtomWhere } from '@codelab/shared/abstract/codegen'
 import sortBy from 'lodash/sortBy'
 import { Model, model } from 'mobx-keystone'
 import { atomApi } from './atom.api'
@@ -11,7 +11,7 @@ import { atomApi } from './atom.api'
 @model('@codelab/AtomRepository')
 export class AtomRepository extends Model({}) implements IAtomRepository {
   @clearCacheForKey('atoms')
-  add = async (atom: IAtom) => {
+  async add(this: AtomRepository, atom: IAtom) {
     const {
       createAtoms: { atoms },
     } = await atomApi.CreateAtoms({ input: [atom.toCreateInput()] })
@@ -20,7 +20,7 @@ export class AtomRepository extends Model({}) implements IAtomRepository {
   }
 
   @clearCacheForKey('atoms')
-  update = async (atom: IAtom) => {
+  async update(this: AtomRepository, atom: IAtom) {
     const {
       updateAtoms: { atoms },
     } = await atomApi.UpdateAtoms({
@@ -32,12 +32,12 @@ export class AtomRepository extends Model({}) implements IAtomRepository {
   }
 
   @cachedWithTTL('atoms', Infinity)
-  find = async (where?: AtomWhere, options?: AtomOptions) => {
+  async find(this: AtomRepository, where?: AtomWhere, options?: AtomOptions) {
     return await atomApi.GetAtoms({ options, where })
   }
 
   @clearCacheForKey('atoms')
-  delete = async (atoms: Array<IAtom>) => {
+  async delete(this: AtomRepository, atoms: Array<IAtom>) {
     const {
       deleteAtoms: { nodesDeleted },
     } = await atomApi.DeleteAtoms({
@@ -50,8 +50,9 @@ export class AtomRepository extends Model({}) implements IAtomRepository {
   /**
    * Get list of atom previews for select dropdown
    */
+
   @cachedWithTTL('atoms', Infinity)
-  findOptions = async () => {
+  async findOptions(this: AtomRepository) {
     const { atoms } = await atomApi.GetAtomOptions()
 
     return sortBy(

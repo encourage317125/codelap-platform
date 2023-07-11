@@ -72,8 +72,7 @@ const PageBuilder: CodelabPage = observer(() => {
           },
           {
             key: ExplorerPaneType.PageList,
-            render: () =>
-              result ? <ExplorerPanePage appId={result.app.id} /> : null,
+            render: () => <ExplorerPanePage />,
           },
         ],
       }}
@@ -81,7 +80,7 @@ const PageBuilder: CodelabPage = observer(() => {
       headerHeight={48}
     >
       <Head>
-        <title>{result?.page.name} | Builder | Codelab</title>
+        <title>{pageName} | Builder | Codelab</title>
       </Head>
 
       <BuilderTabs error={error} isLoading={isLoading} />

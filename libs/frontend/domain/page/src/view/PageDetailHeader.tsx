@@ -8,22 +8,24 @@ import {
 } from '@codelab/frontend/presentation//codelab-ui'
 import {
   useCurrentApp,
+  useCurrentComponent,
   useCurrentPage,
 } from '@codelab/frontend/presentation/container'
 import { Image } from 'antd'
 import { observer } from 'mobx-react-lite'
 import { useRouter } from 'next/router'
 import React, { useCallback } from 'react'
-import tw from 'twin.macro'
 import { BuilderSizeMenu } from './BuilderSizeMenu'
 
 export const PageDetailHeader = observer(() => {
   const router = useRouter()
   const { appName: currentAppName, appSlug, userName } = useCurrentApp()
   const { pageName: currentPageName, pageSlug } = useCurrentPage()
+  const { componentName: currentComponentName } = useCurrentComponent()
   const isBuilder = router.pathname === PageType.PageBuilder
   const appName = currentAppName || '?'
   const pageName = currentPageName || '?'
+  const componentName = currentComponentName || '?'
 
   const switchPreviewMode = () => {
     return router.push({
@@ -37,7 +39,6 @@ export const PageDetailHeader = observer(() => {
       pathname: PageType.PageBuilder,
       query: {
         appSlug,
-        explorerPaneKey: ExplorerPaneType.PageList,
         pageSlug,
         primarySidebarKey: ExplorerPaneType.PageList,
         userName,
@@ -58,28 +59,32 @@ export const PageDetailHeader = observer(() => {
     },
   ]
 
+  const directionItems = currentPageName
+    ? [
+        { onClick: navigateAppsPage, title: appName },
+        { title: 'Pages' },
+        { onClick: navigatePagesPanel, title: pageName },
+      ]
+    : [
+        { onClick: navigateAppsPage, title: appName },
+        { title: 'Components' },
+        { title: componentName },
+      ]
+
   return (
     <CuiHeader
       centralArea={isBuilder ? <BuilderSizeMenu /> : null}
-      direction={
-        <CuiHeaderBreadcrumb
-          items={[
-            { onClick: navigateAppsPage, title: appName },
-            { title: 'Pages' },
-            { onClick: navigatePagesPanel, title: pageName },
-          ]}
-        />
-      }
+      direction={<CuiHeaderBreadcrumb items={directionItems} />}
       logo={
         <Image
           alt="codelab logo"
-          css={tw`w-full h-full`}
+          className="h-full w-full"
           preview={false}
           src="/logo.png"
         />
       }
       toolbar={
-        <CuiHeaderToolbar items={toolbarItems} title="My Header Toolbal" />
+        <CuiHeaderToolbar items={toolbarItems} title="My Header Toolbar" />
       }
     />
   )

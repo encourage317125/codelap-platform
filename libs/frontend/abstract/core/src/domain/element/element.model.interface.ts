@@ -12,6 +12,7 @@ import type {
 import type { Ref } from 'mobx-keystone'
 import type { ICacheService } from '../../service'
 import type { IElementTreeViewDataNode } from '../../ui'
+import type { IAction } from '../action'
 import type { IComponent } from '../component'
 import type { IHook } from '../hook'
 import type { IModel } from '../model.interface'
@@ -56,6 +57,8 @@ export interface IElement
     ICacheService<IElementDTO, IElement> {
   ancestorError: Nullish<RenderingError>
   atomName: string
+  childMapperComponent?: Nullable<Ref<IComponent>>
+  childMapperPropKey?: Nullable<string>
   children: Array<IElement>
   // the closest container node that element belongs to
   closestContainerNode: IComponent | IPage
@@ -79,6 +82,8 @@ export interface IElement
   parent?: Nullable<Ref<IElement>>
   // component that this element belongs to
   parentComponent?: Nullable<Ref<IComponent>>
+  postRenderAction?: Nullable<Ref<IAction>>
+  preRenderAction?: Nullable<Ref<IAction>>
   prevSibling?: Nullable<Ref<IElement>>
   propTransformationJs: Nullable<string>
   props: Ref<IProp>
@@ -125,8 +130,6 @@ export interface IElement
   setRenderType(renderType: IElementRenderType): void
   setRenderingError(error: Nullish<RenderingError>): void
   setSourceElement(element: Ref<IElement>): void
-  // setRenderComponentType(componentRef: Ref<IComponent>): void
-  // getDescendantRefs: Array<Ref<IElement>>
   toUpdateNodesInput(): Pick<
     ElementUpdateInput,
     'firstChild' | 'nextSibling' | 'parent' | 'prevSibling'

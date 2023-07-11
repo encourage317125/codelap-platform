@@ -24,10 +24,18 @@ export const getElementModel = (element: IElement) => {
   }
 
   return {
+    childMapperComponent: element.childMapperComponent
+      ? { id: element.childMapperComponent.id }
+      : null,
+    childMapperPropKey: element.childMapperPropKey,
     id: element.id,
     name: element.name,
-    // postRenderAction: element.postRenderAction,
-    // preRenderAction: element.preRenderAction,
+    postRenderAction: element.postRenderAction
+      ? { id: element.postRenderAction.current.id }
+      : null,
+    preRenderAction: element.preRenderAction
+      ? { id: element.preRenderAction.current.id }
+      : null,
     renderForEachPropKey: element.renderForEachPropKey,
     renderIfExpression: element.renderIfExpression,
     renderType,

@@ -1,12 +1,13 @@
-import type { IApp, IAppRepository } from '@codelab/frontend/abstract/core'
+import type { IAppRepository } from '@codelab/frontend/abstract/core'
+import { IApp } from '@codelab/frontend/abstract/core'
 import { cachedWithTTL, clearCacheForKey } from '@codelab/frontend/shared/utils'
-import type { AppOptions, AppWhere } from '@codelab/shared/abstract/codegen'
+import { AppOptions, AppWhere } from '@codelab/shared/abstract/codegen'
 import { Model, model } from 'mobx-keystone'
 import { appApi } from '../store'
 
 @model('@codelab/AppRepository')
 export class AppRepository extends Model({}) implements IAppRepository {
-  add = async (app: IApp) => {
+  async add(app: IApp) {
     const {
       createApps: { apps },
     } = await appApi.CreateApps({
@@ -17,7 +18,7 @@ export class AppRepository extends Model({}) implements IAppRepository {
   }
 
   @clearCacheForKey('apps')
-  update = async (app: IApp) => {
+  async update(app: IApp) {
     const {
       updateApps: { apps },
     } = await appApi.UpdateApps({
@@ -29,12 +30,12 @@ export class AppRepository extends Model({}) implements IAppRepository {
   }
 
   @cachedWithTTL('apps')
-  find = async (where?: AppWhere, options?: AppOptions) => {
+  async find(where?: AppWhere, options?: AppOptions) {
     return await appApi.GetApps({ options, where })
   }
 
   @clearCacheForKey('apps')
-  delete = async (apps: Array<IApp>) => {
+  async delete(apps: Array<IApp>) {
     const {
       deleteApps: { nodesDeleted },
     } = await appApi.DeleteApps({

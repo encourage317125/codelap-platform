@@ -28,9 +28,13 @@ export class CommandService {
   ) {}
 
   exec() {
-    // console.log('Process.argv', hideBin(process.argv))
+    /**
+     * --runtimeArgs doesn't allow positional args, so we pass as single string then convert back to positional
+     */
+    const args = hideBin(process.argv)
+    // const args = hideBin(process.argv)[0]?.split(' ')
 
-    void yargs(hideBin(process.argv))
+    void yargs(args)
       .scriptName('cli')
       /**
        * These scripts could act on different deployment environment, so we group under `data`
