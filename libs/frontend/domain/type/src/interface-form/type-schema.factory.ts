@@ -241,6 +241,16 @@ export class TypeSchemaFactory {
         break
     }
 
+    if (
+      context?.defaultValues &&
+      type.primitiveKind !== PrimitiveTypeKind.Boolean
+    ) {
+      rulesSchema = {
+        ...rulesSchema,
+        default: context.defaultValues,
+      }
+    }
+
     return {
       type: primitives[type.primitiveKind],
       ...rulesSchema,
